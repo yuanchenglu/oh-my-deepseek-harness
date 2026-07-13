@@ -1,0 +1,10 @@
+name: digital-twin
+version: 1.0.0
+description: 数字分身插件。实现三层认知框架、记忆导航注入、工具质量评估、会话学习总结、子任务监控。
+author: bluth
+hooks:
+  - pre_llm_call
+  - post_tool_call
+  - on_session_end
+  - subagent_start
+  - subagent_stop
