@@ -1,6 +1,6 @@
 """subagent_watch.py 单元测试"""
 import sys, os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'plugins', 'digital-twin'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'plugins', 'deepseek-harness'))
 from subagent_watch import on_subagent_start, on_subagent_stop
 
 

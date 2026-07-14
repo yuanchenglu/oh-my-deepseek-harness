@@ -1,6 +1,6 @@
 """assessor.py 单元测试"""
 import sys, os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'plugins', 'digital-twin'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'plugins', 'deepseek-harness'))
 from assessor import on_post_tool_call
 
 
