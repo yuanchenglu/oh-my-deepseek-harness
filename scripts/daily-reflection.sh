@@ -3,7 +3,7 @@
 # 读取 Hermes state.db 昨日 session 记录，生成反思报告
 set -euo pipefail
 
-LOCK_FILE="/tmp/digital-twin-reflection.lock"
+LOCK_FILE="/tmp/deepseek-harness-reflection.lock"
 exec 9>"$LOCK_FILE"
 if ! flock -n 9; then
     echo "错误: 已有进程在运行 (锁文件: $LOCK_FILE)"
