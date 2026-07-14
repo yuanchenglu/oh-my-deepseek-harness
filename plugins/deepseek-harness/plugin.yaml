@@ -1,10 +1,41 @@
 name: deepseek-harness
-version: 1.0.0
-description: 数字分身插件。实现三层认知框架、记忆导航注入、工具质量评估、会话学习总结、子任务监控。
+version: 2.0.0
+description: 数字分身插件 v2。实现 14 个创新设计模式（I-01 到 I-14）在 Hermes 上的落地。
 author: bluth
+
+# 依赖声明：Context Engine Plugin（软依赖，不强制）
+depends_on:
+  context_engine: deepseek-context
+
 hooks:
+  # I-02 + I-08 范围检测注入
   - pre_llm_call
+  # I-10 策略指引 + I-08 排除清单
+  - pre_llm_call
+  # I-14 reasoning 剥离
+  - pre_llm_call
+  # I-01 审计注入（可选）
+  - pre_llm_call
+  # 约束违反检测 + I-09 提议
   - post_tool_call
+  # I-09 Skill 提议保存
   - on_session_end
+  # 子任务追踪
   - subagent_start
+  # 子任务追踪
   - subagent_stop
+
+# MCP Server 声明
+mcp:
+  plan-engine:
+    url: http://127.0.0.1:8200
+    description: OKR PlanStep DAG + 级联修正引擎（I-06）
+    auto_start: true
+  memory-tagger:
+    url: http://127.0.0.1:8100
+    description: Memory 标签中间层 + λ 过滤（I-12）
+    auto_start: true
+  checkpoint-review:
+    url: http://127.0.0.1:8300
+    description: Checkpoint 快照审查状态机（I-11）
+    auto_start: true
