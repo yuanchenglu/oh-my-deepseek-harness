@@ -74,7 +74,7 @@ cat >> /tmp/migration-plan-$$.md << MIGEOF
 - Layer 3 (参考): memories/*.md → 已就位
 
 ## 插件安装
-- digital-twin → 将安装到 ~/.hermes/plugins/digital-twin/
+- deepseek-harness → 将安装到 ~/.hermes/plugins/deepseek-harness/
 MIGEOF
 
 echo "  迁移计划已生成到: /tmp/migration-plan-$$.md"
@@ -83,8 +83,8 @@ echo "  迁移计划已生成到: /tmp/migration-plan-$$.md"
 echo ""
 echo "【步骤 3/4】安装插件文件..."
 
-PLUGIN_SRC="$PROJECT_ROOT/plugins/digital-twin"
-PLUGIN_DST="$HERMES_HOME/plugins/digital-twin"
+PLUGIN_SRC="$PROJECT_ROOT/plugins/deepseek-harness"
+PLUGIN_DST="$HERMES_HOME/plugins/deepseek-harness"
 
 if [ -d "$PLUGIN_SRC" ]; then
     echo "  源: $PLUGIN_SRC"
@@ -106,14 +106,14 @@ echo "【步骤 4/4】启用插件..."
 
 if [ "$DRY_RUN" != "--dry-run" ]; then
     if command -v hermes &> /dev/null; then
-        hermes plugins enable digital-twin 2>&1 || echo "  ⚠️ enable 失败，可能已经启用或 Hermes 未运行"
+        hermes plugins enable deepseek-harness 2>&1 || echo "  ⚠️ enable 失败，可能已经启用或 Hermes 未运行"
         echo "  检查插件状态:"
-        hermes plugins list 2>&1 | grep -i digital || echo "  ⚠️ 未在插件列表中找到 digital-twin"
+        hermes plugins list 2>&1 | grep -i digital || echo "  ⚠️ 未在插件列表中找到 deepseek-harness"
     else
-        echo "  ⚠️ hermes 命令未找到，请手动运行: hermes plugins enable digital-twin"
+        echo "  ⚠️ hermes 命令未找到，请手动运行: hermes plugins enable deepseek-harness"
     fi
 else
-    echo "  [DRY-RUN] 将执行: hermes plugins enable digital-twin"
+    echo "  [DRY-RUN] 将执行: hermes plugins enable deepseek-harness"
 fi
 
 # ─── 完成 ──────────────────────────────────────────
