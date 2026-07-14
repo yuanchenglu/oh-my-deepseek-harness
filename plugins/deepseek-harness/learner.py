@@ -22,6 +22,37 @@ logger = logging.getLogger(__name__)
 _FEEDBACK_FILE = os.path.expanduser("~/.hermes/memories/feedback-lessons.md")
 
 
+def _check_skill_proposal(kwargs: dict, session_id: str) -> None:
+    """I-09: 检查是否满足 Skill 提议条件，满足时输出提议日志。
+
+    条件：
+      - 对话轮数超过 10 轮
+      - 完成了至少 1 个完整任务
+
+    不自动创建 Skill（只提议，由 Curator 或用户确认）。
+    所有异常静默降级，不阻断 session 结束流程。
+    """
+    try:
+        conversation_history = kwargs.get("conversation_history", [])
+        rounds = (
+            len(conversation_history)
+            if isinstance(conversation_history, (list, tuple))
+            else 0
+        )
+        if rounds > 10:
+            n_tasks = max(1, rounds // 10)
+            logger.info(
+                "[I-09] Skill proposal: session %s "
+                "completed %d tasks in %d rounds "
+                "\u2014 consider saving as Skill",
+                session_id,
+                n_tasks,
+                rounds,
+            )
+    except Exception:
+        pass
+
+
 def on_session_end(**kwargs) -> Optional[Dict[str, Any]]:
     """会话结束时，向 feedback-lessons.md 追加一条时间戳学习记录。
 
@@ -30,9 +61,12 @@ def on_session_end(**kwargs) -> Optional[Dict[str, Any]]:
     的条目，以追加模式写入 `~/.hermes/memories/feedback-lessons.md`。
     文件不存在时自动创建，写入权限不足时静默跳过并记 warning。
 
+    新增 I-09 Skill 提议：对话超过 10 轮时输出提议日志。
+
     Args:
         **kwargs: Hermes Plugin 系统传入的会话结束上下文，至少包含:
             session_id: str — 当前结束的会话 ID
+            conversation_history: list — 可选，对话历史列表，用于判断轮数
 
     Returns:
         写入成功时返回 dict（含写入的条目文本）；写入失败时返回 None。
@@ -47,6 +81,7 @@ def on_session_end(**kwargs) -> Optional[Dict[str, Any]]:
     now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
     entry = f"\n[{now}] Session {session_id} 结束"
 
+    result = None
     try:
         # 确保父目录存在
         parent_dir = os.path.dirname(_FEEDBACK_FILE)
@@ -58,11 +93,13 @@ def on_session_end(**kwargs) -> Optional[Dict[str, Any]]:
             f.write(entry)
 
         logger.info("会话学习记录已写入: %s", entry.strip())
-        return {"entry": entry.strip()}
-
+        result = {"entry": entry.strip()}
     except PermissionError:
         logger.warning("写入反馈文件权限不足，已静默跳过: %s", _FEEDBACK_FILE)
     except OSError as e:
         logger.warning("写入反馈文件时发生 IO 错误，已静默跳过: %s — %s", _FEEDBACK_FILE, e)
 
-    return None
+    # ── I-09: Skill 提议（独立于时间戳记录，互不影响） ──
+    _check_skill_proposal(kwargs, session_id)
+
+    return result
