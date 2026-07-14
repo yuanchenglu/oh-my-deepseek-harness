@@ -1,0 +1,50 @@
+# Memory Tagger — λ 阈值与任务类型映射配置
+# 参考：I-12 Memory 粒度控制 §3.1–3.2
+
+lambda_mappings:
+  # λ 区间 → 注入的记忆层级
+  # 低 λ = 仅保留约束层（发散任务/创意场景）
+  # 高 λ = 全量记忆（收敛任务/工程场景）
+  levels:
+    - min: 0.0
+      max: 0.3
+      label: "weak"
+      layers: ["constraint"]
+      description: "弱 Memory：仅约束层，适合发散性任务"
+    - min: 0.4
+      max: 0.7
+      label: "mixed"
+      layers: ["constraint", "preference", "decision"]
+      description: "中等 Memory：约束+偏好+决策，适合混合任务"
+    - min: 0.8
+      max: 1.0
+      label: "strong"
+      layers: ["constraint", "preference", "style", "decision", "pattern"]
+      description: "强 Memory：全量注入，适合收敛性任务"
+
+task_type_mappings:
+  # 任务类型 → 建议 λ 值
+  convergent:
+    label: "convergent"
+    suggested_lambda: 1.0
+    description: "收敛任务（工程/部署/排查）— 需要全部历史约束"
+    keywords: ["修复", "部署", "排查", "调试", "构建", "发布", "合并", "删除"]
+  divergent:
+    label: "divergent"
+    suggested_lambda: 0.0
+    description: "发散任务（创意/写作/构思）— 不注入偏好和风格"
+    keywords: ["构思", "设计", "写作", "批判", "探索", "头脑风暴", "创意", "灵感"]
+  mixed:
+    label: "mixed"
+    suggested_lambda: 0.5
+    description: "混合任务（方案/策略/分析）— 平衡约束与自由度"
+    keywords: ["方案", "策略", "分析", "评估", "对比", "评审", "规划"]
+
+default_lambda: 0.5
+default_lambda_label: "mixed"
+
+storage:
+  db_path: "~/.hermes/mcp/memory-tagger.db"
+  # Hermes Memory 导入配置
+  hermes_memories_dir: "~/.hermes/memories/"
+  import_on_startup: true
