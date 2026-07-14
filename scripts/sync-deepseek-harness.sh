@@ -3,7 +3,7 @@
 # 同步数字分身的 SOUL.md、记忆文件、插件到 MacBook Air
 set -euo pipefail
 
-LOCK_FILE="/tmp/digital-twin-sync.lock"
+LOCK_FILE="/tmp/deepseek-harness-sync.lock"
 exec 9>"$LOCK_FILE"
 if ! flock -n 9; then
     echo "错误: 已有同步进程在运行 (锁文件: $LOCK_FILE)"
@@ -15,7 +15,7 @@ SOURCE_BASE="~/.hermes"
 DEST_BASE="$HOME/.hermes"
 
 # 需要同步的路径
-SYNC_PATHS=("SOUL.md" "memories/" "plugins/digital-twin/")
+SYNC_PATHS=("SOUL.md" "memories/" "plugins/deepseek-harness/")
 
 # 排除敏感文件和目录
 EXCLUDES=("--exclude=.env" "--exclude=config.yaml" "--exclude=state.db" "--exclude=sessions/" "--exclude=.git/" "--exclude=__pycache__/")
