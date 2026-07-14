@@ -24,14 +24,14 @@ bash scripts/install.sh --dry-run
 bash scripts/install.sh
 
 # 验证插件状态
-hermes plugins list | grep digital-twin
+hermes plugins list | grep deepseek-harness
 ```
 
 ## 目录结构
 
 ```
 oh-my-deepseek-harness/
-├── plugins/digital-twin/   # 数字分身 Plugin
+├── plugins/deepseek-harness/   # 数字分身 Plugin
 │   ├── plugin.yaml         # 插件声明（5 个 Hook）
 │   ├── __init__.py         # 注册入口
 │   ├── gate.py             # 认知门控（pre_llm_call hook）
@@ -40,7 +40,7 @@ oh-my-deepseek-harness/
 │   └── subagent_watch.py   # 子任务监控（subagent_start/stop hook）
 ├── scripts/
 │   ├── install.sh          # 一键安装+备份+迁移
-│   ├── sync-digital-twin.sh # AIPC→MacBook Air 同步
+│   ├── sync-deepseek-harness.sh # AIPC→MacBook Air 同步
 │   └── daily-reflection.sh # 每日三省吾身（cron 用）
 ├── tests/                  # pytest 单元测试
 ├── docs/                   # 文档
@@ -58,14 +58,14 @@ oh-my-deepseek-harness/
 | assessor.py | post_tool_call | 每个工具调用后 | 检查结果内容完整性 |
 | learner.py | on_session_end | session 结束时 | 追加经验教训到 feedback-lessons.md |
 | subagent_watch.py | subagent_start/stop | 子任务启停时 | 记录子任务状态和结果 |
-| sync-digital-twin.sh | cron | 每日 4AM | AIPC→MacBook 单向同步 |
+| sync-deepseek-harness.sh | cron | 每日 4AM | AIPC→MacBook 单向同步 |
 | daily-reflection.sh | cron | 每日 5AM | 生成反思报告到 reflections/ |
 
 ## 卸载
 
 ```bash
-hermes plugins disable digital-twin
-rm -rf ~/.hermes/plugins/digital-twin/
+hermes plugins disable deepseek-harness
+rm -rf ~/.hermes/plugins/deepseek-harness/
 ```
 
 注意：安装时创建的备份文件（`*.bak.*`）会保留，需手动清理。
