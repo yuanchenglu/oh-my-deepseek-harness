@@ -1,0 +1,5 @@
+#!/bin/bash
+# I-01 定期约束审计 Cron——每日凌晨 3:00 执行
+# 读取 constraint-violations.md，统计高频违反约束，生成审计报告到 ~/.hermes/reflections/
+set -euo pipefail
+flock -n /tmp/immune-audit.lock -c "python3 -c \"from plugins.deepseek_harness.immune_audit import run_immune_audit; import json; print(json.dumps(run_immune_audit(), ensure_ascii=False))\""
