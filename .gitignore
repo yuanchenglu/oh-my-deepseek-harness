@@ -5,3 +5,14 @@ node_modules/
 dist/
 *.pyc
 .venv/
+
+# AI Agent 运行时 / 临时产物
+.omc/
+.omo/
+migration-report.md
+
+# 研究文档 / 调研笔记（自动生成）
+docs/
+
+# 会话转储 / 时间戳生成的临时文件
+20*
