@@ -1,0 +1,40 @@
+# DeepSeek Context Engine 配置
+# 复制到 hermes config.yaml 的 context: 段使用
+
+engine: deepseek-context  # 或 hermes config.yaml 中 context.engine: deepseek-context
+
+model: deepseek-chat
+summary_model: ""  # 留空则使用 model
+
+# 压缩阈值：prompt tokens 超过 context_length * threshold_percent 时触发
+threshold_percent: 0.75
+
+# 保护的头/尾消息数（默认值，intent-aware 压缩可能动态调整）
+protect_first_n: 3
+protect_last_n: 20
+
+# 摘要 token 预算比例（相对于 threshold_tokens，default 意图使用此值）
+summary_target_ratio: 0.20
+
+# I-03 注意力预算：差异化压缩参数
+# 默认意图类型（由外部 set_intent() 设置，未设置时使用 default）
+default_intent: default  # default | convergent | divergent
+# 收敛任务（refactor/medium/collaboration/simple）：保留更多上下文
+convergent_target_ratio: 0.40
+# 发散任务（research/new/architecture/spec_driven）：压缩更多
+divergent_target_ratio: 0.25
+
+# API 凭证（优先使用环境变量 DEEPSEEK_API_KEY）
+api_key: ""
+base_url: "https://api.deepseek.com"
+
+# 上下文长度（自动检测不可用时回退）
+context_length: 128000
+
+# 静默模式
+quiet_mode: false
+
+# I-07 审查深度切换参数
+review_depth:
+  hysteresis_threshold: 0.10
+  plan_complexity_default: 3.0
