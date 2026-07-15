@@ -5,7 +5,7 @@ import logging
 import os
 import re
 from collections import Counter
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -13,7 +13,7 @@ _VIOLATIONS_FILE = os.path.expanduser("~/.hermes/memories/constraint-violations.
 _REFLECTIONS_DIR = os.path.expanduser("~/.hermes/reflections/")
 
 
-def run_immune_audit() -> Dict[str, any]:
+def run_immune_audit() -> Dict[str, Any]:
     """读取 constraint-violations.md，统计高频违反，输出审计报告。
     
     Returns:
@@ -64,7 +64,7 @@ def run_immune_audit() -> Dict[str, any]:
     }
 
 
-def _empty_report(reason: str) -> Dict[str, any]:
+def _empty_report(reason: str) -> Dict[str, Any]:
     report_path = _write_report(f"# 免疫系统审计报告\n\n**状态**: 无审计内容\n**原因**: {reason}\n")
     return {"status": "empty" if "为空" in reason else "error", "report_path": report_path, "violation_count": 0, "high_frequency": []}
 

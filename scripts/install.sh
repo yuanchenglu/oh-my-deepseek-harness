@@ -100,6 +100,24 @@ else
     echo "  ⚠️ 插件源目录不存在: $PLUGIN_SRC"
 fi
 
+# deepseek-context install block
+CONTEXT_SRC="$PROJECT_ROOT/plugins/deepseek-context"
+CONTEXT_DST="$HERMES_HOME/plugins/deepseek-context"
+
+if [ -d "$CONTEXT_SRC" ]; then
+    echo "  源: $CONTEXT_SRC"
+    echo "  目标: $CONTEXT_DST"
+    if [ "$DRY_RUN" != "--dry-run" ]; then
+        mkdir -p "$CONTEXT_DST"
+        cp -r "$CONTEXT_SRC"/* "$CONTEXT_DST/"
+        echo "  ✅ deepseek-context 插件文件已复制"
+    else
+        echo "  [DRY-RUN] 将复制: $(ls "$CONTEXT_SRC")"
+    fi
+else
+    echo "  ⚠️ deepseek-context 源目录不存在: $CONTEXT_SRC"
+fi
+
 # ─── 步骤 4: 启用插件 ────────────────────────────────
 echo ""
 echo "【步骤 4/4】启用插件..."
@@ -108,7 +126,7 @@ if [ "$DRY_RUN" != "--dry-run" ]; then
     if command -v hermes &> /dev/null; then
         hermes plugins enable deepseek-harness 2>&1 || echo "  ⚠️ enable 失败，可能已经启用或 Hermes 未运行"
         echo "  检查插件状态:"
-        hermes plugins list 2>&1 | grep -i digital || echo "  ⚠️ 未在插件列表中找到 deepseek-harness"
+        hermes plugins list 2>&1 | grep -i deepseek || echo "  ⚠️ 未在插件列表中找到 deepseek-harness"
     else
         echo "  ⚠️ hermes 命令未找到，请手动运行: hermes plugins enable deepseek-harness"
     fi

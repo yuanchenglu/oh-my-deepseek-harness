@@ -2,4 +2,4 @@ name: deepseek-context
 version: 0.1.0
 description: DeepSeek API 驱动的上下文压缩引擎。独立 LLM 客户端，不依赖 Hermes auxiliary_client。
 type: context_engine
-author: bluth
+author: yuanchenglu

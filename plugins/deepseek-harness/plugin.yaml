@@ -1,7 +1,7 @@
 name: deepseek-harness
 version: 2.0.0
 description: 数字分身插件 v2。实现 14 个创新设计模式（I-01 到 I-14）在 Hermes 上的落地。
-author: bluth
+author: yuanchenglu
 
 # 依赖声明：Context Engine Plugin（软依赖，不强制）
 depends_on:
