@@ -2,6 +2,8 @@
 
 The only Agent plugin system that deeply optimizes 14 of DeepSeek's physical characteristics.
 
+English | [简体中文](README.md)
+
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-green)](https://python.org)
 [![Hermes Agent v0.18+](https://img.shields.io/badge/hermes-%3E%3D0.18.0-purple)](https://github.com/HermesAgent/hermes)
@@ -215,7 +217,7 @@ Backup files created during installation (`*.bak.*`) are retained and must be cl
 
 ## License
 
-MIT (c) 2024 yuanchenglu
+MIT (c) 2026 yuanchenglu
 
 ---
 

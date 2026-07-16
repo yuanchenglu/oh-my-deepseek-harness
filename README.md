@@ -2,6 +2,8 @@
 
 市面上唯一针对 DeepSeek 做了 14 项深度优化的 Agent 插件系统。
 
+[English](README_EN.md) | 简体中文
+
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-green)](https://python.org)
 [![Hermes Agent v0.18+](https://img.shields.io/badge/hermes-%3E%3D0.18.0-purple)](https://github.com/HermesAgent/hermes)
@@ -213,7 +215,7 @@ rm -rf ~/.hermes/plugins/deepseek-harness/
 
 ## License
 
-MIT © 2024 yuanchenglu
+MIT © 2026 yuanchenglu
 
 ---
 
