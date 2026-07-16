@@ -1,6 +1,6 @@
 name: deepseek-harness
-version: 2.0.0
-description: 数字分身插件 v2。实现 14 个创新设计模式（I-01 到 I-14）在 Hermes 上的落地。
+version: 2.1.0
+description: 数字分身插件 v2.1。实现 14 个创新设计模式（I-01 到 I-14）+ I-17 推理强度控制 + I-18 时效注入。
 author: yuanchenglu
 
 # 依赖声明：Context Engine Plugin（软依赖，不强制）
@@ -13,6 +13,10 @@ hooks:
   # I-10 策略指引 + I-08 排除清单
   - pre_llm_call
   # I-14 reasoning 剥离
+  - pre_llm_call
+  # I-17 推理强度控制
+  - pre_llm_call
+  # I-18 时效信息注入
   - pre_llm_call
   # I-01 审计注入（可选）
   - pre_llm_call
