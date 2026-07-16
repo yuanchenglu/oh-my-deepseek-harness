@@ -10,8 +10,14 @@ dist/
 .omc/
 .omo/
 migration-report.md
+.coverage
+*.egg-info/
 
 # 研究文档 / 调研笔记（自动生成）
 
 # 会话转储 / 时间戳生成的临时文件
 20*
+
+# 运行时符号链接（conftest.py 自动生成）
+plugins/deepseek_context
+plugins/deepseek_harness
