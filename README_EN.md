@@ -146,7 +146,7 @@ oh-my-deepseek-harness/
 │   └── daily-reflection.sh        # Daily reflection (cron)
 ├── crons/
 │   └── immune-audit.cron          # I-01 periodic constraint audit (daily 3:00)
-├── tests/                         # pytest unit tests (144 cases, 14 files)
+├── tests/                         # pytest unit tests (159 cases, 16 files)
 ├── docs/research/                 # Research documentation
 ├── README.md
 ├── README_EN.md
@@ -171,22 +171,22 @@ oh-my-deepseek-harness/
 | I-12 | Memory Lambda Function Filtering | ✅ | Memory Tagger MCP service, lambda expression filtering of irrelevant memories |
 | I-13 | Structural Context Compression | ✅ | Context Engine selects compression strategy by data structure (code/config/docs) |
 | I-14 | Provider-Aware Reasoning Strip | ✅ | Selectively strips thinking tokens by provider type: stripped for DeepSeek/OpenAI, retained for Anthropic |
+| I-15 | DSML Tool Call Optimization | ➖ | Server-side auto-converted; no plugin needed |
+| I-16 | Quick Instruction Routing | ➖ | V4 internal mechanism; not available via OpenAI-compatible API (I-10 intent routing is alternative) |
+| I-17 | Reasoning Effort Control | ✅ | Dynamically sets reasoning_effort (max/high) based on I-10 intent classification. Spike verified 3x reasoning token increase |
+| I-18 | Latest Reminder Injection | ✅ | Fallback: injects current datetime into system prompt on first turn (latest_reminder role not supported by API) |
 
-All 14 patterns are implemented and shipped in v2.0.0.
+All 16 patterns (I-01 through I-18 feasible subset) are implemented and shipped in v2.1.0.
 
 ## Roadmap
 
 - ✅ **v1.0 Foundation Plugin**: Cognitive gate + quality assessment + learning summary + subtask watch (completed)
 - ✅ **v2.0 Four-Layer Architecture**: Plugin + Context Engine + MCP microservices + Platform Core (completed)
 - ✅ **All 14 Patterns Implemented**: I-01 through I-14 fully shipped (completed)
-- 🔲 **Full-Feature Stable Release**: Fully stabilize all 14 Agent engineering patterns in a single release, plus deliver the 4 DeepSeek V4 API-layer optimizations
+- ✅ **v2.1 V4 Feature Validation**: Spike verified I-15~I-18 feasibility + implemented I-17/I-18 (completed)
 - 🔲 **Platform Adaptation**: Adapt platform_core to other Agent platforms such as OpenCode and Claude Code
-- 🔲 **More Innovation Patterns**: Continue exploring DeepSeek's new API-layer characteristics, extending to I-15 and beyond
+- 🔲 **More Innovation Patterns**: Continue exploring DeepSeek's new API-layer characteristics, extending to I-19 and beyond
 - 🔲 **Community Contribution Guide**: Improve CONTRIBUTING.md and developer documentation, lower the barrier to participation
-- 🔲 **I-15 DSML Tool Call Optimization**: Leverage V4's unique ｜DSML｜ format for optimized tool serialization
-- 🔲 **I-16 Quick Instruction Routing**: Use V4's action token for search/answer routing decisions
-- 🔲 **I-17 Reasoning Effort Control**: Automatically switch to reasoning_effort max for complex tasks
-- 🔲 **I-18 Latest Reminder Injection**: Use latest_reminder role to inject time-sensitive information
 
 ## FAQ
 

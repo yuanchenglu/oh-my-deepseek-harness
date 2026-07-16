@@ -145,7 +145,7 @@ oh-my-deepseek-harness/
 │   └── daily-reflection.sh        # 每日三省吾身（cron 用）
 ├── crons/
 │   └── immune-audit.cron          # I-01 定期约束审计（每日 3:00）
-├── tests/                         # pytest 单元测试（144 用例, 14 文件）
+├── tests/                         # pytest 单元测试（159 用例, 16 文件）
 ├── docs/research/                 # 调研文档
 ├── README.md
 └── LICENSE                        # MIT
@@ -169,22 +169,22 @@ oh-my-deepseek-harness/
 | I-12 | Memory λ 函数过滤 | ✅ | Memory Tagger MCP 服务，λ 表达式过滤非相关记忆 |
 | I-13 | 结构性上下文压缩 | ✅ | Context Engine 按数据结构（代码/配置/文档）选择压缩策略 |
 | I-14 | Provider 感知 Reasoning 剥离 | ✅ | 按 provider 类型选择性剥离 thinking tokens，DeepSeek/OpenAI 剥离，Anthropic 保留 |
+| I-15 | DSML 工具调用优化 | ➖ | 服务器端自动转换，无需插件处理 |
+| I-16 | Quick Instruction 路由 | ➖ | V4 内部机制，OpenAI 兼容 API 不可用（I-10 意图路由为替代方案） |
+| I-17 | 推理强度控制 | ✅ | 根据 I-10 意图分类动态设置 reasoning_effort（max/high），Spike 验证 3x 推理深度提升 |
+| I-18 | 时效信息注入 | ✅ | 降级方案：首轮注入当前日期时间到 system prompt（latest_reminder 角色不被 API 支持） |
 
-全部 14 项 Agent 工程模式已实现并在 v2.0.0 中落地。
+全部 16 项 Agent 工程模式（I-01 到 I-18 中可行部分）已实现并在 v2.1.0 中落地。
 
 ## 路线图
 
 - ✅ **v1.0 基础插件**：认知门控 + 质量评估 + 学习总结 + 子任务监控（已完成）
 - ✅ **v2.0 四层架构**：Plugin + Context Engine + MCP 微服务 + Platform Core（已完成）
 - ✅ **14 模式全实现**：I-01 到 I-14 全部落地（已完成）
-- 🔲 **全特性稳定版**：将全部 14 项 Agent 工程模式稳定落地，并交付 4 项 DeepSeek V4 API 层优化
+- ✅ **v2.1 V4 特性验证**：Spike 验证 I-15~I-18 + 实现 I-17/I-18（已完成）
 - 🔲 **平台适配**：将 platform_core 适配到 OpenCode、Claude Code 等其他 Agent 平台
-- 🔲 **更多创新模式**：持续挖掘 DeepSeek 的新 API 层特性，扩展 I-15 及以后
+- 🔲 **更多创新模式**：持续挖掘 DeepSeek 的新 API 层特性，扩展 I-19 及以后
 - 🔲 **社区贡献指南**：完善 CONTRIBUTING.md 和开发者文档，降低参与门槛
-- 🔲 **I-15 DSML 工具调用优化**：利用 V4 独有的 ｜DSML｜ 格式优化工具序列化
-- 🔲 **I-16 Quick Instruction 路由**：利用 V4 的 action token 做 search/answer 路由
-- 🔲 **I-17 推理强度控制**：利用 reasoning_effort max 在复杂任务自动切换
-- 🔲 **I-18 最新提醒注入**：利用 latest_reminder 角色注入时效信息
 
 ## FAQ
 
