@@ -1,6 +1,6 @@
 # oh-my-deepseek-harness
 
-The only Agent plugin system that deeply optimizes 14 of DeepSeek's physical characteristics.
+An Agent plugin system with deep optimizations for DeepSeek. 14 Agent engineering patterns implemented, 4 DeepSeek V4 API-layer physical property optimizations coming soon.
 
 English | [简体中文](README.md)
 
@@ -13,7 +13,7 @@ English | [简体中文](README.md)
 
 ## Why This Project Exists
 
-DeepSeek has 14 unique physical characteristics (reasoning capability, KV Cache behavior, context window structure, thinking token format, etc.), but general-purpose Agent frameworks do not optimize specifically for these traits. The result: token waste, context pollution, and underutilized reasoning power.
+DeepSeek V4 has several unique API-layer and model-layer physical characteristics (reasoning_content structure, DSML tool calling format, Quick Instruction routing, reasoning effort control), but generic Agent frameworks don't optimize for these. Meanwhile, Agent engineering practices (cognitive gating, constraint immunity, intent routing) also lack systematic implementation.
 
 Built on the Hermes Agent Plugin system, this project translates DeepSeek's physical properties into runnable Agent capabilities through a four-layer architecture of plugins, an independent context engine, MCP microservices, and a platform-agnostic core. It does not modify a single line of Hermes core code.
 
@@ -153,7 +153,7 @@ oh-my-deepseek-harness/
 └── LICENSE                        # MIT
 ```
 
-## 14 Innovation Design Patterns
+## 14 Agent Engineering Patterns + Upcoming DeepSeek V4 Physical Properties
 
 | ID | Pattern Name | Status | Description |
 |----|-------------|--------|-------------|
@@ -179,10 +179,14 @@ All 14 patterns are implemented and shipped in v2.0.0.
 - ✅ **v1.0 Foundation Plugin**: Cognitive gate + quality assessment + learning summary + subtask watch (completed)
 - ✅ **v2.0 Four-Layer Architecture**: Plugin + Context Engine + MCP microservices + Platform Core (completed)
 - ✅ **All 14 Patterns Implemented**: I-01 through I-14 fully shipped (completed)
-- 🔲 **Full-Feature Stable Release**: Fully stabilize all 14 of DeepSeek's physical characteristics in a single release, including stress tests and edge case coverage
+- 🔲 **Full-Feature Stable Release**: Fully stabilize all 14 Agent engineering patterns in a single release, plus deliver the 4 DeepSeek V4 API-layer optimizations
 - 🔲 **Platform Adaptation**: Adapt platform_core to other Agent platforms such as OpenCode and Claude Code
-- 🔲 **More Innovation Patterns**: Continue exploring DeepSeek's new physical characteristics, extending to I-15 and beyond
+- 🔲 **More Innovation Patterns**: Continue exploring DeepSeek's new API-layer characteristics, extending to I-15 and beyond
 - 🔲 **Community Contribution Guide**: Improve CONTRIBUTING.md and developer documentation, lower the barrier to participation
+- 🔲 **I-15 DSML Tool Call Optimization**: Leverage V4's unique ｜DSML｜ format for optimized tool serialization
+- 🔲 **I-16 Quick Instruction Routing**: Use V4's action token for search/answer routing decisions
+- 🔲 **I-17 Reasoning Effort Control**: Automatically switch to reasoning_effort max for complex tasks
+- 🔲 **I-18 Latest Reminder Injection**: Use latest_reminder role to inject time-sensitive information
 
 ## FAQ
 

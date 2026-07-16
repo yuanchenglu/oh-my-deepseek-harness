@@ -1,6 +1,6 @@
 # oh-my-deepseek-harness
 
-市面上唯一针对 DeepSeek 做了 14 项深度优化的 Agent 插件系统。
+针对 DeepSeek 做了深度优化的 Agent 插件系统。14 项 Agent 工程模式已实现，4 项 DeepSeek V4 物理特性优化即将到来。
 
 [English](README_EN.md) | 简体中文
 
@@ -13,7 +13,7 @@
 
 ## 为什么需要这个项目
 
-DeepSeek 有 14 项独特的物理特性（推理能力、KV Cache 行为、上下文窗口结构、thinking token 格式等），但通用 Agent 框架没有为这些特性做专门优化。结果是：Token 浪费、上下文污染、推理能力无法充分发挥。
+DeepSeek V4 有多项独特的 API 层和模型层物理特性（reasoning_content 结构、DSML 工具调用格式、Quick Instruction 路由、推理强度控制等），但通用 Agent 框架没有为这些特性做专门优化。同时，Agent 工程实践（认知门控、约束免疫、意图路由等）也缺乏系统化落地。
 
 这个项目以 Hermes Agent Plugin 系统为基础，通过插件、独立上下文引擎、MCP 微服务和平台无关核心四层架构，将 DeepSeek 的物理特性一一落地为可运行的 Agent 能力。不改一行 Hermes 核心代码。
 
@@ -151,7 +151,7 @@ oh-my-deepseek-harness/
 └── LICENSE                        # MIT
 ```
 
-## 14 个创新设计模式
+## 14 项 Agent 工程模式 + 即将到来的 DeepSeek V4 物理特性
 
 | 编号 | 模式名称 | 状态 | 说明 |
 |------|---------|------|------|
@@ -170,17 +170,21 @@ oh-my-deepseek-harness/
 | I-13 | 结构性上下文压缩 | ✅ | Context Engine 按数据结构（代码/配置/文档）选择压缩策略 |
 | I-14 | Provider 感知 Reasoning 剥离 | ✅ | 按 provider 类型选择性剥离 thinking tokens，DeepSeek/OpenAI 剥离，Anthropic 保留 |
 
-全部 14 个模式已实现并在 v2.0.0 中落地。
+全部 14 项 Agent 工程模式已实现并在 v2.0.0 中落地。
 
 ## 路线图
 
 - ✅ **v1.0 基础插件**：认知门控 + 质量评估 + 学习总结 + 子任务监控（已完成）
 - ✅ **v2.0 四层架构**：Plugin + Context Engine + MCP 微服务 + Platform Core（已完成）
 - ✅ **14 模式全实现**：I-01 到 I-14 全部落地（已完成）
-- 🔲 **全特性稳定版**：将 DeepSeek 全部 14 项物理特性在一个版本中完全稳定落地，包括压力测试和边界场景覆盖
+- 🔲 **全特性稳定版**：将全部 14 项 Agent 工程模式稳定落地，并交付 4 项 DeepSeek V4 API 层优化
 - 🔲 **平台适配**：将 platform_core 适配到 OpenCode、Claude Code 等其他 Agent 平台
-- 🔲 **更多创新模式**：持续挖掘 DeepSeek 的新物理特性，扩展 I-15 及以后
+- 🔲 **更多创新模式**：持续挖掘 DeepSeek 的新 API 层特性，扩展 I-15 及以后
 - 🔲 **社区贡献指南**：完善 CONTRIBUTING.md 和开发者文档，降低参与门槛
+- 🔲 **I-15 DSML 工具调用优化**：利用 V4 独有的 ｜DSML｜ 格式优化工具序列化
+- 🔲 **I-16 Quick Instruction 路由**：利用 V4 的 action token 做 search/answer 路由
+- 🔲 **I-17 推理强度控制**：利用 reasoning_effort max 在复杂任务自动切换
+- 🔲 **I-18 最新提醒注入**：利用 latest_reminder 角色注入时效信息
 
 ## FAQ
 
