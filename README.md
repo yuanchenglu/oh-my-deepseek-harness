@@ -1,13 +1,13 @@
 # oh-my-deepseek-harness
 
-针对 DeepSeek 做了深度优化的 Agent 插件系统。14 项 Agent 工程模式已实现，4 项 DeepSeek V4 物理特性优化即将到来。
+针对 DeepSeek 做了深度优化的 Agent 插件系统。16 项 Agent 工程模式已实现。
 
 [English](README_EN.md) | 简体中文
 
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-green)](https://python.org)
 [![Hermes Agent v0.18+](https://img.shields.io/badge/hermes-%3E%3D0.18.0-purple)](https://github.com/HermesAgent/hermes)
-[![Tests](https://img.shields.io/badge/tests-144%20cases-brightgreen)](tests/)
+[![Tests](https://img.shields.io/badge/tests-162%20cases-brightgreen)](tests/)
 
 ---
 
@@ -26,6 +26,8 @@ DeepSeek V4 有多项独特的 API 层和模型层物理特性（reasoning_conte
 - ✅ **工具质量评估**（post_tool_call 内容完整性检查）：对 write/read/bash 等工具调用结果自动校验，拦截空结果和异常
 - ✅ **会话学习**（I-09 Skill 提议）：长对话自动识别可复用的 Skill 模式，追加到 feedback-lessons.md
 - ✅ **三省吾身**：每日 cron 读取 state.db 统计对话轮次和 Token 消耗，生成反思报告到 reflections/
+- ✅ **推理强度控制**（I-17 基于意图动态调整）：根据 I-10 意图分类结果，对 architecture/research/collaboration 类任务注入高复杂度推理指引，对 refactor/new/medium 类任务注入中等复杂度推理指引
+- ✅ **时效信息注入**（I-18 latest_reminder）：首轮对话自动注入当前日期时间信息，让模型感知真实时间
 - ✅ **子任务监控**：追踪 subagent_start/subagent_stop，记录每个子任务的起止和结果
 - ✅ **上下文压缩引擎**（I-03/I-04/I-07/I-13 独立 Context Engine Plugin）：使用 DeepSeek API 独立压缩上下文，不依赖 Hermes auxiliary_client
 - ✅ **OKR Plan Engine MCP**（I-06 级联修正 FastAPI 服务）：PlanStep DAG 编排 + 级联修正，端口 8200
@@ -145,7 +147,7 @@ oh-my-deepseek-harness/
 │   └── daily-reflection.sh        # 每日三省吾身（cron 用）
 ├── crons/
 │   └── immune-audit.cron          # I-01 定期约束审计（每日 3:00）
-├── tests/                         # pytest 单元测试（159 用例, 16 文件）
+├── tests/                         # pytest 单元测试（162 用例, 16 文件）
 ├── docs/research/                 # 调研文档
 ├── README.md
 └── LICENSE                        # MIT
@@ -169,10 +171,10 @@ oh-my-deepseek-harness/
 | I-12 | Memory λ 函数过滤 | ✅ | Memory Tagger MCP 服务，λ 表达式过滤非相关记忆 |
 | I-13 | 结构性上下文压缩 | ✅ | Context Engine 按数据结构（代码/配置/文档）选择压缩策略 |
 | I-14 | Provider 感知 Reasoning 剥离 | ✅ | 按 provider 类型选择性剥离 thinking tokens，DeepSeek/OpenAI 剥离，Anthropic 保留 |
-| I-15 | DSML 工具调用优化 | ➖ | 服务器端自动转换，无需插件处理 |
-| I-16 | Quick Instruction 路由 | ➖ | V4 内部机制，OpenAI 兼容 API 不可用（I-10 意图路由为替代方案） |
-| I-17 | 推理强度控制 | ✅ | 根据 I-10 意图分类动态设置 reasoning_effort（max/high），Spike 验证 3x 推理深度提升 |
-| I-18 | 时效信息注入 | ✅ | 降级方案：首轮注入当前日期时间到 system prompt（latest_reminder 角色不被 API 支持） |
+| I-15 | DSML 工具调用优化 | ✅ | DeepSeek 服务器端自动将工具调用转为 OpenAI 格式，客户端无需解析 |
+| I-16 | Quick Instruction 路由 | 🔲 | V4 内部机制，OpenAI 兼容 API 不可用，由 I-10 意图路由替代 |
+| I-17 | 推理强度控制 | ✅ | 根据 I-10 意图分类结果，对 architecture/research/collaboration 类任务注入高复杂度推理指引，对 refactor/new/medium 类任务注入中等复杂度推理指引 |
+| I-18 | 时效信息注入 | ✅ | 首轮对话自动注入当前日期时间信息，让模型感知真实时间 |
 
 全部 16 项 Agent 工程模式（I-01 到 I-18 中可行部分）已实现并在 v2.1.0 中落地。
 

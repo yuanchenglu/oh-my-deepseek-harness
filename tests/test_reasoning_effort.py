@@ -58,32 +58,31 @@ class TestOnPreLlmCall:
         assert r is None
 
     def test_architecture_returns_max_context(self):
-        """architecture intent 应返回含 reasoning_effort=max 的 context。"""
+        """architecture intent 应返回高复杂度推理指引。"""
         r = on_pre_llm_call(
             is_first_turn=True,
             user_message="design the system architecture",
         )
         assert r is not None
         assert "context" in r
-        assert "reasoning_effort=max" in r["context"]
-        assert "architecture" in r["context"]
+        assert "高复杂度" in r["context"]
 
     def test_refactor_returns_high_context(self):
-        """refactor intent 应返回含 reasoning_effort=high 的 context。"""
+        """refactor intent 应返回中等复杂度推理指引。"""
         r = on_pre_llm_call(
             is_first_turn=True,
             user_message="refactor the auth module",
         )
         assert r is not None
         assert "context" in r
-        assert "reasoning_effort=high" in r["context"]
+        assert "中等复杂度" in r["context"]
 
     def test_research_returns_max_context(self):
-        """research intent 应返回含 reasoning_effort=max 的 context。"""
+        """research intent 应返回高复杂度推理指引。"""
         r = on_pre_llm_call(
             is_first_turn=True,
             user_message="research the best approach",
         )
         assert r is not None
         assert "context" in r
-        assert "reasoning_effort=max" in r["context"]
+        assert "高复杂度" in r["context"]

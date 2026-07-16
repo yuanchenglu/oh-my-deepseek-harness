@@ -1,13 +1,13 @@
 # oh-my-deepseek-harness
 
-An Agent plugin system with deep optimizations for DeepSeek. 14 Agent engineering patterns implemented, 4 DeepSeek V4 API-layer physical property optimizations coming soon.
+An Agent plugin system with deep optimizations for DeepSeek. 16 Agent engineering patterns implemented.
 
 English | [简体中文](README.md)
 
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-green)](https://python.org)
 [![Hermes Agent v0.18+](https://img.shields.io/badge/hermes-%3E%3D0.18.0-purple)](https://github.com/HermesAgent/hermes)
-[![Tests](https://img.shields.io/badge/tests-144%20cases-brightgreen)](tests/)
+[![Tests](https://img.shields.io/badge/tests-162%20cases-brightgreen)](tests/)
 
 ---
 
@@ -26,6 +26,8 @@ Built on the Hermes Agent Plugin system, this project translates DeepSeek's phys
 - ✅ **Tool Quality Assessment** (post_tool_call content integrity check): Automatically validates results of write/read/bash tool calls, intercepts empty results and exceptions
 - ✅ **Session Learning** (I-09 Skill Proposal): Identifies reusable Skill patterns in long conversations and appends them to feedback-lessons.md
 - ✅ **Daily Reflection**: Reads state.db via daily cron to count conversation turns and Token consumption, generates reflection reports in reflections/
+- ✅ **Reasoning Effort Control** (I-17 Intent-Based Dynamic Adjustment): Injects high-complexity reasoning guidance for architecture/research/collaboration tasks and medium-complexity reasoning guidance for refactor/new/medium tasks based on I-10 intent classification
+- ✅ **Timeliness Injection** (I-18 latest_reminder): Automatically injects current date and time on the first conversation turn, making the model aware of real-world time
 - ✅ **Subtask Watch**: Tracks subagent_start/subagent_stop events, records each subtask's start, end, and result
 - ✅ **Context Compression Engine** (I-03/I-04/I-07/I-13 Independent Context Engine Plugin): Uses DeepSeek API for independent context compression, does not depend on Hermes auxiliary_client
 - ✅ **OKR Plan Engine MCP** (I-06 Cascading Correction FastAPI Service): PlanStep DAG orchestration + cascading correction, port 8200
@@ -146,7 +148,7 @@ oh-my-deepseek-harness/
 │   └── daily-reflection.sh        # Daily reflection (cron)
 ├── crons/
 │   └── immune-audit.cron          # I-01 periodic constraint audit (daily 3:00)
-├── tests/                         # pytest unit tests (159 cases, 16 files)
+├── tests/                         # pytest unit tests (162 cases, 16 files)
 ├── docs/research/                 # Research documentation
 ├── README.md
 ├── README_EN.md
@@ -171,10 +173,10 @@ oh-my-deepseek-harness/
 | I-12 | Memory Lambda Function Filtering | ✅ | Memory Tagger MCP service, lambda expression filtering of irrelevant memories |
 | I-13 | Structural Context Compression | ✅ | Context Engine selects compression strategy by data structure (code/config/docs) |
 | I-14 | Provider-Aware Reasoning Strip | ✅ | Selectively strips thinking tokens by provider type: stripped for DeepSeek/OpenAI, retained for Anthropic |
-| I-15 | DSML Tool Call Optimization | ➖ | Server-side auto-converted; no plugin needed |
-| I-16 | Quick Instruction Routing | ➖ | V4 internal mechanism; not available via OpenAI-compatible API (I-10 intent routing is alternative) |
-| I-17 | Reasoning Effort Control | ✅ | Dynamically sets reasoning_effort (max/high) based on I-10 intent classification. Spike verified 3x reasoning token increase |
-| I-18 | Latest Reminder Injection | ✅ | Fallback: injects current datetime into system prompt on first turn (latest_reminder role not supported by API) |
+| I-15 | DSML Tool Call Optimization | ✅ | DeepSeek server automatically converts tool calls to OpenAI format; no client-side parsing needed |
+| I-16 | Quick Instruction Routing | 🔲 | V4 internal mechanism; not available via OpenAI-compatible API, replaced by I-10 intent routing |
+| I-17 | Reasoning Effort Control | ✅ | Injects high-complexity reasoning guidance for architecture/research/collaboration tasks and medium-complexity reasoning guidance for refactor/new/medium tasks based on I-10 intent classification |
+| I-18 | Latest Reminder Injection | ✅ | Automatically injects current date and time on the first conversation turn, making the model aware of real-world time |
 
 All 16 patterns (I-01 through I-18 feasible subset) are implemented and shipped in v2.1.0.
 

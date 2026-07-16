@@ -2,11 +2,11 @@
 I-18 时效信息注入（Latest Reminder）。
 
 在 pre_llm_call hook 中注入当前日期和时效信息到 LLM 上下文。
-作为 latest_reminder 角色被 API 拒绝后的降级方案。
 
 Spike 验证结论：
-- DeepSeek API 不接受 role="latest_reminder"（400 InvalidParameter）
-- 降级方案：将时效信息注入 system prompt 末尾
+- DeepSeek API 接受 role="latest_reminder"（200 OK，模型正确利用时效信息）
+- 但 Hermes pre_llm_call hook 无法修改 conversation_history（turn_context.py:474 传副本）
+- 降级方案：通过 context 文本注入时间信息，功能等价
 
 注入方式：
 - 首轮：注入完整时效信息（当前日期、时间）到 context
@@ -28,8 +28,8 @@ def _build_reminder_text() -> str:
     """
     now = datetime.now()
     return (
-        f"[I-18] Current time: {now.strftime('%Y-%m-%d %H:%M %Z')}. "
-        f"This information is provided for temporal awareness."
+        f"[I-18 时效信息] 当前时间: {now.strftime('%Y年%m月%d日 %H:%M')}。"
+        f"回答涉及日期/时间的问题时请以此为准。"
     )
 
 
@@ -37,7 +37,7 @@ def on_pre_llm_call(**kwargs: Any) -> Optional[Dict[str, Any]]:
     """pre_llm_call hook：注入时效信息到 LLM 上下文。
 
     仅在首轮调用时注入当前日期和时间信息。
-    通过 context 注入到 system prompt，让模型感知当前时间。
+    通过 context 注入到 user message（保护 system prompt KV cache 前缀）。
 
     Args:
         **kwargs: Hermes Plugin 系统传入的上下文。

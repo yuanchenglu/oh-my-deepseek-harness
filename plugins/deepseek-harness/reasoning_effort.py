@@ -2,17 +2,21 @@
 I-17 推理强度控制（Reasoning Effort Control）。
 
 在 pre_llm_call hook 中根据 I-10 意图路由的分类结果，
-动态设置 reasoning_effort 参数，控制 DeepSeek V4 模型的推理深度。
+通过文本提示注入推理深度指引，控制 DeepSeek V4 模型的推理深度。
+
+设计限制：Hermes pre_llm_call hook 协议仅支持通过返回 {"context": "..."}
+注入文本到 user message，无法直接设置 API 端的 reasoning_effort 参数。
+因此本插件改为通过上下文文本指引模型调整推理强度，而非直接操作 API 参数。
 
 Spike 验证结论：
 - DeepSeek API 接受 reasoning_effort 参数（"max"/"high"/"medium"）
 - 设 "max" 时推理 token 约 3x 于不设时（282 vs 91）
-- 通过 API 参数传递，不手动注入 REASONING_EFFORT_MAX 文本
+- 因 Hermes hook 架构限制，改为文本提示注入
 
-映射规则（意图类型 → reasoning_effort 级别）：
-  - architecture / research / collaboration → "max"
-  - refactor / new / medium → "high"
-  - simple / spec_driven → 不设置（使用模型默认值）
+映射规则（意图类型 → 推理强度指引）：
+  - architecture / research / collaboration → 高复杂度提示
+  - refactor / new / medium → 中等复杂度提示
+  - simple / spec_driven → 不注入
 
 关联: docs/innovations/17-reasoning-effort-control.md
 """
@@ -36,10 +40,6 @@ _INTENT_EFFORT_MAP: dict[str, str] = {
     "simple": "",
     "spec_driven": "",
 }
-
-# 需要设置 reasoning_effort 的 intent 列表（用于快速判断）
-_EFFORT_INTENTS = {"architecture", "research", "collaboration", "refactor", "new", "medium"}
-
 
 def _get_reasoning_effort_level(intent: str) -> Optional[str]:
     """根据 I-10 意图类型获取对应的 reasoning_effort 级别。
@@ -93,17 +93,14 @@ def on_pre_llm_call(**kwargs: Any) -> Optional[Dict[str, Any]]:
         if effort is None:
             return None
 
-        logger.info(
-            "[I-17] Injecting reasoning_effort=%s for intent=%s (confidence=%.2f)",
-            effort,
-            intent,
-            result.get("confidence", 0.0),
-        )
+        if effort == "max":
+            hint = "本任务属于高复杂度类型（架构/研究/协作），请进行充分的深度推理，考虑多种方案、边界情况和长期影响。"
+        elif effort == "high":
+            hint = "本任务属于中等复杂度类型（重构/新功能/功能修改），请进行细致的逐步推理，确保逻辑正确。"
+        else:
+            return None
 
-        return {
-            "context": f"[I-17 reasoning_effort={effort}] "
-            f"当前推理强度设置为 {effort}（意图: {intent}）。"
-        }
+        return {"context": f"[I-17 推理强度] {hint}"}
 
     except ImportError:
         logger.debug("[I-17] intent_router not available, skipping")
