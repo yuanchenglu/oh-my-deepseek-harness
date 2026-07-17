@@ -41,7 +41,7 @@ class TestHarnessPluginYaml:
         assert "subagent_stop" in hooks
 
     def test_hooks_pre_llm_call_count(self):
-        """pre_llm_call 注册了至少 3 次（gate + intent_router + reasoning_strip + immune_audit）。"""
+        """pre_llm_call 注册了至少 3 次（gate + intent_router + reasoning_effort + latest_reminder + immune_audit）。"""
         data = _load_plugin_yaml("deepseek-harness")
         count = sum(1 for h in data["hooks"] if h == "pre_llm_call")
         assert count >= 3

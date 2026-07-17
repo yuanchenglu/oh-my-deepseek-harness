@@ -1,6 +1,6 @@
 name: deepseek-harness
-version: 2.1.0
-description: 数字分身插件 v2.1。实现 14 个创新设计模式（I-01 到 I-14）+ I-17 推理强度控制 + I-18 时效注入。
+version: 2.2.0
+description: 数字分身插件 v2.2。实现 13 个创新设计模式（I-01~I-13，I-14 已移除）+ I-17 推理提示路由 + I-18 时效注入。
 author: yuanchenglu
 
 # 依赖声明：Context Engine Plugin（软依赖，不强制）
@@ -11,8 +11,6 @@ hooks:
   # I-02 + I-08 范围检测注入
   - pre_llm_call
   # I-10 策略指引 + I-08 排除清单
-  - pre_llm_call
-  # I-14 reasoning 剥离
   - pre_llm_call
   # I-17 推理强度控制
   - pre_llm_call
