@@ -46,20 +46,19 @@ class TestHarnessPluginYaml:
         count = sum(1 for h in data["hooks"] if h == "pre_llm_call")
         assert count >= 3
 
-    def test_mcp_servers_declared(self):
-        """mcp section 包含 3 个 server 声明。"""
+    def test_provides_tools_declared(self):
+        """provides_tools 声明了 9 个工具。"""
         data = _load_plugin_yaml("deepseek-harness")
-        mcp = data.get("mcp", {})
-        assert len(mcp) >= 3
-        assert "plan-engine" in mcp
-        assert "memory-tagger" in mcp
-        assert "checkpoint-review" in mcp
+        tools = data.get("provides_tools", [])
+        assert len(tools) == 9
+        assert "plan_create" in tools
+        assert "memory_tag" in tools
+        assert "checkpoint_review" in tools
 
-    def test_mcp_server_has_url_and_description(self):
+    def test_no_mcp_block(self):
+        """不应再有 mcp 块（已改为 provides_tools + ctx.register_tool）。"""
         data = _load_plugin_yaml("deepseek-harness")
-        for name, cfg in data.get("mcp", {}).items():
-            assert "url" in cfg, f"MCP server {name} 缺少 url"
-            assert "description" in cfg, f"MCP server {name} 缺少 description"
+        assert "mcp" not in data, "plugin.yaml 不应再有 mcp 块"
 
     def test_version_format(self):
         data = _load_plugin_yaml("deepseek-harness")

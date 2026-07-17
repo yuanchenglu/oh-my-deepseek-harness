@@ -1,11 +1,23 @@
 name: deepseek-harness
 version: 2.2.0
-description: 数字分身插件 v2.2。实现 13 个创新设计模式（I-01~I-13，I-14 已移除）+ I-17 推理提示路由 + I-18 时效注入。
+description: 数字分身插件 v2.2。实现 13 个创新设计模式（I-01~I-13，I-14 已移除）+ I-17 推理提示路由 + I-18 时效注入 + 9 个注册工具（I-06/I-11/I-12）。
 author: yuanchenglu
 
 # 依赖声明：Context Engine Plugin（软依赖，不强制）
 depends_on:
   context_engine: deepseek-context
+
+# 暴露给 LLM 的工具列表（通过 ctx.register_tool 注册）
+provides_tools:
+  - plan_create
+  - plan_update_step
+  - plan_cascade
+  - plan_status
+  - memory_tag
+  - memory_query
+  - memory_filter
+  - checkpoint_create
+  - checkpoint_review
 
 hooks:
   # I-02 + I-08 范围检测注入
@@ -26,18 +38,3 @@ hooks:
   - subagent_start
   # 子任务追踪
   - subagent_stop
-
-# MCP Server 声明
-mcp:
-  plan-engine:
-    url: http://127.0.0.1:8200
-    description: OKR PlanStep DAG + 级联修正引擎（I-06）
-    auto_start: true
-  memory-tagger:
-    url: http://127.0.0.1:8100
-    description: Memory 标签中间层 + λ 过滤（I-12）
-    auto_start: true
-  checkpoint-review:
-    url: http://127.0.0.1:8300
-    description: Checkpoint 快照审查状态机（I-11）
-    auto_start: true
