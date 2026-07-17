@@ -4,9 +4,10 @@ I-18 时效信息注入（Latest Reminder）。
 在 pre_llm_call hook 中注入当前日期和时效信息到 LLM 上下文。
 
 Spike 验证结论：
-- DeepSeek API 接受 role="latest_reminder"（200 OK，模型正确利用时效信息）
-- 但 Hermes pre_llm_call hook 无法修改 conversation_history（turn_context.py:474 传副本）
-- 降级方案：通过 context 文本注入时间信息，功能等价
+- DeepSeek API 拒绝 role="latest_reminder"（400 InvalidParameter）
+- latest_reminder 是 V4 编码器内部机制，OpenAI 兼容 API 不可用
+- Hermes pre_llm_call hook 也无法修改 conversation_history（传副本）
+- 降级方案：通过 context 文本注入时间信息（功能不等价，仅作时间感知）
 
 注入方式：
 - 首轮：注入完整时效信息（当前日期、时间）到 context
