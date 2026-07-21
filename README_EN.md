@@ -209,4 +209,6 @@ MIT (c) 2026 yuanchenglu
 
 ---
 
-*oh-my-deepseek-harness is an open source community project with no direct affiliation to DeepSeek or Hermes Agent.*
+> ⭐ If this project saved you time, give it a star so more people find the right way to use DeepSeek with Agents.
+>
+> *oh-my-deepseek-harness is an open source community project with no direct affiliation to DeepSeek or Hermes Agent.*
