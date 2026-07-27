@@ -104,3 +104,60 @@ G5 通过后发布，P0/P1 必须为 0，并完成最终 RC 14 天观察。
 ## 8. 产品成功定义
 
 陌生用户能从不可变制品安装、完成任务、诊断、升级和安全卸载；陌生贡献者能运行测试并提交可追踪变更；维护者用证据 Gate 而非宣传文案判断发布或回滚。
+
+## 9. 详细 Persona 与边界
+
+### Persona A：个人开发者
+
+使用 Hermes + DeepSeek 完成代码、研究或自动化任务；希望安装简单、成本低、行为可诊断，不需要理解多个本地服务的实现细节。
+
+### Persona B：Agent 高强度用户
+
+运行长会话和复杂任务，关注 Context 漂移、计划变化、Memory 污染和外发数据边界，愿意使用 Doctor、Audit 和高级配置。
+
+### Persona C：Harness 研究者/贡献者
+
+关注 Context Engineering、Memory、Plan、Tool Use 和可复现实验；需要稳定模块边界、测试夹具和证据追踪。
+
+### 产品内
+
+Hermes Adapter、Session Policy、Intent/Reasoning Guidance、Context Integrity、Plan/Memory/Checkpoint、本地 Server、安装/诊断/迁移/卸载、日志和 Release Evidence。
+
+### 产品外
+
+Hermes 核心修改、模型训练、独立 UI、云账号与同步、企业权限、多 Agent 编排、未经确认的 Skill、远程 Server 安全承诺和非 Hermes 平台适配。
+
+## 10. 产品原则
+
+1. Integrity before compression。
+2. Explicit over magical。
+3. Session-scoped by default。
+4. Single source of contract。
+5. Local-first, transparent outbound。
+6. Evidence-based claims。
+7. Fewer features, complete loops。
+8. Gate before date。
+
+## 11. 成功指标
+
+北极星指标是“有效 Harness 会话率”：用户从发布制品安装后，在无数据完整性错误、无未披露外发和可诊断故障的情况下完成任务的会话占比。
+
+| 指标 | Beta 目标 |
+|---|---:|
+| Clean install | 支持矩阵 100% |
+| Server readiness | 100% |
+| Tool Contract | 10/10 |
+| Context Integrity | 100% |
+| Session 隔离 | 100% |
+| Memory 重复导入 | 0% |
+| 未解释外发 | 0 |
+| P0 | 0 |
+
+## 12. 产品决策记录
+
+- ADR-P-001：停止扩展 Innovation，先完成开源闭环。
+- ADR-P-002：版本使用 3.0.0 Beta，不回退到 0.x。
+- ADR-P-003：Skill 自动创建不进入 Beta。
+- ADR-P-004：Server 保持本地单进程。
+- ADR-P-005：Cron 仅作 Experimental 示例，不由安装器修改。
+- ADR-P-006：当前 9 Tool、目标 10 Tool；新增 Tool 不得在 M0 偷跑。
