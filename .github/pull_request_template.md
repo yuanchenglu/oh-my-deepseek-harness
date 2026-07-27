@@ -1,3 +1,5 @@
+> **Security:** Do not disclose vulnerabilities, exploit details, secrets, private data, real user files, or unredacted logs in a public PR. Follow [`SECURITY.md`](../SECURITY.md) and use GitHub Private Vulnerability Reporting.
+
 ## Work ID / Issue
 
 - Work ID: `<!-- e.g. CTX-001 -->`
@@ -60,6 +62,7 @@ Test counts:
 - [ ] No new undisclosed external data transfer was introduced.
 - [ ] Logs and errors do not expose Prompt, Tool Result, Secret or sensitive absolute paths.
 - [ ] Destructive operations have dry-run/confirmation and path-boundary tests, or are not applicable.
+- [ ] No private advisory contents, exploit details, credentials or sensitive reporter information appear in this PR.
 
 Details / N/A reason:
 
@@ -83,6 +86,7 @@ Details / N/A reason:
 - [ ] Evidence document updated.
 - [ ] User-facing documentation matches actual behavior.
 - [ ] Known Limitations updated when applicable.
+- [ ] For release-surface changes, [`docs/release/RELEASE_CHECKLIST.md`](../docs/release/RELEASE_CHECKLIST.md) was reviewed and updated or marked not applicable.
 
 Evidence path / links:
 
@@ -98,3 +102,4 @@ Evidence path / links:
 - [ ] Required CI is green.
 - [ ] PR targets `develop` unless this is an authorized G3-passed Release PR to `master`.
 - [ ] No Tag, GitHub Release or package was published without an authorized Release Work ID.
+- [ ] Security-sensitive remediation remains coordinated through the private advisory until disclosure is approved.
