@@ -29,19 +29,32 @@ Built on the Hermes Agent Plugin system, this project translates DeepSeek's phys
 - ✅ **Timeliness Injection** (I-18 Degraded Fallback): Automatically injects current date and time on the first conversation turn. Note: API rejects `role=latest_reminder` (400 InvalidParameter); degraded to context text injection
 - ✅ **Subtask Watch**: Tracks subagent_start/subagent_stop events, records each subtask's start, end, and result
 - ✅ **Context Compression Engine** (I-03/I-04/I-07/I-13 Independent Context Engine Plugin): Uses DeepSeek API for independent context compression, does not depend on Hermes auxiliary_client
-- ✅ **Harness Server Merged Service** (I-06/I-11/I-12 Three-in-One): Single FastAPI service + single SQLite, registers 9 tools exposed to LLM via `ctx.register_tool()`:
+- ✅ **Harness Server Merged Service** (I-06/I-11/I-12 Three-in-One): Single FastAPI service + single SQLite. The current runtime registers 9 working tools; the Open-source Beta target contract is 10 tools.
   - plan_create/plan_update_step/plan_cascade/plan_status (I-06 Cascading Planning)
   - memory_tag/memory_query/memory_filter (I-12 Memory Tagging + Lambda Filtering)
   - checkpoint_create/checkpoint_review (I-11 Checkpoint Review)
+  - `memory_store` is target-only until `CON-001 + MEM-001` implement its schema, domain logic, and persistence
+
+### Tool Contract: 9 Current, 10 Target
+
+The sole machine-readable target-name source is `plugins/deepseek-harness/tools.py::TARGET_PUBLIC_TOOL_NAMES`.
+
+| Domain | Beta target tools | Current runtime |
+|---|---|---|
+| Plan | `plan_create`, `plan_update_step`, `plan_cascade`, `plan_status` | 4/4 registered |
+| Memory | `memory_tag`, `memory_store`, `memory_query`, `memory_filter` | 3/4 registered; `memory_store` pending |
+| Checkpoint | `checkpoint_create`, `checkpoint_review` | 2/2 registered |
+
+M0 does not register a placeholder `memory_store` handler or schema.
 
 ## Architecture (3 Layers)
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
 │  Layer 1: Hermes Plugin (plugins/deepseek-harness/)         │
-│  10 Python files · 8 Hook points · 9 registered tools · v2.2│
+│  10 Python files · 8 Hook points · 9 current / 10 target    │
 │  pre_llm_call(5) + post_tool_call + on_session_end          │
-│  + subagent_start + subagent_stop + 9 tools                 │
+│  + subagent_start + subagent_stop                            │
 ├──────────────────────────────────────────────────────────────┤
 │  Layer 2: Context Engine Plugin (plugins/deepseek-context/) │
 │  Independent LLM client · no Hermes auxiliary_client dep     │
@@ -51,13 +64,13 @@ Built on the Hermes Agent Plugin system, this project translates DeepSeek's phys
 │  Single FastAPI service · Single SQLite · Port 8200         │
 │  I-06 Cascading Planning + I-12 Memory Tagging              │
 │  + I-11 Checkpoint Review                                   │
-│  9 tools exposed to LLM via ctx.register_tool()              │
+│  9 working tools currently exposed through ctx.register_tool │
 └──────────────────────────────────────────────────────────────┘
 ```
 
 ### Layer 1: Hermes Plugin
 
-`plugins/deepseek-harness/` contains 10 files injected through 8 Hook points + 9 tools:
+`plugins/deepseek-harness/` contains 10 files injected through 8 Hook points. It currently registers 9 working tools while preserving a 10-tool Beta target contract:
 
 | File | Hook | Trigger | Function |
 |------|------|---------|----------|
@@ -69,7 +82,7 @@ Built on the Hermes Agent Plugin system, this project translates DeepSeek's phys
 | assessor.py | post_tool_call | After every tool call | Content integrity check |
 | learner.py | on_session_end | At session end | Skill proposal appended to feedback log |
 | subagent_watch.py | subagent_start/stop | On subtask start/stop | Records subtask status and result |
-| tools.py | register_tool(×9) | Plugin registration | 9 tools exposed to LLM (I-06/I-11/I-12) |
+| tools.py | register_tool(×9) | Plugin registration | Authoritative 10-tool target names; registers the derived 9-tool runtime set |
 
 ### Layer 2: Context Engine Plugin
 
@@ -77,11 +90,13 @@ Built on the Hermes Agent Plugin system, this project translates DeepSeek's phys
 
 ### Layer 3: Harness Server
 
-`mcp/harness_server/` is a single FastAPI service that merges the original plan-engine, memory-tagger, and checkpoint-review into one. It exposes 9 tools to the LLM through `ctx.register_tool()`:
+`mcp/harness_server/` is a single FastAPI service that merges the original plan-engine, memory-tagger, and checkpoint-review into one. It currently exposes 9 working tools to the LLM through `ctx.register_tool()`:
 
 - **plan** endpoints (I-06): plan_create / plan_update_step / plan_cascade / plan_status
 - **memory** endpoints (I-12): memory_tag / memory_query / memory_filter
 - **checkpoint** endpoints (I-11): checkpoint_create / checkpoint_review
+
+The Beta target adds `memory_store`, but it is not registered until `CON-001 + MEM-001` complete.
 
 Single SQLite persistence (`~/.hermes/mcp/harness.db`), auto-launched during plugin registration.
 
@@ -108,8 +123,8 @@ The install script automatically handles: backup SOUL.md/MEMORY.md/USER.md, crea
 ```
 oh-my-deepseek-harness/
 ├── plugins/
-│   ├── deepseek-harness/          # Main plugin (10 files, 8 hooks, 9 tools, v2.2)
-│   │   ├── plugin.yaml            # Plugin declaration + I-01~I-18 pattern mapping
+│   ├── deepseek-harness/          # Main plugin (10 files, 8 hooks, 9 current tools, 10 target tools)
+│   │   ├── plugin.yaml            # Plugin declaration + current runtime Tool list
 │   │   ├── __init__.py            # Registration entry (8 handlers + 9 tools)
 │   │   ├── gate.py                # Cognitive gate (I-02 + I-08)
 │   │   ├── intent_router.py       # Intent router (I-10)
@@ -119,7 +134,7 @@ oh-my-deepseek-harness/
 │   │   ├── assessor.py            # Tool quality assessment
 │   │   ├── learner.py             # Session learning (I-09)
 │   │   ├── subagent_watch.py      # Subtask watch
-│   │   ├── tools.py               # 9 tool registrations (I-06/I-11/I-12)
+│   │   ├── tools.py               # TARGET_PUBLIC_TOOL_NAMES + 9 runtime registrations
 │   │   └── strategies.yaml        # 7+1 intent strategy config
 │   └── deepseek-context/          # Context engine plugin (independent LLM client)
 │       ├── plugin.yaml
