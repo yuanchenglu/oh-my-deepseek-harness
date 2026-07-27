@@ -51,6 +51,14 @@ context_engine_required:
     - context_length
     - compression_count
 
+known_compatibility_gaps:
+  context_engine_missing_properties:
+    - name
+  owner_work_ids:
+    - PKG-001
+    - COMPAT-001
+  meaning: Candidate selected, but current source is not yet a complete Hermes v0.19.0 ContextEngine implementation.
+
 activation:
   general_plugin_requires_enablement: true
   context_engine_requires_explicit_selection: true
