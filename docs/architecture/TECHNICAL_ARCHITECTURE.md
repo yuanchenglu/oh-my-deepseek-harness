@@ -186,3 +186,92 @@ G3 生成 RC 制品；G3 通过后合入 master，再对精确 Commit 运行最�
 ## 9. 明确不做
 
 不修改 Hermes 核心；不做远程 Server、云账号、多租户、UI、容器编排、复杂 LLM DAG、自动 Skill 执行或新 Innovation。
+
+## 10. 核心内部类型
+
+### HookContext
+
+```python
+@dataclass(frozen=True)
+class HookContext:
+    session_id: str
+    turn_id: str | None
+    task_id: str | None
+    user_message: str
+    conversation_history: list[dict]
+    is_first_turn: bool
+    model: str | None
+```
+
+Adapter 必须完成缺失字段、类型和生命周期映射，领域服务不直接接收 Hermes 原始 kwargs。
+
+### SummaryProvider
+
+```python
+class SummaryProvider(Protocol):
+    def summarize(self, request: SummaryRequest) -> SummaryResult: ...
+```
+
+Provider 返回结构化结果，异常、空响应、超时、cooldown 和缺 Key 均由 Pipeline 统一转为 rollback。
+
+## 11. 配置解析与环境变量
+
+| 配置 | 环境变量 | 约束 |
+|---|---|---|
+| 配置文件 | `HARNESS_CONFIG_PATH` | 默认位于数据根 config 目录 |
+| 数据根 | `HARNESS_DATA_ROOT` | 默认 `~/.hermes/oh-my-deepseek-harness` |
+| SQLite | `HARNESS_DB_PATH` | 越出数据根时 purge 不删除 |
+| Host | `HARNESS_HOST` | 默认 `127.0.0.1` |
+| Port | `HARNESS_PORT` | 默认 `8200` |
+| Summary | `HARNESS_SUMMARY_ENABLED` | 只接受 true/false/1/0 |
+| Outbound | `HARNESS_SUMMARY_OUTBOUND_POLICY` | Beta 只接受 redact |
+| Tool args | `HARNESS_SUMMARY_ALLOW_TOOL_ARGUMENTS` | Beta 固定 false |
+| Startup import | `HARNESS_MEMORY_IMPORT_ON_STARTUP` | 默认 false |
+| Log content | `HARNESS_LOG_INCLUDE_CONTENT` | Beta 固定 false |
+| Provider Key | `DEEPSEEK_API_KEY` | 只从环境读取 |
+| Provider URL | `DEEPSEEK_BASE_URL` | 仍受 consent/redaction 约束 |
+
+旧 `HARNESS_SERVER_PORT` 和 `HARNESS_SERVER_URL` 不属于目标契约。
+
+## 12. 事务、并发和故障边界
+
+- SQLite 写操作使用显式事务；约束字段使用 allowlist。
+- Plan DAG 更新在提交前重新验证；失败恢复原图。
+- Memory Import 以文件/批次为事务边界，取消或损坏输入不产生半批次。
+- Checkpoint 编号通过数据库约束或原子分配，不能使用“查询最大值后 +1”的无锁路径。
+- Supervisor 使用 PID、端口和 `/version` 三重确认，不能只相信 PID 文件。
+- Session Store 支持并发访问，测试用 barrier 强制触发竞争路径。
+
+## 13. 安全威胁模型
+
+| 威胁 | 边界与控制 |
+|---|---|
+| 非授权远程访问 | 默认 loopback，Beta 拒绝非 loopback |
+| Secret 外发 | consent、最小化、redaction、Fake 捕获测试 |
+| Prompt Injection | Summary 标记为参考材料，权限与 confirm 在结构层控制 |
+| 路径穿越/symlink | realpath 规范化，越出数据根拒绝或保留 |
+| 日志泄露 | 默认不含内容，错误不回显 traceback/绝对路径 |
+| 依赖供应链 | lock 范围、pip-audit、许可证、SBOM、OIDC/最小发布权限 |
+| 旧程序写新 Schema | 启动前版本检查并拒绝 |
+
+## 14. Migration Architecture
+
+Migration 由 CLI 编排为可恢复阶段：detect → backup → stop old runtime → migrate config → migrate DB → migrate events → deploy → doctor → commit；任一阶段失败进入 rollback。每个阶段记录可机器读取的状态，但不得包含 Secret 或 Prompt 原文。
+
+旧版本 fixture 固定来自 `develop@37e4016`。降级没有显式路径时必须拒绝，不能尝试“最佳努力”改写新 Schema。
+
+## 15. Release Artifact Flow
+
+```text
+frozen develop commit / disposable RC tag
+  → build wheel + sdist
+  → install outside repository
+  → test-release
+  → SHA256 + SBOM + provenance + notes
+  → G3 PASS
+  → PR to master
+  → rebuild and re-run final artifact test on exact master commit
+  → BETA-001 immutable tag + GitHub Release
+```
+
+临时 RC Tag 可删除但不得作为公开安装入口；正式 Tag 不得移动、覆盖或替换同名制品。
