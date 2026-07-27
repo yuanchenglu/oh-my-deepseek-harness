@@ -1,12 +1,12 @@
 # PRD：oh-my-deepseek-harness
 
 - 产品名称：oh-my-deepseek-harness
-- 文档版本：2.0
+- 文档版本：2.1
 - 文档状态：Open-source Beta Execution Baseline
 - 目标发布：Git/GitHub `v3.0.0-beta.1`；Python `3.0.0b1`；Stable `v3.0.0`
 - 适用分支：`develop`
 - Owner：Repository Maintainer
-- 最后更新：2026-07-27
+- 最后更新：2026-07-28
 
 > 当前代码仍是 Experimental Preview；G0 尚未通过。本文件定义目标契约，不表示功能已经实现。
 
@@ -27,6 +27,8 @@
 ### 2.2 Tool Contract
 
 当前运行时注册 9 个公共 Tool；Beta 目标固定为 10 个。`memory_store` 只由 `CON-001 + MEM-001` 实现，M0 不得提前注册不可工作的 Tool。
+
+机器可执行的目标名称唯一来源是 `plugins/deepseek-harness/tools.py::TARGET_PUBLIC_TOOL_NAMES`。当前 9 Tool Runtime 必须由该目标清单减去显式 pending 集合派生；Manifest、测试和文档不得维护第二份可驱动注册的目标清单。
 
 | 领域 | 目标 Tool |
 |---|---|
@@ -464,7 +466,7 @@ Python 3.10、3.11、3.12 全部通过。
 
 #### FR-QA-003 Contract Tests
 
-10 个目标 Tool 的 Schema 从 Pydantic Model 生成并自动比对。
+10 个目标 Tool 名称来自 `TARGET_PUBLIC_TOOL_NAMES`；后续 Schema 从 Pydantic Model 生成并自动比对。`memory_store` 在 `CON-001 + MEM-001` 完成前只属于目标分母，不得出现在 Runtime 注册集合。
 
 #### FR-QA-004 Process E2E
 
