@@ -543,3 +543,194 @@ logging: {include_content: false}
 ## 11. Definition of Done
 
 一个 Requirement 只有在实现、正常/边界/故障测试、HOME 隔离、文档配置、Required CI、Requirement→Test→PR 追踪、隐私披露和对外文案一致全部满足后才完成。
+
+## 12. 详细配置契约
+
+### 12.1 配置文件
+
+```yaml
+config_version: 1
+features:
+  cognitive_gate: true
+  constraint_guard: true
+  intent_router: true
+  reasoning_guidance: true
+  latest_reminder: true
+  context_engine: true
+  harness_tools: true
+server:
+  host: 127.0.0.1
+  port: 8200
+  startup_timeout_seconds: 10
+context:
+  threshold_percent: 0.75
+  fail_mode: preserve_original
+  protect_first_n: 3
+  protect_last_n: 20
+summary:
+  enabled: false
+  provider: deepseek
+  base_url: https://api.deepseek.com
+  outbound_policy: redact
+  allow_tool_arguments: false
+memory:
+  import_on_startup: false
+  default_lambda: 0.5
+logging:
+  level: INFO
+  include_content: false
+```
+
+环境变量只允许使用发布计划 §2.8 的稳定名称。未知字段给出 warning；非法类型、危险远程监听、非法布尔值或不支持的 outbound policy 必须拒绝启动。
+
+### 12.2 Runtime 目录
+
+```text
+~/.hermes/oh-my-deepseek-harness/
+├── config/config.yaml
+├── data/harness.db
+├── logs/harness-server.log
+├── events/constraint-events.jsonl
+├── runtime/server.json
+└── backups/
+```
+
+目录权限为 `0700`；配置、DB、事件、日志和 runtime 文件为 `0600`。运行数据不得写回 Git 仓库。
+
+## 13. 核心状态机
+
+### 13.1 Server
+
+```text
+STOPPED → STARTING → READY
+               ├→ FAILED
+READY → STOPPING → STOPPED
+```
+
+### 13.2 Compression
+
+```text
+IDLE → PLANNED → SUMMARIZING → VALIDATING → COMMITTED
+                     ├───────────────→ ROLLED_BACK
+                     └→ FAILED → ROLLED_BACK
+```
+
+### 13.3 Plan Step
+
+```text
+pending → in_progress → completed
+   │          ├→ blocked
+   │          └→ pending_review
+   └→ cancelled
+blocked → in_progress | cancelled
+pending_review → pending | in_progress | cancelled
+```
+
+任何状态变化必须通过领域服务和事务，不允许 Adapter 或 Tool Handler 直接写库绕过校验。
+
+## 14. 非功能需求
+
+### NFR-001 性能
+
+- Hook 纯本地处理 P95 < 20ms；
+- `/health` P95 < 100ms；
+- 非摘要 Tool API P95 < 500ms；
+- Summary 超时默认不超过 30s；
+- 10,000 条 Memory 下常规查询 P95 < 200ms。
+
+这些目标是 Beta 工程预算，不是对所有设备的硬 SLA；测试报告必须记录环境和分位数。
+
+### NFR-002 可靠性
+
+辅助组件失败不影响 Hermes 主会话；Context 数据损坏为 0；安装可重复；DB 更新具备事务一致性；rollback 不完整按 P0 处理。
+
+### NFR-003 可移植性
+
+不得硬编码仓库路径、用户名和绝对安装目录；支持矩阵外环境必须给出明确拒绝或 Experimental 标识。
+
+### NFR-004 可维护性
+
+业务函数有类型注解；Tool Contract 自动生成；领域逻辑与 FastAPI/Hermes Adapter 分离；超过 500 行的单文件必须说明拆分理由。
+
+### NFR-005 可观测性
+
+所有降级行为都有结构化事件、错误码、request ID 和恢复建议；默认日志不记录用户内容。
+
+### NFR-006 安全性
+
+默认 loopback；Secret 不进入日志；外发 opt-in；文件最小权限；破坏性命令必须 dry-run/confirm；Prompt 不提升系统权限。
+
+### NFR-007 可测试性
+
+所有外部依赖可注入；禁止 import 时产生用户数据副作用；普通 CI 不访问网络或真实 Secret。
+
+### NFR-008 向后兼容
+
+Config、DB、JSONL 和 runtime state 变更必须有 Schema 版本、migration、拒绝降级和失败回滚。
+
+## 15. 迁移需求
+
+从审查基线 `develop@37e4016` 升级到首个 Beta 时：
+
+1. 识别当前 distribution、Config 和 DB Schema；
+2. 备份旧配置、DB、事件文件和 runtime state；
+3. 对重复 Memory 生成 dry-run 去重报告；
+4. 将可解析约束 Markdown 迁移为 JSONL，无法解析条目保留原文件并报告；
+5. 停止旧 Server，避免双进程；
+6. 部署新 Hermes 薄入口并执行数据迁移；
+7. 运行 Doctor；
+8. 任一步失败恢复旧配置、DB 和可运行旧版本；
+9. 旧程序读取新 Schema 或请求无迁移路径的降级时，在修改数据前拒绝。
+
+## 16. 量化指标
+
+### 16.1 发布前指标
+
+- 支持 Python Matrix：100%；
+- 10 个 Tool Contract：100%；
+- Context Integrity：100%；
+- Session 并发隔离：100%；
+- Memory 重复导入率：0%；
+- 未解释外部数据发送：0；
+- P0：0；Stable 时 P1：0。
+
+### 16.2 Public Beta 暴露量
+
+- 至少 10 名非维护者；
+- 至少 20 次独立安装，观察成功率 ≥ 90%，报告 95% Wilson 区间；
+- 至少 10 人文档自助安装，成功率 ≥ 80%；
+- 至少 50 次长会话，数据损坏与跨 Session 污染为 0；
+- 至少 200 次合法 Tool 调用，总成功率 ≥ 95%，每个 Tool ≥ 10 次且成功率 ≥ 90%；
+- 至少 50 次 Context 压缩尝试，每次完整性通过或完整 rollback。
+
+默认不上传遥测，只使用用户主动提交、可预览、再次脱敏的结构化诊断包。
+
+## 17. 需求域追踪
+
+| 需求域 | 数量 | 主责 Work ID | 测试范围 |
+|---|---:|---|---|
+| FR-INSTALL | 6 | INS-001–003、QA-ART-001、MIG-001 | TC-INSTALL-001–010、TC-MIG-001–006 |
+| FR-PLUGIN | 5 | PKG-001、INS-001、INS-003、COMPAT-001 | Plugin Lifecycle E2E |
+| FR-POLICY | 8 | SES-001、AUD-001、OPS-001 | TC-POLICY-001–008、TC-AUDIT-CLI-001 |
+| FR-INTENT | 7 | INTENT-001、DOC-001 | TC-INTENT-001–008 |
+| FR-CONTEXT | 13 | CTX-001–004、PRIV-001 | TC-CTX-001–014 |
+| FR-SERVER | 7 | PKG-001、RUN-001、RUN-002、CON-001、SEC-002 | TC-SERVER-001–005 |
+| FR-PLAN | 8 | CON-001、PLAN-001–003 | TC-PLAN-001–013 |
+| FR-MEMORY | 7 | CON-001、MEM-001、MEM-002 | TC-MEM-001–013 |
+| FR-CHECKPOINT | 6 | CON-001、CP-001 | TC-CP-001–006 |
+| FR-OBS | 5 | RUN-002、AUD-001、PRIV-001、DOC-002 | Logging/Status/Redaction |
+| FR-SEC | 7 | PRIV-001、SEC-001、SEC-002、INS-001、INS-003 | TC-SEC-001–006 |
+| FR-QA | 9 | QA-ART-001、QA-001、QA-002、COMPAT-001、REL-006 | Fast/Integration/Release CI |
+| **合计** | **88** | — | 100 个 Test ID + E2E/审查证据 |
+
+## 18. 产品决策与未决外部事实
+
+- ADR-P-001：`v3.0.0-beta.1` 保持与现有 2.x 的升级语义，不回退到 0.x。
+- ADR-P-002：Beta 不自动修改 crontab/systemd/launchd，正式入口为手工 `audit`。
+- ADR-P-003：Skill 自动创建不进入 Beta。
+- ADR-P-004：Harness Server 保持本地单机单进程。
+- ADR-P-005：当前 9 Tool 与目标 10 Tool 明确区分，M0 不提前注册 `memory_store`。
+- OQ-01：PyPI 名称与 Trusted Publisher 权限由 `REL-005` 验证。
+- OQ-02：目标 Hermes 正式版本由 `COMPAT-000` 选择。
+
+除上述外部事实外，版本、CLI、Tool 分母、路径、安全默认值和发布顺序在本周期内均视为固定契约。
