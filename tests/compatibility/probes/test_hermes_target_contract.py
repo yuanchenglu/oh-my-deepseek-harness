@@ -23,12 +23,24 @@ def _fixture() -> dict:
     return yaml.safe_load(FIXTURE.read_text(encoding="utf-8"))
 
 
+def _literal_value(node: ast.AST):
+    if (
+        isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id == "frozenset"
+        and len(node.args) == 1
+        and not node.keywords
+    ):
+        return frozenset(ast.literal_eval(node.args[0]))
+    return ast.literal_eval(node)
+
+
 def _literal_assignment(module: ast.Module, name: str):
     for node in module.body:
         if isinstance(node, (ast.Assign, ast.AnnAssign)):
             targets = node.targets if isinstance(node, ast.Assign) else [node.target]
             if any(isinstance(target, ast.Name) and target.id == name for target in targets):
-                return ast.literal_eval(node.value)
+                return _literal_value(node.value)
     raise AssertionError(f"missing literal assignment: {name}")
 
 
@@ -69,7 +81,7 @@ def test_target_and_runtime_tool_name_contract_remains_10_and_9() -> None:
     assert len([name for name in target if name not in pending]) == 9
 
 
-def test_context_engine_source_covers_selected_required_abc() -> None:
+def test_context_engine_source_matches_methods_and_records_property_gap() -> None:
     fixture = _fixture()
     module = ast.parse(CONTEXT_SOURCE.read_text(encoding="utf-8"))
     engine = next(
@@ -78,13 +90,30 @@ def test_context_engine_source_covers_selected_required_abc() -> None:
         if isinstance(node, ast.ClassDef) and node.name == "DeepSeekContextEngine"
     )
 
-    methods = {node.name for node in engine.body if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))}
+    methods = {
+        node.name
+        for node in engine.body
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+    }
     required_methods = set(fixture["context_engine_required"]["methods"])
     required_properties = set(fixture["context_engine_required"]["properties"])
-    assert required_methods <= methods
-    assert required_properties <= methods
+    recorded_missing = set(
+        fixture["known_compatibility_gaps"]["context_engine_missing_properties"]
+    )
 
-    init = next(node for node in engine.body if isinstance(node, ast.FunctionDef) and node.name == "__init__")
+    assert required_methods <= methods
+    assert recorded_missing == {"name"}
+    assert required_properties - methods == recorded_missing
+    assert fixture["known_compatibility_gaps"]["owner_work_ids"] == [
+        "PKG-001",
+        "COMPAT-001",
+    ]
+
+    init = next(
+        node
+        for node in engine.body
+        if isinstance(node, ast.FunctionDef) and node.name == "__init__"
+    )
     assigned_attributes = {
         node.attr
         for node in ast.walk(init)
