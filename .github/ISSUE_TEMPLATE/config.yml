@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Private security report / 私密安全报告
+    url: https://github.com/yuanchenglu/oh-my-deepseek-harness/security/advisories/new
+    about: Do not disclose vulnerabilities, secrets, private data, exploit steps, or unredacted logs in public Issues.
+  - name: Security policy / 安全政策
+    url: https://github.com/yuanchenglu/oh-my-deepseek-harness/blob/develop/SECURITY.md
+    about: Read the supported scope, response targets, and coordinated-disclosure rules before reporting.
