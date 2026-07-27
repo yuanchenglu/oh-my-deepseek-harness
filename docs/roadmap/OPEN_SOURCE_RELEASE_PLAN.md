@@ -1,10 +1,10 @@
 # 开源发布执行计划（Open-source Release Execution Plan）
 
-> 文档版本：2.3.1（Execution Status Correction）
+> 文档版本：2.3.2（Issue Ledger Synchronization）
 >
 > 审查基线：`develop@37e4016`
 >
-> 当前实施基线：`develop@61642f69`
+> 当前实施基线：`develop@a0083ce1`
 >
 > 计划状态：`IN_IMPLEMENTATION`
 >
@@ -22,7 +22,7 @@
 
 执行优先级固定为：
 
-1. 本文件 v2.3.1 的明确规则；
+1. 本文件 v2.3.2 的明确规则；
 2. `docs/product/PRD.md`、两份 Architecture 和 `docs/testing/TEST_PLAN.md` 的已同步契约；
 3. v2.2 归档中的未修改任务细节；
 4. 历史测试报告，仅作为不可变历史证据，不作为当前目标契约。
@@ -39,18 +39,20 @@
 | 2026-07-27 | 2.2 | 固定 48 个 Work ID、100 个 Test ID、Migration、Ruleset、provenance 与安全验收 | 三层闭环校验 |
 | 2026-07-28 | 2.3 | 合并 RC/正式 Tag、REL-004、XFAIL ID、BETA-003 修正；记录 REL-000/001 完成和 REL-002 治理状态；将 v2.2 全文无损归档 | Plan audit + execution evidence |
 | 2026-07-28 | 2.3.1 | 记录 REL-002 完成；恢复归档规定的 `REL-002 → REL-004 → GOV-001 → REL-003` 强制顺序；标识 Tool 目标常量 | REL-004 dependency verification |
+| 2026-07-28 | 2.3.2 | 记录 REL-004/GOV-001 完成和 48 个 canonical Issue；同步 88 FR、17 CR、100 Test ID 追踪；修正 `M2 → G2 → M3 → M4 → G3` 摘要顺序 | REL-003 Issue/traceability verification |
 
 ## 1. 当前结论与实施状态
 
 ### 1.1 发布判断
 
-当前产品仍是 **Experimental Preview**，不满足 Public Beta Gate，更不满足 Stable Gate。版本元数据统一、文档契约统一或仓库治理完成，不等于 Runtime、Context、Tool、Migration、安全和 Release 制品已经完成。
+当前产品仍是 **Experimental Preview**，不满足 Public Beta Gate，更不满足 Stable Gate。版本元数据统一、文档契约统一、Issue 建账或仓库治理完成，不等于 Runtime、Context、Tool、Migration、安全和 Release 制品已经完成。
 
 ### 1.2 Plan Ready Gate
 
 Plan Ready 维持 `PASS`。本计划具备：
 
 - 48 个固定 Work ID；
+- 48 个唯一 canonical GitHub Issue；
 - 88 个 `FR-*` 需求；
 - 100 个 Test ID；
 - 5 个 P0、7 个 P1、5 个 P2 追踪基线；
@@ -59,18 +61,18 @@ Plan Ready 维持 `PASS`。本计划具备：
 
 ### 1.3 当前 M0 状态
 
-| Work ID | 状态 | 合并证据 | 说明 |
+| Work ID | 状态 | 合并/Issue 证据 | 说明 |
 |---|---|---|---|
-| `REL-000` | Complete | PR #4 / `e18db7e` | 规格契约、88 FR、100 Test ID 同步 |
-| `REL-001` | Complete | PR #6 / `a97dfe4` | Python/Plugin/Git 版本语义统一 |
-| `REL-002` | Complete | PR #8 + #9 / `e7e1414e` + `61642f69` | `develop` 默认分支、保护规则、贡献治理和 v2.3 主计划合并完成 |
-| `REL-004` | In progress | Issue #10 | 冻结唯一 10 Tool 目标源，Runtime 仍注册 9 个 Tool |
-| `GOV-001` | Blocked by REL-004 | — | 增加 Security、Issue/PR 和 Release 治理文件 |
-| `REL-003` | Blocked by GOV-001 | — | 48 个执行 Issue 与完整追踪矩阵 |
-| `REL-005` | Eligible, not started | — | 可与主串行并行验证 PyPI 名称和权限 |
-| `COMPAT-000` | Eligible, not started | — | 可与主串行并行选择 Hermes 验证候选版本 |
+| `REL-000` | Complete | PR #4 / `e18db7e` / Issue #3 | 规格契约、88 FR、100 Test ID 同步 |
+| `REL-001` | Complete | PR #6 / `a97dfe4` / Issue #5 | Python/Plugin/Git 版本语义统一 |
+| `REL-002` | Complete | PR #8 + #9 / `e7e1414e` + `61642f69` / Issue #7 | `develop` 默认分支、保护规则、贡献治理和 v2.3 主计划合并完成 |
+| `REL-004` | Complete | PR #11 / `7d52de9f` / Issue #10 | 唯一 10 Tool 目标源；Runtime 仍注册 9 个 Tool |
+| `GOV-001` | Complete | PR #14 / `a0083ce1` / Issue #12 | Security、Issue/PR Forms 和 Release Checklist |
+| `REL-003` | In review | Issue #15；48 canonical Issues 已创建 | 完整 Work/FR/CR/XF/Test 追踪矩阵待 PR/CI/合并 |
+| `REL-005` | Open, eligible | Issue #16 | 验证 PyPI 名称、2FA、Trusted Publisher 与权限；不记录凭证 |
+| `COMPAT-000` | Open, eligible | Issue #17 | 选择一个真实 Hermes 验证目标和 E2E 计划 |
 
-M0 主串行固定为 `REL-000 → REL-001 → REL-002 → REL-004 → GOV-001 → REL-003`。`REL-005` 与 `COMPAT-000` 在 `REL-000` 后可并行，但 G0 只有在 `REL-003 + REL-005 + COMPAT-000` 全部完成后才可判定。
+M0 主串行固定为 `REL-000 → REL-001 → REL-002 → REL-004 → GOV-001 → REL-003`。`REL-005` 与 `COMPAT-000` 在 `REL-000` 后可并行。G0 只有在 `REL-003 + REL-005 + COMPAT-000` 全部完成并生成 Gate Evidence 后才可判定；Issue 创建本身不使 G0 通过。
 
 ## 2. 固定发布契约
 
@@ -232,8 +234,8 @@ BETA-002 + BETA-003 + REL-007 → G4
 ```text
 M0 完成 → G0
 M1 完成 → G1
-M2/M3 完成 → G2
-M4 完成 → G3 RC 验证
+M2 完成 → G2
+M3 + M4 完成 → G3 RC 验证
 G3 PASS → develop → master Release PR
 精确 master Commit 最终制品重建 + test-release
 PASS → BETA-001 不可变 Tag/Release
@@ -266,8 +268,8 @@ G3 从冻结 Commit SHA 或可删除 RC Tag 构建 RC 制品。G3 通过并合�
 
 ## 11. 当前下一步
 
-1. 完成 `REL-004` 的测试、PR、CI、Evidence 和合并；
-2. `REL-004` 完成后执行 `GOV-001`；
-3. `GOV-001` 完成后执行 `REL-003`，创建 48 个真实 Issue 并补齐完整追踪矩阵；
-4. `REL-005` 与 `COMPAT-000` 可在不与主串行文件冲突时并行实施；
-5. `REL-003 + REL-005 + COMPAT-000` 全部完成并生成 G0 Evidence 前，不进入 M1。
+1. 完成 `REL-003` 的 PR、Required CI、Evidence 和合并；
+2. 执行 `REL-005` #16，验证 PyPI 名称、2FA、Trusted Publisher 和维护者权限，不记录凭证；
+3. 执行 `COMPAT-000` #17，选择唯一真实 Hermes 候选并冻结 E2E 计划；
+4. `REL-003 + REL-005 + COMPAT-000` 全部完成后生成 `GATE-G0.md` 并独立判定 G0；
+5. G0 Evidence 为 PASS 前，不启动 `PKG-001` #18 或任何 M1 实施。
