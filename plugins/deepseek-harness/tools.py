@@ -1,9 +1,10 @@
 """工具注册模块 — 把 harness_server 的功能注册为 Hermes 工具。
 
-通过 ctx.register_tool() 把合并服务的 9 个端点暴露为 LLM 可调用的工具，
-让模型能主动使用规划引擎（I-06）、记忆标签（I-12）和快照审查（I-11）。
+当前 Runtime 通过 ``ctx.register_tool()`` 注册 9 个可工作的公共 Tool。
+Open-source Beta 的目标分母固定为 10 个；尚未实现的 ``memory_store`` 只存在于
+``TARGET_PUBLIC_TOOL_NAMES``，在 CON-001 + MEM-001 完成前不得注册占位 Handler/Schema。
 
-工具列表：
+当前 Runtime 工具：
   plan_create        — 从任务描述创建 OKR PlanStep 列表（I-06）
   plan_update_step   — 更新步骤状态/内容 + 自动级联修正（I-06）
   plan_cascade       — 级联修正引擎（I-06）
@@ -14,6 +15,9 @@
   checkpoint_create  — 从 Plan 状态提取 Checkpoint 快照（I-11）
   checkpoint_review  — 对 Checkpoint 执行审查（I-11）
 
+Beta 目标新增：
+  memory_store       — 显式写入、分类和去重（由 CON-001 + MEM-001 实现）
+
 关联: docs/innovations/06-okr-planstep-cascade.md
       docs/innovations/11-checkpoint-review.md
       docs/innovations/12-memory-granularity.md
@@ -23,11 +27,34 @@ import logging
 import os
 import subprocess
 import time
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 import httpx
 
 logger = logging.getLogger(__name__)
+
+# REL-004: Beta 公共 Tool 名称的唯一机器可读目标源。
+# 不得从 manifest、README 或独立测试常量反向生成 Runtime 注册集合。
+TARGET_PUBLIC_TOOL_NAMES: tuple[str, ...] = (
+    "plan_create",
+    "plan_update_step",
+    "plan_cascade",
+    "plan_status",
+    "memory_tag",
+    "memory_store",
+    "memory_query",
+    "memory_filter",
+    "checkpoint_create",
+    "checkpoint_review",
+)
+
+# 待实现目标必须显式列出；禁止为其创建不可工作的占位 Handler 或 Schema。
+PENDING_PUBLIC_TOOL_NAMES: frozenset[str] = frozenset({"memory_store"})
+
+# 当前 Runtime 清单只允许由目标清单减去待实现清单派生。
+RUNTIME_PUBLIC_TOOL_NAMES: tuple[str, ...] = tuple(
+    name for name in TARGET_PUBLIC_TOOL_NAMES if name not in PENDING_PUBLIC_TOOL_NAMES
+)
 
 # 合并服务的地址（单端口 8200）
 _SERVER_URL = os.environ.get("HARNESS_SERVER_URL", "http://127.0.0.1:8200")
@@ -50,7 +77,7 @@ def _ensure_server_running() -> None:
         _server_process = subprocess.Popen(
             [
                 os.environ.get("PYTHON", "python3"),
-                _server_script,
+                _SERVER_SCRIPT,
             ],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
@@ -263,21 +290,36 @@ _TOOL_DESCRIPTIONS = {
 }
 
 
-def register_all_tools(ctx) -> None:
-    """注册全部 9 个工具到 Hermes。
+def _validate_runtime_registry() -> None:
+    """保证当前 Handler/Schema/Description 与派生 Runtime 清单完全一致。"""
+    expected = set(RUNTIME_PUBLIC_TOOL_NAMES)
+    registries = {
+        "handlers": set(_TOOL_HANDLERS),
+        "schemas": set(_TOOL_SCHEMAS),
+        "descriptions": set(_TOOL_DESCRIPTIONS),
+    }
+    mismatches = {name: sorted(values ^ expected) for name, values in registries.items() if values != expected}
+    if mismatches:
+        raise RuntimeError(f"Tool registry contract mismatch: {mismatches}")
 
-    在插件的 register(ctx) 函数中调用此函数即可。
+
+def register_all_tools(ctx) -> None:
+    """注册当前 9 个可工作 Tool 到 Hermes。
+
+    目标 10 Tool 契约由 ``TARGET_PUBLIC_TOOL_NAMES`` 固定；``memory_store`` 在
+    CON-001 + MEM-001 完成前属于 pending，不能注册占位实现。
 
     Args:
         ctx: Hermes PluginContext 对象。
     """
-    for name, handler in _TOOL_HANDLERS.items():
+    _validate_runtime_registry()
+    for name in RUNTIME_PUBLIC_TOOL_NAMES:
         try:
             ctx.register_tool(
                 name=name,
                 toolset="deepseek-harness",
                 schema=_TOOL_SCHEMAS[name],
-                handler=handler,
+                handler=_TOOL_HANDLERS[name],
                 description=_TOOL_DESCRIPTIONS[name],
             )
             logger.debug("[tools] 注册工具: %s", name)

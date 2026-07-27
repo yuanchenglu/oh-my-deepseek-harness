@@ -112,7 +112,7 @@ hermes plugins list | grep deepseek
 
 ## 完整能力一览
 
-核心插件层（Layer 1）贡献 9 个 Python 文件，通过 8 个 Hermes Hook 点 + 9 个注册工具运行：
+核心插件层（Layer 1）贡献 9 个 Python 文件，通过 8 个 Hermes Hook 点运行。**当前 Runtime 注册 9 个可工作 Tool；Open-source Beta 目标契约固定为 10 个。**
 
 | 文件名 | 触发时机 | 功能 |
 |--------|---------|------|
@@ -124,7 +124,19 @@ hermes plugins list | grep deepseek
 | `assessor.py` | 每次工具调用后 | 内容完整性检查 |
 | `learner.py` | Session 结束时 | Skill 提议 → 追加反馈记录 |
 | `subagent_watch.py` | 子任务启停时 | 记录子任务状态和结果 |
-| `tools.py` | 插件注册时 | 注册 9 个工具（级联规划 / 记忆标签 / 快照审查） |
+| `tools.py` | 插件注册时 | 目标 10 Tool 名称权威源；当前只注册 9 个可工作 Tool |
+
+### Tool Contract：当前 9，目标 10
+
+目标名称的唯一机器可读来源是 `plugins/deepseek-harness/tools.py::TARGET_PUBLIC_TOOL_NAMES`。
+
+| 领域 | Beta 目标 Tool | 当前状态 |
+|---|---|---|
+| Plan | `plan_create`、`plan_update_step`、`plan_cascade`、`plan_status` | 4/4 已注册 |
+| Memory | `memory_tag`、`memory_store`、`memory_query`、`memory_filter` | 3/4 已注册；`memory_store` pending |
+| Checkpoint | `checkpoint_create`、`checkpoint_review` | 2/2 已注册 |
+
+`memory_store` 不会在 M0 注册占位实现；其 Schema/Contract 由 `CON-001` 完成，领域逻辑和持久化由 `MEM-001` 完成。
 
 **15 项能力，按你关心的方式拆解**（看不懂技术术语也没关系，看"你的收益"列就行了）：
 
@@ -180,7 +192,7 @@ hermes plugins list | grep deepseek
 ```
 ┌──────────────────────────────────────────────────────┐
 │  Layer 1: Hermes 插件层 (plugins/deepseek-harness/)  │
-│  9 个文件 · 8 个 Hook · 9 个注册工具                  │
+│  9 个文件 · 8 个 Hook · 当前 9 Tool / 目标 10 Tool    │
 │  负责：认知门控 · 意图路由 · 质量评估 · 学习         │
 ├──────────────────────────────────────────────────────┤
 │  Layer 2: 上下文引擎 (plugins/deepseek-context/)     │
@@ -195,7 +207,7 @@ hermes plugins list | grep deepseek
 
 - **Layer 1** 是你日常打交道的部分。所有 Hook 都在这层，Hermes 每轮对话会自动加载。
 - **Layer 2** 是底层优化引擎，在你看不到的地方默默压缩上下文，对话多长都不卡。
-- **Layer 3** 是核心工具服务，通过 `ctx.register_tool()` 暴露 9 个工具给 LLM 调用。插件注册时自动拉起，不需要你手动启动。
+- **Layer 3** 是核心工具服务，当前通过 `ctx.register_tool()` 暴露 9 个可工作 Tool；Beta 目标第 10 个 `memory_store` 尚未注册。
 
 不会改 Hermes 核心代码，不会有 merge 冲突，不会影响你已有的 MemOS 或其他插件。
 

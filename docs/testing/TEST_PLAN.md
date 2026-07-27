@@ -1,6 +1,6 @@
 # 测试计划：oh-my-deepseek-harness
 
-- 文档版本：2.0
+- 文档版本：2.1
 - 适用分支：`develop`
 - 目标版本：`v3.0.0-beta.1` / Python `3.0.0b1`
 - 当前状态：100 个 Test ID 已登记；实现与 Release Gate 尚未通过
@@ -13,6 +13,7 @@
 4. strict XFAIL 修复后删除，不得 skip 或弱化断言。
 5. Release 证据必须来自 wheel/sdist 和冻结 Commit/RC Tag。
 6. 当前 9 Tool、目标 10 Tool；`memory_store` 不在 M0 实现。
+7. 10 Tool 目标名称的唯一机器可读来源是 `plugins/deepseek-harness/tools.py::TARGET_PUBLIC_TOOL_NAMES`；当前 Runtime 清单由目标清单减去显式 pending 集合派生。
 
 ## 2. 验证通道
 
@@ -99,6 +100,8 @@ DEEPSEEK_API_KEY=fake
 | `TC-CTX-013` | 多 Session 多次压缩 | Summary 状态不串线 | `CTX-004` |
 
 ### 4.5 Tool Contract
+
+目标名称由 `TARGET_PUBLIC_TOOL_NAMES` 固定为 10 个；`RUNTIME_PUBLIC_TOOL_NAMES` 必须等于目标集合减去 `PENDING_PUBLIC_TOOL_NAMES={memory_store}`。M0 只验证名称、分母和迁移状态，不要求 `memory_store` Handler/Schema 存在。
 
 | ID | 场景 | 固定期望 | 主责 Work ID |
 |---|---|---|---|
@@ -222,6 +225,7 @@ DEEPSEEK_API_KEY=fake
 ### G0
 - 100 个 Test ID 唯一且各有唯一主责。
 - 版本、Tool、CLI、路径、支持范围和安全默认值在规格文档中一致。
+- `TARGET_PUBLIC_TOOL_NAMES` 精确包含 10 个唯一名称；当前注册集合精确为目标集合减去 `memory_store`。
 
 ### Public Beta
 - Release Test Failed = 0、XPASS = 0、XFAIL = 0。

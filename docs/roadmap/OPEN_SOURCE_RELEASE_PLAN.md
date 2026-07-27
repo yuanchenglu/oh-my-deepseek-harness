@@ -1,10 +1,10 @@
 # 开源发布执行计划（Open-source Release Execution Plan）
 
-> 文档版本：2.3（Consolidated Execution Authority）
+> 文档版本：2.3.1（Execution Status Correction）
 >
 > 审查基线：`develop@37e4016`
 >
-> 当前实施基线：`develop@e7e1414e`
+> 当前实施基线：`develop@61642f69`
 >
 > 计划状态：`IN_IMPLEMENTATION`
 >
@@ -22,7 +22,7 @@
 
 执行优先级固定为：
 
-1. 本文件 v2.3 的明确规则；
+1. 本文件 v2.3.1 的明确规则；
 2. `docs/product/PRD.md`、两份 Architecture 和 `docs/testing/TEST_PLAN.md` 的已同步契约；
 3. v2.2 归档中的未修改任务细节；
 4. 历史测试报告，仅作为不可变历史证据，不作为当前目标契约。
@@ -38,6 +38,7 @@
 | 2026-07-27 | 2.1 | 补充代理执行协议、文件边界、命令、证据与停止条件 | 实施可执行性审查 |
 | 2026-07-27 | 2.2 | 固定 48 个 Work ID、100 个 Test ID、Migration、Ruleset、provenance 与安全验收 | 三层闭环校验 |
 | 2026-07-28 | 2.3 | 合并 RC/正式 Tag、REL-004、XFAIL ID、BETA-003 修正；记录 REL-000/001 完成和 REL-002 治理状态；将 v2.2 全文无损归档 | Plan audit + execution evidence |
+| 2026-07-28 | 2.3.1 | 记录 REL-002 完成；恢复归档规定的 `REL-002 → REL-004 → GOV-001 → REL-003` 强制顺序；标识 Tool 目标常量 | REL-004 dependency verification |
 
 ## 1. 当前结论与实施状态
 
@@ -62,12 +63,14 @@ Plan Ready 维持 `PASS`。本计划具备：
 |---|---|---|---|
 | `REL-000` | Complete | PR #4 / `e18db7e` | 规格契约、88 FR、100 Test ID 同步 |
 | `REL-001` | Complete | PR #6 / `a97dfe4` | Python/Plugin/Git 版本语义统一 |
-| `REL-002` | In verification | PR #8 / `e7e1414e` | 仓库文件治理完成；默认分支已机器确认；Ruleset 由仓库管理员人工确认；本次完成主计划回并 |
-| `REL-003` | Not started | — | 48 个执行 Issue 与完整追踪 |
-| `REL-004` | Not started | — | 只冻结目标 10 Tool Contract，不实现第 10 Tool |
-| 其余 M0 | Not started | — | 依赖完成后按 v2.2 任务账本执行 |
+| `REL-002` | Complete | PR #8 + #9 / `e7e1414e` + `61642f69` | `develop` 默认分支、保护规则、贡献治理和 v2.3 主计划合并完成 |
+| `REL-004` | In progress | Issue #10 | 冻结唯一 10 Tool 目标源，Runtime 仍注册 9 个 Tool |
+| `GOV-001` | Blocked by REL-004 | — | 增加 Security、Issue/PR 和 Release 治理文件 |
+| `REL-003` | Blocked by GOV-001 | — | 48 个执行 Issue 与完整追踪矩阵 |
+| `REL-005` | Eligible, not started | — | 可与主串行并行验证 PyPI 名称和权限 |
+| `COMPAT-000` | Eligible, not started | — | 可与主串行并行选择 Hermes 验证候选版本 |
 
-在 `REL-002` 证据关闭前，不启动串行后继任务。G0 只有在全部 M0 必需项通过后才可判定。
+M0 主串行固定为 `REL-000 → REL-001 → REL-002 → REL-004 → GOV-001 → REL-003`。`REL-005` 与 `COMPAT-000` 在 `REL-000` 后可并行，但 G0 只有在 `REL-003 + REL-005 + COMPAT-000` 全部完成后才可判定。
 
 ## 2. 固定发布契约
 
@@ -106,6 +109,8 @@ Beta 目标清单固定为：
 | Plan | `plan_create`、`plan_update_step`、`plan_cascade`、`plan_status` |
 | Memory | `memory_tag`、`memory_store`、`memory_query`、`memory_filter` |
 | Checkpoint | `checkpoint_create`、`checkpoint_review` |
+
+唯一机器可读目标源是 `plugins/deepseek-harness/tools.py::TARGET_PUBLIC_TOOL_NAMES`。当前 Runtime 清单必须由该目标常量减去 `PENDING_PUBLIC_TOOL_NAMES` 派生。
 
 当前运行时注册 9 个公共 Tool，尚无 `memory_store`。这一现状在 `CON-001 + MEM-001` 完成前不构成 G0 失败；G0 要求目标 Contract、名称、领域归属、迁移状态和测试分母已冻结。
 
@@ -261,8 +266,8 @@ G3 从冻结 Commit SHA 或可删除 RC Tag 构建 RC 制品。G3 通过并合�
 
 ## 11. 当前下一步
 
-1. 完成 `REL-002` Consolidation PR、CI 和 Evidence；
-2. 关闭 Issue #7；
-3. 按归档任务账本开始 `REL-003`；
-4. 只有 `REL-003` 完成后才开始 `REL-004`；
-5. M0 全部必需项完成并生成 G0 Evidence 前，不进入 M1。
+1. 完成 `REL-004` 的测试、PR、CI、Evidence 和合并；
+2. `REL-004` 完成后执行 `GOV-001`；
+3. `GOV-001` 完成后执行 `REL-003`，创建 48 个真实 Issue 并补齐完整追踪矩阵；
+4. `REL-005` 与 `COMPAT-000` 可在不与主串行文件冲突时并行实施；
+5. `REL-003 + REL-005 + COMPAT-000` 全部完成并生成 G0 Evidence 前，不进入 M1。

@@ -1,13 +1,14 @@
 name: deepseek-harness
 version: 3.0.0-beta.1
-description: Open-source Beta 稳定化清单。当前运行时注册 9 个工具；Beta 目标第 10 个 memory_store 由后续 Contract/Memory Work ID 实现。
+description: Open-source Beta 稳定化清单。当前 Runtime 注册 9 个可工作 Tool；Beta 目标为 10 个，唯一机器可读目标源是 tools.py::TARGET_PUBLIC_TOOL_NAMES，memory_store 由 CON-001 + MEM-001 实现。
 author: yuanchenglu
 
 # 依赖声明：Context Engine Plugin（软依赖，不强制）
 depends_on:
   context_engine: deepseek-context
 
-# 当前运行时暴露给 LLM 的 9 个工具（Beta 目标为 10 个）
+# 当前 Runtime 暴露给 LLM 的 9 个可工作 Tool。
+# 不在此复制 10 Tool 目标清单；目标名称只由 tools.py::TARGET_PUBLIC_TOOL_NAMES 定义。
 provides_tools:
   - plan_create
   - plan_update_step
