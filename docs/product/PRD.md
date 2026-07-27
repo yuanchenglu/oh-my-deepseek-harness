@@ -1,149 +1,101 @@
 # PRD：oh-my-deepseek-harness
 
 - 产品名称：oh-my-deepseek-harness
-- 文档版本：1.0
-- 文档状态：Open-source Beta Baseline
-- 目标发布：`v0.3.0-beta`
+- 文档版本：2.0
+- 文档状态：Open-source Beta Execution Baseline
+- 目标发布：Git/GitHub `v3.0.0-beta.1`；Python `3.0.0b1`；Stable `v3.0.0`
 - 适用分支：`develop`
 - Owner：Repository Maintainer
 - 最后更新：2026-07-27
 
----
+> 当前代码仍是 Experimental Preview；G0 尚未通过。本文件定义目标契约，不表示功能已经实现。
 
-## 1. 背景
+## 1. 产品定义
 
-DeepSeek 模型接入 Hermes Agent 后，模型本身只解决推理和生成问题。Agent 是否能够持续遵守用户约束、管理长上下文、选择合适的任务策略、维护计划和记忆，主要由 Harness 决定。
+`oh-my-deepseek-harness` 是运行在 Hermes Agent 周边的本地 Harness 增强层，不是独立 Agent、模型 SDK、云平台或 UI 产品。目标是让 DeepSeek + Hermes 在长任务中保持约束、上下文、计划、记忆和 Checkpoint 的完整性。
 
-当前仓库已经原型化实现以下方向：
+## 2. 固定发布契约
 
-- 认知门控；
-- 硬约束提取和违规检测；
-- 意图分类和策略提示；
-- 推理深度文本提示；
-- 时效信息注入；
-- 上下文压缩；
-- Plan、Memory、Checkpoint 本地服务；
-- Session 结束记录和子任务状态检查。
+### 2.1 版本与制品
 
-但现有实现缺少统一产品规格，导致：
+- Git Tag / GitHub Release：`v3.0.0-beta.1`；
+- Python Distribution：`3.0.0b1`；
+- Plugin Manifest：`3.0.0-beta.1`；
+- Beta 制品：wheel、sdist、SHA256SUMS、SBOM、provenance、Release Notes、Known Limitations；
+- G3 使用冻结 Commit SHA 或可删除 RC Tag 验证；正式不可变 Beta Tag 仅由 `BETA-001` 在最终制品验证后创建。
 
-1. 功能名称、实际行为和 README 承诺不一致；
-2. 各模块独立实现，跨模块契约没有定义；
-3. 安装、运行、故障和卸载流程不完整；
-4. 关键的数据完整性、安全和隐私要求没有进入验收标准；
-5. 测试偏向代码单元，不足以证明产品可用。
+### 2.2 Tool Contract
 
-本 PRD 的目标是把项目从“创新点集合”转化为一个边界明确、可验证、可开源发布的产品。
+当前运行时注册 9 个公共 Tool；Beta 目标固定为 10 个。`memory_store` 只由 `CON-001 + MEM-001` 实现，M0 不得提前注册不可工作的 Tool。
 
----
+| 领域 | 目标 Tool |
+|---|---|
+| Plan | `plan_create`、`plan_update_step`、`plan_cascade`、`plan_status` |
+| Memory | `memory_tag`、`memory_store`、`memory_query`、`memory_filter` |
+| Checkpoint | `checkpoint_create`、`checkpoint_review` |
 
-## 2. 产品愿景
+### 2.3 安装与 CLI 边界
 
-让 Hermes Agent + DeepSeek 在长任务中表现得更可靠、更可控、更节省上下文，同时确保任何优化都不能以损坏用户事实、约束和执行状态为代价。
+```bash
+python -m pip install "oh-my-deepseek-harness[all]==3.0.0b1"
+deepseek-harness install
+deepseek-harness doctor
+```
 
-### 产品一句话
+Python distribution 只由 pip 管理；`deepseek-harness` 只管理 Hermes 部署、配置、数据、Server 和诊断，不得调用 pip 安装、升级或卸载自身。
 
-> 一个面向 Hermes Agent + DeepSeek 的本地 Harness 增强套件，为 Session 约束、任务策略、上下文完整性、计划、记忆和 Checkpoint 提供可测试的运行时能力。
+公开 CLI 固定为：
 
----
+```text
+install [--dry-run]
+doctor [--json]
+upgrade [--dry-run]
+server start|status|stop|restart
+audit [--json]
+memory import PATH [--dry-run]
+memory delete (--id ID | --source SOURCE) --confirm
+plan show PLAN_ID [--include-archived]
+plan archive PLAN_ID
+plan delete PLAN_ID --confirm
+uninstall [--dry-run] [--purge-data --confirm]
+```
+
+退出码：0 成功；2 参数或缺确认且无变化；3 环境前置失败；4 Runtime/DB/Provider 失败且无新增半状态；5 rollback 成功；6 rollback 不完整并按 P0 处理。
+
+### 2.4 支持范围与安全默认值
+
+- OS：Linux、macOS；Python：3.10–3.12；Hermes：由 `COMPAT-000` 固定一个正式版本；
+- Server：`127.0.0.1:8200`，单机单进程；
+- 数据根：`~/.hermes/oh-my-deepseek-harness/`；
+- Summary：默认关闭，启用前明确告知，外发前脱敏，默认不发送 Tool 参数；
+- Memory 启动导入：默认关闭；日志内容：默认不含用户内容；
+- 环境变量只使用 `HARNESS_CONFIG_PATH`、`HARNESS_DATA_ROOT`、`HARNESS_DB_PATH`、`HARNESS_HOST`、`HARNESS_PORT`、`HARNESS_SUMMARY_ENABLED`、`HARNESS_SUMMARY_OUTBOUND_POLICY`、`HARNESS_SUMMARY_ALLOW_TOOL_ARGUMENTS`、`HARNESS_MEMORY_IMPORT_ON_STARTUP`、`HARNESS_LOG_INCLUDE_CONTENT`、`DEEPSEEK_API_KEY`、`DEEPSEEK_BASE_URL`。
 
 ## 3. 产品原则
 
-1. **正确性优先于 Token 节省**：压缩失败时保留原文。
-2. **显式优先于魔法**：文本提示降级不能包装为原生 API 参数控制。
-3. **用户指令优先**：自动策略和排除项不得覆盖用户显式需求。
-4. **Session 默认隔离**：任何运行时状态不得无意跨会话传播。
-5. **单一契约源**：Tool、API 和 Storage 使用同一数据模型。
-6. **本地优先、外发透明**：所有外部数据发送可见、可关闭、可脱敏。
-7. **少功能、完整闭环**：Beta 不新增 Innovation 编号，只修完整性。
-8. **文档必须可证实**：对外能力需有测试、日志或运行结果支撑。
+1. 正确性优先于 Token 节省。
+2. 用户显式要求优先于自动策略。
+3. Session 默认隔离。
+4. Tool/API/Storage 使用单一契约源。
+5. 本地优先，外发透明、可关闭、可脱敏。
+6. 少功能、完整闭环，不新增 Innovation。
+7. 对外文案必须有测试或运行证据。
 
----
+## 4. 目标用户与非目标
 
-## 4. 产品目标
+- 目标：Hermes + DeepSeek 个人开发者、高强度 Agent 用户、开源贡献者和维护者。
+- 非目标：非 Hermes 用户、企业多租户平台、独立 UI、云同步、未经确认的 Skill 自动执行、复杂 LLM DAG 和分布式服务。
 
-### O1：可安装
+## 5. 产品目标
 
-全新支持环境能够按照 README 完成安装，并验证 Plugin、Context Engine、Harness Server 状态。
+- O1 可从最终制品安装、诊断、升级和卸载。
+- O2 Context 变换不丢失、重复或破坏 Tool Pair。
+- O3 Session 和运行状态隔离。
+- O4 10 个目标 Tool 契约闭环。
+- O5 故障可诊断、可恢复。
+- O6 仓库可贡献、可复现、可发布。
 
-### O2：不损坏上下文
-
-任何 Context 压缩或故障降级都不得丢失受保护事实、重复最新消息或破坏 Tool call/result 配对。
-
-### O3：可控且隔离
-
-约束、意图和策略绑定到 Session；并发或连续会话之间没有状态污染。
-
-### O4：Tool 闭环可用
-
-Plan、Memory、Checkpoint 工具的 Schema、API 和持久化一致，合法 Tool 调用不会因内部契约不一致而失败。
-
-### O5：可诊断
-
-用户能够理解安装、Server、外部 API、数据库和工具调用失败的原因。
-
-### O6：真实开源
-
-仓库具备准确 README、贡献路径、测试基线、隐私说明、版本策略和发布门槛。
-
----
-
-## 5. 非目标
-
-Beta 不提供：
-
-- 独立 Agent UI 或桌面客户端；
-- 非 Hermes 平台适配；
-- 企业级多租户、RBAC、SSO；
-- 云端控制台和数据同步；
-- 自动创建和执行未经用户确认的 Skill；
-- LLM 驱动的复杂 DAG 自动规划；
-- 分布式微服务、消息队列或容器编排；
-- 对 DeepSeek 内部编码器机制的不可验证封装；
-- 修改 Hermes 核心源码；
-- “绝对不会与其他插件冲突”的承诺。
-
----
-
-## 6. 用户角色
-
-### U1 个人开发者
-
-需要一键安装和默认可靠行为，不希望理解内部服务细节。
-
-### U2 高级 Agent 用户
-
-需要策略、约束、Memory 和 Context 的可配置能力，关注 Token 和长期任务质量。
-
-### U3 开源贡献者
-
-需要清晰模块边界、测试规范和可复现缺陷。
-
-### U4 维护者
-
-需要版本、兼容性、日志、Release Gate 和故障定位能力。
-
----
-
-## 7. 使用前提
-
-### 支持环境
-
-- Python 3.10、3.11、3.12；
-- Hermes Agent 兼容版本，具体范围必须在兼容矩阵中标注；
-- Linux 和 macOS 为 Beta 支持目标；
-- Windows 暂不承诺，WSL 可作为实验环境；
-- 若启用 DeepSeek Context Summary，需要 DeepSeek API Key 和网络访问。
-
-### 默认端口与路径
-
-- Harness Server：`127.0.0.1:8200`；
-- 数据目录：`~/.hermes/oh-my-deepseek-harness/`；
-- 默认不得使用仓库目录存储用户运行数据。
-
----
-
-## 8. 产品范围总览
+## 6. 产品范围总览
 
 | Epic | 名称 | Beta 优先级 |
 |---|---|---|
@@ -160,591 +112,444 @@ Beta 不提供：
 | EP-11 | 安全与隐私 | P0 |
 | EP-12 | 测试、兼容和发布 | P0 |
 
----
+## 7. 功能需求
 
-# 9. 功能需求
+### EP-01 安装、升级和卸载
 
-## EP-01 安装、升级和卸载
+#### FR-INSTALL-001 Dry Run
 
-### FR-INSTALL-001 Dry Run
+`deepseek-harness install --dry-run` 必须展示 Python/Hermes 检测值、支持范围、部署路径、端口、外发开关、备份和缺失依赖；不得产生持久化变化。
 
-用户执行 `scripts/install.sh --dry-run` 时，系统必须展示：
+#### FR-INSTALL-002 Clean Install
 
-- Python/Hermes 版本；
-- 将安装的 Python package；
-- 将创建或修改的路径；
-- 将使用的端口；
-- 是否启用外部摘要；
-- 将备份的文件；
-- 缺失依赖；
-- 不执行任何写操作。
+用户先由 pip 安装 distribution，再由 `deepseek-harness install` 注册 Hermes 薄适配入口、初始化产品数据根、启动或验证 Server，并执行 Doctor。CLI 不得调用 pip 安装自身。
 
-**验收**：在临时 HOME 中运行前后文件树完全一致。
+#### FR-INSTALL-003 幂等安装
 
-### FR-INSTALL-002 Clean Install
+重复安装同一版本不得重复写配置、重复导入 Memory、创建双进程、删除用户文件或无限增长备份。
 
-正式安装必须：
+#### FR-INSTALL-004 Upgrade
 
-1. 检查依赖；
-2. 备份已有用户配置；
-3. 安装完整 runtime package 和 extras；
-4. 注册 Harness Plugin；
-5. 注册 Context Engine；
-6. 初始化数据目录；
-7. 启动或验证 Harness Server；
-8. 执行 Doctor；
-9. 输出下一步命令。
+`upgrade --dry-run` 先报告 Config/DB/JSONL/进程迁移；正式升级必须备份、显式迁移并在任一步失败时恢复可运行旧版本。
 
-### FR-INSTALL-003 幂等安装
+#### FR-INSTALL-005 Uninstall
 
-重复安装同一版本不得：
+普通卸载停止 Server 并移除 Hermes 注册、薄适配文件和 runtime state，保留 Python distribution 与用户数据；`--purge-data --confirm` 仅删除规范化数据根内的已知路径。
 
-- 重复写入配置；
-- 重复导入 Memory；
-- 创建多个 Server；
-- 删除用户文件；
-- 产生不可控备份增长。
+#### FR-INSTALL-006 Doctor
 
-### FR-INSTALL-004 Upgrade
+Doctor 检查 Python、Hermes、Plugin、Context、Server `/health`/`/ready`/`/version`、DB、Provider、端口、版本和权限；支持人类输出与单 JSON object 输出。
 
-升级必须识别当前版本和配置版本，执行显式 migration。失败时保留原版本和备份。
+### EP-02 Plugin 注册与生命周期
 
-### FR-INSTALL-005 Uninstall
+#### FR-PLUGIN-001 Hook 注册
 
-提供卸载命令或脚本，能够：
+Plugin 必须明确列出 Hook、Handler、优先级和幂等注册规则。
 
-- 禁用 Plugin；
-- 停止 Server；
-- 删除已安装程序文件；
-- 默认保留用户数据库和备份；
-- 支持 `--purge-data` 显式清理数据；
-- 输出清理结果。
+#### FR-PLUGIN-002 Hook Context 校验
 
-### FR-INSTALL-006 Doctor
+Hermes payload 必须转换为内部 DTO；缺失字段使用安全默认值或结构化错误。
 
-Doctor 至少检查：
+#### FR-PLUGIN-003 Hook 失败降级
 
-- Python 版本；
-- Hermes 命令和版本；
-- Plugin 注册；
-- Context Engine import；
-- Harness Server `/health` 和 `/ready`；
-- 数据库可读写；
-- DeepSeek API 配置；
-- 端口冲突；
-- 关键 package 版本。
+辅助 Hook 异常不得阻断 Hermes 主请求；必须记录组件、Session、异常类型和降级行为。
 
----
+#### FR-PLUGIN-004 生命周期
 
-## EP-02 Plugin 注册与生命周期
+支持 register、session start/end、pre LLM、post tool、subagent start/stop，以及目标 Hermes 支持时的 shutdown。
 
-### FR-PLUGIN-001 Hook 注册
+#### FR-PLUGIN-005 可配置开关
 
-Plugin 注册必须明确列出每个 Hook、Handler 和优先级。重复注册不得产生重复注入。
+Cognitive Gate、Constraint Guard、Intent Router、Reasoning Guidance、Latest Reminder、Context Engine、Harness Tools 可独立启停。
 
-### FR-PLUGIN-002 Hook Context 校验
+### EP-03 Session Policy 和硬约束
 
-每个 Hook payload 必须转换为内部类型；缺失字段使用安全默认值或返回结构化错误。
+#### FR-POLICY-001 Session 隔离
 
-### FR-PLUGIN-003 Hook 失败降级
+约束、意图、策略和更新时间必须按 `session_id` 隔离；缺失 `session_id` 时不得落入共享可变状态。
 
-辅助 Hook 异常不得阻断 Hermes 主请求。必须记录组件、Session、异常类型和降级行为。
+#### FR-POLICY-002 约束提取
 
-### FR-PLUGIN-004 生命周期
+约束保留原文、来源 Session/Turn、创建时间、标准化关键词和生命周期范围。
 
-必须支持：
+#### FR-POLICY-003 约束更新
 
-- plugin register；
-- session start；
-- pre LLM call；
-- post tool call；
-- session end；
-- subagent start/stop；
-- plugin shutdown（若 Hermes 支持）。
+用户可显式新增、替换或取消约束；不能因后续消息未重述而自动删除。
 
-### FR-PLUGIN-005 可配置开关
+#### FR-POLICY-004 Tool Violation Evaluation
 
-用户可独立启用/禁用：
+Tool 调用后按名称、参数、路径和命令评估疑似违反；Beta 只告警和记录，不声称绝对阻断。
 
-- Cognitive Gate；
-- Constraint Guard；
-- Intent Router；
-- Reasoning Guidance；
-- Latest Reminder；
-- Context Engine；
-- Harness Tools。
+#### FR-POLICY-005 Violation Event
 
----
+事件以 JSONL 持久化，至少含 event ID、timestamp、session ID、constraint ID、tool、evidence、severity、evaluator version。
 
-## EP-03 Session Policy 和硬约束
+#### FR-POLICY-006 Session End Cleanup
 
-### FR-POLICY-001 Session 隔离
+Session 结束时清理内存状态；审计事件独立持久化。
 
-每个 `session_id` 拥有独立约束、意图、策略和更新时间。不存在 `session_id` 时不得使用共享可变状态。
+#### FR-POLICY-007 范围控制
 
-### FR-POLICY-002 约束提取
+自动排除仅为建议，用户显式要求优先，并记录冲突。
 
-系统从用户消息中识别明确的禁止、必须、范围和文件边界。每条约束必须保留：
+#### FR-POLICY-008 审计报告
 
-- 原始文本；
-- 来源 Session；
-- 来源 Turn；
-- 创建时间；
-- 标准化关键词；
-- 生命周期范围。
+Markdown 报告只由 JSONL 事件派生，支持日期、约束、Tool 和 Session 汇总；报告失败不影响源事件。
 
-### FR-POLICY-003 约束更新
+### EP-04 意图和推理提示路由
 
-用户可新增、替换或取消约束。取消必须通过明确语义，不得仅因为下一条消息未提及而自动删除。
+#### FR-INTENT-001 意图类别
 
-### FR-POLICY-004 Tool Violation Evaluation
+Beta 支持 simple、refactor、feature、architecture、research、collaboration、neutral/default。
 
-Tool 调用后系统检查 Tool 名称、参数、路径和命令是否疑似违反约束。
+#### FR-INTENT-002 可解释输出
 
-Beta 只提供警告和记录，不声称绝对阻断。
+返回 intent、confidence、matched evidence、alternative candidates 和 strategy ID。
 
-### FR-POLICY-005 Violation Event
+#### FR-INTENT-003 低置信回退
 
-事件必须写入结构化 JSONL，包含：
+低于阈值或第一、第二候选差距不足时返回 neutral/default。
 
-- event ID；
-- timestamp；
-- session ID；
-- constraint ID；
-- tool name；
-- evidence；
-- severity；
-- evaluator version。
+#### FR-INTENT-004 用户显式优先
 
-### FR-POLICY-006 Session End Cleanup
+用户明确声明任务类型时覆盖自动分类。
 
-Session 结束后清理内存状态。需要保留的审计事件单独持久化。
+#### FR-INTENT-005 Strategy Mapping
 
-### FR-POLICY-007 范围控制
+Strategy 只决定计划粒度、审查标准、推理深度提示和是否建议澄清。
 
-自动排除项只能作为建议，不得否定用户显式要求。若自动策略与用户要求冲突，用户要求优先并记录冲突。
+#### FR-INTENT-006 Reasoning Guidance 命名
 
-### FR-POLICY-008 审计报告
+若 Hermes Hook 不能设置 API `reasoning_effort`，只能称为“推理深度提示”。
 
-审计报告从结构化事件派生，支持日期范围、约束、Tool 和 Session 汇总。报告生成失败不影响运行数据。
+#### FR-INTENT-007 Time Reminder
 
----
+时间注入包含 ISO 时间、时区和来源，默认只在首轮注入且可关闭。
 
-## EP-04 意图和推理提示路由
+### EP-05 Context Integrity
 
-### FR-INTENT-001 意图类别
+#### FR-CONTEXT-001 压缩触发
 
-Beta 支持：
+仅在估算 Token 达到阈值时触发，支持关闭和手动触发。
 
-- simple；
-- refactor；
-- feature；
-- architecture；
-- research；
-- collaboration；
-- neutral/default。
-
-不得使用含义不清的 `spec_driven` 作为所有未知任务的强策略。
-
-### FR-INTENT-002 可解释输出
-
-分类结果必须提供：
-
-- intent；
-- confidence；
-- matched evidence；
-- alternative candidates；
-- strategy ID。
-
-### FR-INTENT-003 低置信回退
-
-低于阈值或一二名差距不足时，返回 neutral/default。
-
-### FR-INTENT-004 用户显式优先
-
-若用户明确说明“这是简单修改”或“需要深度研究”，可直接覆盖自动分类。
-
-### FR-INTENT-005 Strategy Mapping
-
-Strategy 只决定提示级参数：
-
-- 建议计划粒度；
-- 建议审查标准；
-- 建议推理深度；
-- 是否需要澄清。
-
-### FR-INTENT-006 Reasoning Guidance 命名
-
-如果 Hermes Hook 无法设置 API `reasoning_effort`，产品必须明确称为“推理深度提示”，不得称为 API 参数控制。
-
-### FR-INTENT-007 Time Reminder
-
-时间注入必须包含 ISO 时间、时区和来源。默认只在首轮注入，用户可关闭。
-
----
-
-## EP-05 Context Integrity
-
-### FR-CONTEXT-001 压缩触发
-
-只在估算 Token 达到配置阈值时触发。必须支持关闭和手动触发。
-
-### FR-CONTEXT-002 输入不可变
+#### FR-CONTEXT-002 输入不可变
 
 压缩不得原地修改输入 messages。
 
-### FR-CONTEXT-003 Stable Message ID
+#### FR-CONTEXT-003 Stable Message ID
 
-管线内部为消息分配稳定 ID，用于压缩前后完整性验证。
+管线内部为消息分配稳定 ID，用于前后完整性验证。
 
-### FR-CONTEXT-004 受保护消息
+#### FR-CONTEXT-004 受保护消息
 
-以下默认受保护：
+System Prompt、硬约束、最新 N 条、Pending Ask、关键 Tool Error 和用户标记消息默认受保护。
 
-- System Prompt；
-- 用户硬约束；
-- 最新 N 条消息；
-- 未完成任务和明确 Pending Ask；
-- 关键 Tool Error；
-- 用户标记为不可压缩的消息。
+#### FR-CONTEXT-005 Tool Result Pruning
 
-### FR-CONTEXT-005 Tool Result Pruning
+只压缩旧 Tool Result，并保留 Tool 名、关键参数、成功/失败、输出规模和后续有用错误。
 
-只允许把旧 Tool Result 压缩为可解释摘要，必须保留：
+#### FR-CONTEXT-006 Secret Redaction
 
-- Tool 名称；
-- 关键参数；
-- 成功/失败；
-- 输出规模；
-- 对后续有用的错误信息。
+外发前脱敏 API Key、Bearer Token、Private Key、`.env` Secret、云凭证和用户正则。
 
-### FR-CONTEXT-006 Secret Redaction
+#### FR-CONTEXT-007 Summary Provider
 
-发送外部 Summary Provider 前，检测并脱敏：
+Provider 可替换并支持 Fake；缺 Key、网络或 SDK 时必须可诊断。
 
-- API Key；
-- Bearer Token；
-- Private Key；
-- `.env` Secret；
-- 常见云凭证；
-- 用户配置的正则模式。
+#### FR-CONTEXT-008 Summary Failure
 
-### FR-CONTEXT-007 Summary Provider
+Provider 错误、超时、空响应、cooldown 或校验失败时完整返回原始 messages。
 
-Provider 必须可替换，支持 fake provider 用于测试。缺少 API Key 时必须在首次使用前给出可诊断错误。
+#### FR-CONTEXT-009 输出完整性
 
-### FR-CONTEXT-008 Summary Failure
+提交前验证最新用户消息恰好一次、受保护原文存在、非压缩区顺序不变、Tool Pair 合法、ID 不重复、Token 下降、摘要不提升为当前指令。
 
-任何 Provider 错误、超时、空响应、cooldown 或校验失败，必须返回原始消息。
+#### FR-CONTEXT-010 Rollback
 
-### FR-CONTEXT-009 输出完整性
+完整性失败自动 rollback，并记录不含原 Prompt 的原因事件。
 
-提交压缩结果前验证：
+#### FR-CONTEXT-011 前缀稳定性
 
-- 最新用户消息恰好一次；
-- 受保护原文存在；
-- 非压缩区顺序不变；
-- Tool Pair 合法；
-- 无重复 message ID；
-- 输出 Token 小于输入；
-- 摘要不能作为新用户指令执行。
+只有真实捕获 System Prompt 时才记录指纹，不得用固定占位伪装。
 
-### FR-CONTEXT-010 Rollback
+#### FR-CONTEXT-012 数据发送提示
 
-校验失败自动 rollback，并记录 `compression_rolled_back` 事件和原因。
+启用外部摘要前说明发送内容、Provider、关闭方式和脱敏边界，并获得明确选择。
 
-### FR-CONTEXT-011 前缀稳定性
+#### FR-CONTEXT-013 Context Metrics
 
-系统可观测 System Prompt 指纹，但不得用固定占位字符串伪装真实指纹。只有真实捕获到 Prompt 时才声明“前缀已冻结”。
+本地记录输入/输出 Token、裁剪数、延迟、压缩率、rollback 原因和脱敏计数，默认不上传。
 
-### FR-CONTEXT-012 数据发送提示
+### EP-06 Harness Server Runtime
 
-启用外部摘要时，安装和配置文档必须说明会发送哪些内容、到哪个 Provider、如何关闭。
+#### FR-SERVER-001 Package 启动
 
-### FR-CONTEXT-013 Context Metrics
+Server 通过 Module 或 Console Script 启动，不依赖仓库相对路径。
 
-记录但默认不上传：
+#### FR-SERVER-002 Loopback 默认
 
-- 输入/输出估算 Token；
-- 裁剪 Tool Result 数；
-- Summary 延迟；
-- 压缩率；
-- Rollback 原因；
-- Secret Redaction 数量。
+默认绑定 `127.0.0.1`；Beta 对非 loopback 默认拒绝。
 
----
+#### FR-SERVER-003 Process Supervisor
 
-## EP-06 Harness Server Runtime
+Supervisor 先探测健康、避免双进程、等待 readiness、保存 PID/版本、处理端口占用并提供幂等停止。
 
-### FR-SERVER-001 Package 启动
+#### FR-SERVER-004 Health API
 
-Server 必须通过 Module 或 Console Script 启动，不允许依赖仓库相对路径。
+`/health` 只验证进程；`/ready` 验证 DB/migration/service；`/version` 返回 distribution/server/config/db/Hermes 版本。
 
-### FR-SERVER-002 Loopback 默认
+#### FR-SERVER-005 App Factory
 
-默认绑定 `127.0.0.1`。绑定其他地址需要显式配置和风险提示。
+运行和测试通过 `create_app(settings, repositories)` 装配；import 不得读取真实 HOME、创建 DB 或导入 Memory。
 
-### FR-SERVER-003 Process Supervisor
+#### FR-SERVER-006 统一错误 Envelope
 
-Supervisor 必须：
+API 与 Tool 共用 `ok/data/error/meta` envelope、request ID 和固定错误码映射。
 
-- 先探测健康状态；
-- 避免重复进程；
-- 等待 readiness；
-- 保存 PID 和版本；
-- 处理端口占用；
-- 提供停止操作。
+#### FR-SERVER-007 输入限制
 
-### FR-SERVER-004 Health API
+Task、Memory、Checkpoint、数组和文本长度设上限，拒绝资源滥用。
 
-- `/health`：进程存活；
-- `/ready`：数据库和 Service 可用；
-- `/version`：Server/Schema 版本。
+### EP-07 Plan 工具
 
-响应不得暴露 Secret；默认不暴露绝对数据库路径。
+#### FR-PLAN-001 Create Plan
 
-### FR-SERVER-005 App Factory
+接收任务描述或显式步骤；规则式分解标记 `decomposition_method=rule_based`。
 
-测试和运行必须通过 `create_app(settings, repositories)` 创建应用，禁止 import 时读取真实 HOME 和导入 Memory。
+#### FR-PLAN-002 Step Model
 
-### FR-SERVER-006 统一错误 Envelope
+Step 含 ID、Plan ID、文本、状态、依赖、父级、关联强度、创建/更新时间。
 
-所有 Tool API 返回统一错误类型、request ID 和可读信息。
+#### FR-PLAN-003 DAG Validation
 
-### FR-SERVER-007 输入限制
+创建和更新后验证依赖存在、同 Plan、无自依赖、无循环、Parent 合法。
 
-对 Task、Memory、Checkpoint 和数组长度设置合理上限，防止本地资源滥用。
+#### FR-PLAN-004 状态机
 
----
+状态为 pending、in_progress、completed、blocked、pending_review、cancelled，并定义合法转换。
 
-## EP-07 Plan 工具
+#### FR-PLAN-005 Cascade
 
-### FR-PLAN-001 Create Plan
+返回受影响步骤和原因，不静默修改已完成步骤。
 
-接收任务描述或显式步骤列表。规则式分解必须标记 `decomposition_method=rule_based`。
+#### FR-PLAN-006 Transaction
 
-### FR-PLAN-002 Step Model
+Plan 创建、Step 更新和 Cascade 原子化，失败无半状态。
 
-Step 包含：ID、Plan ID、文本、状态、依赖、父级、关联强度、创建/更新时间。
+#### FR-PLAN-007 Query
 
-### FR-PLAN-003 DAG Validation
+`plan_status`/CLI 可查看 Plan、依赖图、更新时间和异常状态。
 
-创建和每次更新后验证：
+#### FR-PLAN-008 Delete/Archive
 
-- 依赖存在；
-- 同 Plan；
-- 无自依赖；
-- 无循环；
-- Parent 合法。
+默认支持 Archive；Delete 需 `--confirm` 且只影响目标 Plan。
 
-### FR-PLAN-004 状态机
+### EP-08 Memory 工具
 
-合法状态：
+#### FR-MEMORY-001 Classify
 
-- pending；
-- in_progress；
-- completed；
-- blocked；
-- pending_review；
-- cancelled。
+输入文本返回 layer、tags、confidence、evidence，不持久化。
 
-状态转换规则必须显式定义。
+#### FR-MEMORY-002 Store
 
-### FR-PLAN-005 Cascade
+`memory_store` 显式写入，自动分类并以 content hash + source identity 去重。
 
-Cascade 返回受影响步骤和原因，不直接静默修改已完成步骤。
-
-### FR-PLAN-006 Transaction
-
-Plan 创建、Step 更新和 Cascade 必须使用事务，失败不产生半完成状态。
-
-### FR-PLAN-007 Query
-
-支持查看 Plan、依赖图、更新时间和异常状态。
-
-### FR-PLAN-008 Delete/Archive
-
-Beta 至少支持 Archive，避免数据库无限增长。
-
----
-
-## EP-08 Memory 工具
-
-### FR-MEMORY-001 Classify
-
-输入文本，返回 layer、tags、confidence 和 evidence，不持久化。
-
-### FR-MEMORY-002 Store
-
-显式写入 Memory，自动分类、生成内容哈希并去重。
-
-### FR-MEMORY-003 Query
+#### FR-MEMORY-003 Query
 
 按 tags、layer、source、时间和 limit 查询。
 
-### FR-MEMORY-004 Lambda Filter
+#### FR-MEMORY-004 Lambda Filter
 
-λ 值和层级映射必须来自统一配置，边界连续，不允许配置存在 `0.3–0.4`、`0.7–0.8` 未定义区间。
+λ 映射来自统一配置，0.3/0.4/0.7/0.8 边界连续。
 
-### FR-MEMORY-005 Import
+#### FR-MEMORY-005 Import
 
-导入支持：
+支持 dry-run、文件统计、幂等、变更检测、截断提示、错误列表和取消；默认不在启动时导入。
 
-- dry run；
-- 文件级统计；
-- 幂等；
-- 变更检测；
-- 截断提示；
-- 错误列表；
-- 可取消默认启动导入。
+#### FR-MEMORY-006 Delete
 
-### FR-MEMORY-006 Delete
+按 ID 或 Source 删除，CLI 缺 `--confirm` 时拒绝。
 
-用户可按 ID 或 Source 删除导入数据。
+#### FR-MEMORY-007 数据来源
 
-### FR-MEMORY-007 数据来源
+每条记录保留 source、source identity、mtime 和 import batch。
 
-每条 Memory 保留 source、source identity、mtime 和 import batch。
+### EP-09 Checkpoint 工具
 
----
+#### FR-CHECKPOINT-001 Create
 
-## EP-09 Checkpoint 工具
+必须传合法 Plan ID，或显式 external snapshot；默认验证 completed IDs 归属。
 
-### FR-CHECKPOINT-001 Create
+#### FR-CHECKPOINT-002 Snapshot
 
-必须传入合法 Plan ID，或显式允许 external snapshot。默认验证 completed IDs 属于 Plan。
+包含目标、完成摘要、剩余计划、异常发现、规则版本和创建时间。
 
-### FR-CHECKPOINT-002 Snapshot
+#### FR-CHECKPOINT-003 Numbering
 
-快照包含：目标、完成步骤摘要、剩余计划、异常发现、规则版本和创建时间。
+编号在事务中生成，同 Plan 并发不重复。
 
-### FR-CHECKPOINT-003 Numbering
+#### FR-CHECKPOINT-004 Review
 
-编号在事务中生成；同一 Plan 并发创建不得产生重复 number。
+规则评估返回 alignment、progress、impact、adjustments、confidence、rule version。
 
-### FR-CHECKPOINT-004 Review
+#### FR-CHECKPOINT-005 Idempotency
 
-Review 是可解释规则评估，返回：alignment、progress、impact、adjustments、confidence、rule version。
+同 Checkpoint 与同规则版本重复 Review 结果一致。
 
-### FR-CHECKPOINT-005 Idempotency
+#### FR-CHECKPOINT-006 Chain
 
-相同 Checkpoint 和相同规则版本重复 Review，结果应一致。
+按 Plan 查询有序 Checkpoint 链和阶段变化。
 
-### FR-CHECKPOINT-006 Chain
+### EP-10 日志、诊断和错误
 
-支持按 Plan 查询 Checkpoint 链和阶段变化。
+#### FR-OBS-001 结构化日志
 
----
+日志含 timestamp、level、component、event、session_id、request_id、duration、status、error_code。
 
-## EP-10 日志、诊断和错误
-
-### FR-OBS-001 结构化日志
-
-日志至少包含：timestamp、level、component、event、session_id、request_id、duration、status、error_code。
-
-### FR-OBS-002 隐私日志
+#### FR-OBS-002 隐私日志
 
 默认不记录完整 Prompt、API Key、Tool Result 和 Memory 原文。
 
-### FR-OBS-003 用户错误
+#### FR-OBS-003 用户错误
 
-用户可见错误必须说明：
+说明发生了什么、组件、是否降级、恢复动作和日志位置。
 
-- 发生了什么；
-- 哪个组件；
-- 是否已降级；
-- 如何修复；
-- 日志位置。
+#### FR-OBS-004 Server 日志
 
-### FR-OBS-004 Server 日志
+stdout/stderr 写入用户可访问日志，不得全部丢弃。
 
-Server stdout/stderr 写入日志文件，不得全部丢弃。
+#### FR-OBS-005 Runtime Status
 
-### FR-OBS-005 Runtime Status
+Doctor/status 显示 Plugin、Context、Server、DB、Provider 和版本。
 
-Doctor 或状态命令显示 Plugin、Context、Server、DB、Provider 和版本。
+### EP-11 安全与隐私
 
----
+#### FR-SEC-001 Outbound Consent
 
-## EP-11 安全与隐私
+Summary 默认关闭；只有展示说明并获得明确选择后才启用。
 
-### FR-SEC-001 Outbound Consent
+#### FR-SEC-002 Data Minimization
 
-外部 Summary Provider 默认配置必须在安装文档中显式说明。用户可关闭。
+只发送摘要所需最小内容，默认不发送完整 Tool 参数。
 
-### FR-SEC-002 Data Minimization
+#### FR-SEC-003 Local API
 
-只发送完成摘要所需的最小内容，默认不发送完整 Tool 参数。
+Beta 仅承诺 loopback 本地 API，不提供远程访问安全承诺。
 
-### FR-SEC-003 Local API
+#### FR-SEC-004 File Permission
 
-非 loopback 监听必须显式允许。Beta 不提供远程访问安全承诺。
+数据根目录 `0700`；配置、DB、事件、日志和 runtime 文件 `0600`。
 
-### FR-SEC-004 File Permission
+#### FR-SEC-005 Dependency Security
 
-数据、事件和日志文件应仅当前用户可读写。
+依赖漏洞扫描，未豁免 High/Critical 阻断 Release。
 
-### FR-SEC-005 Dependency Security
+#### FR-SEC-006 Prompt Injection Boundary
 
-CI 运行依赖漏洞扫描，严重漏洞阻断 Release。
+摘要标记为参考材料，不提升权限，不绕过结构校验和显式确认。
 
-### FR-SEC-006 Prompt Injection Boundary
+#### FR-SEC-007 Destructive Operations
 
-压缩摘要必须带“参考材料”标记，不能把历史用户指令重新变成当前指令。模型提示不能代替结构校验。
+删除限制在规范化已知目录，支持 dry-run，并防 symlink/path traversal。
 
-### FR-SEC-007 Destructive Operations
+### EP-12 测试、兼容和发布
 
-Installer 和 Uninstaller 的删除操作必须限制在已知目录，并支持 dry run。
+#### FR-QA-001 测试隔离
 
----
+所有自动测试使用临时 HOME、DB、端口和 Fake Provider。
 
-## EP-12 测试、兼容和发布
-
-### FR-QA-001 测试隔离
-
-所有自动测试使用临时 HOME、临时数据库和 Fake Provider。
-
-### FR-QA-002 Python Matrix
+#### FR-QA-002 Python Matrix
 
 Python 3.10、3.11、3.12 全部通过。
 
-### FR-QA-003 Contract Tests
+#### FR-QA-003 Contract Tests
 
-每个 Tool 的 Schema 必须与 Pydantic Model 自动比对。
+10 个目标 Tool 的 Schema 从 Pydantic Model 生成并自动比对。
 
-### FR-QA-004 Process E2E
+#### FR-QA-004 Process E2E
 
-真实启动 Harness Server，调用所有 API，验证日志和退出。
+真实启动 Server，验证探针、Tool/API、日志和退出。
 
-### FR-QA-005 Install E2E
+#### FR-QA-005 Install E2E
 
-空环境执行 dry run、install、doctor、uninstall。
+空环境完成 pip install → install → doctor → smoke → 普通 uninstall → pip uninstall。
 
-### FR-QA-006 Context Property Tests
+#### FR-QA-006 Context Property Tests
 
-使用生成消息序列验证完整性不变量和故障回退。
+生成消息序列验证完整性不变量和故障 rollback。
 
-### FR-QA-007 Compatibility Matrix
+#### FR-QA-007 Compatibility Matrix
 
-至少验证一个明确 Hermes Release；不支持的版本给出可读错误。
+Linux/macOS、Python 3.10–3.12，并至少验证一个由 `COMPAT-000` 固定的 Hermes 正式版本。
 
-### FR-QA-008 Known Defects
+#### FR-QA-008 Known Defects
 
-已知缺陷必须有 Issue 或 strict xfail；不能只写在文档中。
+已知缺陷必须有 Issue、精确复现和 strict XFAIL；修复后删除 XFAIL。
 
-### FR-QA-009 Release Gate
+#### FR-QA-009 Release Gate
 
-任何 P0、未解释的数据损坏、安装失败或隐私阻断问题存在时，不得发布 stable。
+P0、未解释数据损坏、安装失败、隐私阻断或无证据 Gate 存在时不得发布。
 
----
+## 8. 配置与数据生命周期
 
-# 10. 配置需求
+配置优先级固定为 CLI > Environment > User Config > Package Defaults。未知字段给出 warning；非法类型、危险监听或非法布尔值以退出码 3 拒绝。
 
-## 10.1 配置文件
+```yaml
+server: {host: 127.0.0.1, port: 8200}
+summary: {enabled: false, outbound_policy: redact, allow_tool_arguments: false}
+memory: {import_on_startup: false}
+logging: {include_content: false}
+```
+
+| 数据 | 范围 | 默认保留 |
+|---|---|---|
+| Session Policy | Session | Session 结束清理 |
+| Constraint Events | 本地用户 | 用户显式清理 |
+| Plan/Memory/Checkpoint | 本地用户 | Archive/Delete |
+| Runtime PID | 进程 | 停止时清理 |
+| Logs | 本地用户 | 可轮转 |
+| Summary 请求 | 外部 Provider | 由 Provider 政策决定，需文档披露 |
+
+## 9. 关键验收场景
+
+- AC-01：空 HOME 安装后 Plugin、Context、Server 就绪且 Doctor 全绿。
+- AC-02：重复安装无重复配置、Memory 或进程。
+- AC-03：Session A 的约束不影响 Session B。
+- AC-04：Summary 超时、空响应、缺 Key 或异常时完整 rollback。
+- AC-05：Merge 路径每条尾部消息恰好一次。
+- AC-06：10 个目标 Tool 的最小合法 payload 不产生内部 422。
+- AC-07：同一 Memory 输入重启三次不增加重复记录。
+- AC-08：更新依赖形成环时返回 conflict 且 DB 不变。
+- AC-09：含 Secret 的内容外发和日志均已脱敏。
+- AC-10：普通卸载保留 distribution 和用户数据；purge 仅删除安全边界内路径。
+
+## 10. Release Gate
+
+### Public Beta 前置
+
+- G0–G3 全部以证据报告 PASS；
+- P0 = 0；P1 已关闭或具有有效 Beta Waiver；
+- 100 个 Test ID 已登记，Release Test Failed/XPASS/XFAIL = 0；
+- 10 个目标 Tool Contract、Context、Session、Migration、安全和真实 Hermes E2E 通过；
+- 最终制品、SHA256、SBOM、provenance、Release Notes 一致。
+
+### Stable 前置
+
+- G0–G4 全部通过；P0 = 0、P1 = 0；
+- 至少 10 名非维护者、20 次独立安装、50 次长会话、200 次合法 Tool 调用和 50 次压缩尝试达到计划阈值；
+- 最终 RC 连续至少 14 个日历日且无数据完整性 P0；
+- 安全、许可证、依赖和迁移审查完成。
+
+## 11. Definition of Done
+
+一个 Requirement 只有在实现、正常/边界/故障测试、HOME 隔离、文档配置、Required CI、Requirement→Test→PR 追踪、隐私披露和对外文案一致全部满足后才完成。
+
+## 12. 详细配置契约
+
+### 12.1 配置文件
 
 ```yaml
 config_version: 1
-
 features:
   cognitive_gate: true
   constraint_guard: true
@@ -753,78 +558,64 @@ features:
   latest_reminder: true
   context_engine: true
   harness_tools: true
-
 server:
   host: 127.0.0.1
   port: 8200
   startup_timeout_seconds: 10
-
 context:
   threshold_percent: 0.75
   fail_mode: preserve_original
   protect_first_n: 3
   protect_last_n: 20
-
 summary:
-  enabled: true
+  enabled: false
   provider: deepseek
   base_url: https://api.deepseek.com
   outbound_policy: redact
   allow_tool_arguments: false
-
 memory:
   import_on_startup: false
   default_lambda: 0.5
-
 logging:
   level: INFO
   include_content: false
 ```
 
-## 10.2 配置优先级
+环境变量只允许使用发布计划 §2.8 的稳定名称。未知字段给出 warning；非法类型、危险远程监听、非法布尔值或不支持的 outbound policy 必须拒绝启动。
 
-CLI > Environment > User Config > Defaults。
+### 12.2 Runtime 目录
 
-## 10.3 配置校验
+```text
+~/.hermes/oh-my-deepseek-harness/
+├── config/config.yaml
+├── data/harness.db
+├── logs/harness-server.log
+├── events/constraint-events.jsonl
+├── runtime/server.json
+└── backups/
+```
 
-未知字段给出 warning；非法类型或危险远程监听配置必须拒绝启动。
+目录权限为 `0700`；配置、DB、事件、日志和 runtime 文件为 `0600`。运行数据不得写回 Git 仓库。
 
----
+## 13. 核心状态机
 
-# 11. 状态与数据生命周期
-
-| 数据 | 范围 | 默认保留 |
-|---|---|---|
-| Session 约束 | Session | Session 结束清理 |
-| Constraint Events | 用户本地 | 长期，用户可清理 |
-| Plan | 用户本地 | 直到 Archive/Delete |
-| Memory | 用户本地 | 直到 Delete |
-| Checkpoint | 用户本地 | 随 Plan 生命周期 |
-| Server Runtime PID | 进程 | 进程结束清理 |
-| Logs | 用户本地 | 可配置轮转 |
-| Summary API 内容 | 外部 Provider | 由 Provider 政策决定，需文档说明 |
-
----
-
-# 12. 核心状态机
-
-## 12.1 Server
+### 13.1 Server
 
 ```text
 STOPPED → STARTING → READY
-              ├→ FAILED
+               ├→ FAILED
 READY → STOPPING → STOPPED
 ```
 
-## 12.2 Compression
+### 13.2 Compression
 
 ```text
 IDLE → PLANNED → SUMMARIZING → VALIDATING → COMMITTED
-                    ├───────────────→ ROLLED_BACK
-                    └→ FAILED → ROLLED_BACK
+                     ├───────────────→ ROLLED_BACK
+                     └→ FAILED → ROLLED_BACK
 ```
 
-## 12.3 Plan Step
+### 13.3 Plan Step
 
 ```text
 pending → in_progress → completed
@@ -835,283 +626,111 @@ blocked → in_progress | cancelled
 pending_review → pending | in_progress | cancelled
 ```
 
----
+任何状态变化必须通过领域服务和事务，不允许 Adapter 或 Tool Handler 直接写库绕过校验。
 
-# 13. 关键交互
+## 14. 非功能需求
 
-## 13.1 Context Failure
-
-用户不应看到对话中断。系统继续使用原始上下文，并在日志中记录：
-
-```text
-Context compression rolled back: summary_provider_timeout
-```
-
-## 13.2 Tool Server Unavailable
-
-Tool 返回：
-
-```json
-{
-  "ok": false,
-  "error": {
-    "code": "server_unavailable",
-    "message": "Harness Server 未就绪",
-    "recovery": "运行 harness doctor"
-  }
-}
-```
-
-不得返回 Python traceback 给模型。
-
-## 13.3 Constraint Suspected Violation
-
-Beta 默认不强行阻断 Hermes Tool；返回 warning context，记录结构化事件，并让上层决定是否需要用户确认。
-
----
-
-# 14. 非功能需求
-
-## NFR-001 性能
+### NFR-001 性能
 
 - Hook 纯本地处理 P95 < 20ms；
 - `/health` P95 < 100ms；
 - 非摘要 Tool API P95 < 500ms；
-- Summary 超时可配置，默认不超过 30s；
-- SQLite 常规查询在 10,000 条 Memory 下 P95 < 200ms。
+- Summary 超时默认不超过 30s；
+- 10,000 条 Memory 下常规查询 P95 < 200ms。
 
-## NFR-002 可靠性
+这些目标是 Beta 工程预算，不是对所有设备的硬 SLA；测试报告必须记录环境和分位数。
 
-- 辅助组件失败不影响 Hermes 主会话；
-- Context 数据损坏事故为 0；
-- 安装过程可重复；
-- DB 更新具备事务一致性。
+### NFR-002 可靠性
 
-## NFR-003 可移植性
+辅助组件失败不影响 Hermes 主会话；Context 数据损坏为 0；安装可重复；DB 更新具备事务一致性；rollback 不完整按 P0 处理。
 
-不得硬编码仓库路径、用户名和绝对安装目录。
+### NFR-003 可移植性
 
-## NFR-004 可维护性
+不得硬编码仓库路径、用户名和绝对安装目录；支持矩阵外环境必须给出明确拒绝或 Experimental 标识。
 
-- 业务函数有类型注解；
-- Tool Contract 自动生成；
-- 单文件建议不超过 500 行，超出需拆分理由；
-- 领域逻辑与 FastAPI/Hook Adapter 分离。
+### NFR-004 可维护性
 
-## NFR-005 可观测性
+业务函数有类型注解；Tool Contract 自动生成；领域逻辑与 FastAPI/Hermes Adapter 分离；超过 500 行的单文件必须说明拆分理由。
 
-所有降级行为都有日志事件和错误码。
+### NFR-005 可观测性
 
-## NFR-006 安全性
+所有降级行为都有结构化事件、错误码、request ID 和恢复建议；默认日志不记录用户内容。
 
-默认只监听 loopback；Secret 不进入日志；外部发送有脱敏。
+### NFR-006 安全性
 
-## NFR-007 可测试性
+默认 loopback；Secret 不进入日志；外发 opt-in；文件最小权限；破坏性命令必须 dry-run/confirm；Prompt 不提升系统权限。
 
-所有外部依赖可注入；禁止 import 时产生用户数据副作用。
+### NFR-007 可测试性
 
-## NFR-008 向后兼容
+所有外部依赖可注入；禁止 import 时产生用户数据副作用；普通 CI 不访问网络或真实 Secret。
 
-配置和数据库 Schema 变更必须有版本和 migration。
+### NFR-008 向后兼容
 
----
+Config、DB、JSONL 和 runtime state 变更必须有 Schema 版本、migration、拒绝降级和失败回滚。
 
-# 15. 产品指标
+## 15. 迁移需求
 
-## 15.1 发布前指标
+从审查基线 `develop@37e4016` 升级到首个 Beta 时：
 
-- Clean install：3/3 Python 版本成功；
-- Tool contract：100%；
-- Context integrity：100%；
-- Session isolation：100%；
-- Memory import duplicate：0；
-- P0：0；
-- 未关闭 P1：有明确 Release Waiver 才允许 Beta，不允许 stable。
-
-## 15.2 运行指标（本地、默认不上传）
-
-- 压缩尝试/成功/回滚次数；
-- Tool 调用成功率；
-- Server 启动失败原因；
-- 约束疑似违反数量；
-- Memory 去重数量；
-- Doctor 检查结果。
-
-项目不在 Beta 中建设云端遥测系统。
-
----
-
-# 16. 文案和能力分级
-
-README 中每项能力标记：
-
-- **Stable**：E2E 和回归测试通过；
-- **Beta**：核心路径通过，存在兼容限制；
-- **Experimental**：原型或算法验证；
-- **Degraded**：由于平台限制使用替代实现；
-- **Removed**：验证不可行后移除。
-
-禁止使用未经证实的：
-
-- 唯一；
-- 完美；
-- 零副作用；
-- 永不冲突；
-- 对话多长都不卡；
-- 自动变聪明。
-
----
-
-# 17. 依赖需求
-
-正式运行依赖必须覆盖实际 import：
-
-- PyYAML；
-- FastAPI；
-- Uvicorn；
-- Pydantic；
-- HTTP Client；
-- OpenAI-compatible SDK（仅 Context extra）；
-- 其他实际运行库。
-
-CI 必须从空环境安装 package，不允许依赖开发机已有包。
-
----
-
-# 18. 迁移需求
-
-从当前版本升级到 Beta 时：
-
-1. 备份原 `~/.hermes/mcp/harness.db`；
-2. 检测重复 Memory，提供 dry-run 去重报告；
-3. 迁移约束 Markdown 日志为 JSONL，无法解析条目保留原文件；
-4. 统一配置路径；
-5. 停止旧 Server 进程；
-6. 安装新 package；
+1. 识别当前 distribution、Config 和 DB Schema；
+2. 备份旧配置、DB、事件文件和 runtime state；
+3. 对重复 Memory 生成 dry-run 去重报告；
+4. 将可解析约束 Markdown 迁移为 JSONL，无法解析条目保留原文件并报告；
+5. 停止旧 Server，避免双进程；
+6. 部署新 Hermes 薄入口并执行数据迁移；
 7. 运行 Doctor；
-8. 失败时恢复原配置和 DB。
+8. 任一步失败恢复旧配置、DB 和可运行旧版本；
+9. 旧程序读取新 Schema 或请求无迁移路径的降级时，在修改数据前拒绝。
 
----
+## 16. 量化指标
 
-# 19. 验收场景
+### 16.1 发布前指标
 
-## AC-01 全新安装
+- 支持 Python Matrix：100%；
+- 10 个 Tool Contract：100%；
+- Context Integrity：100%；
+- Session 并发隔离：100%；
+- Memory 重复导入率：0%；
+- 未解释外部数据发送：0；
+- P0：0；Stable 时 P1：0。
 
-Given 空 HOME 和支持版本 Python/Hermes，When 安装，Then Plugin、Context、Server 全部就绪，Doctor 全绿。
+### 16.2 Public Beta 暴露量
 
-## AC-02 重复安装
+- 至少 10 名非维护者；
+- 至少 20 次独立安装，观察成功率 ≥ 90%，报告 95% Wilson 区间；
+- 至少 10 人文档自助安装，成功率 ≥ 80%；
+- 至少 50 次长会话，数据损坏与跨 Session 污染为 0；
+- 至少 200 次合法 Tool 调用，总成功率 ≥ 95%，每个 Tool ≥ 10 次且成功率 ≥ 90%；
+- 至少 50 次 Context 压缩尝试，每次完整性通过或完整 rollback。
 
-Given 已安装同版本，When 再次安装，Then 无重复进程、配置和 Memory。
+默认不上传遥测，只使用用户主动提交、可预览、再次脱敏的结构化诊断包。
 
-## AC-03 Session 隔离
+## 17. 需求域追踪
 
-Given Session A 有“不能删除 DB”，Session B 无此约束，When B 调用相关 Tool，Then 不使用 A 的约束。
+| 需求域 | 数量 | 主责 Work ID | 测试范围 |
+|---|---:|---|---|
+| FR-INSTALL | 6 | INS-001–003、QA-ART-001、MIG-001 | TC-INSTALL-001–010、TC-MIG-001–006 |
+| FR-PLUGIN | 5 | PKG-001、INS-001、INS-003、COMPAT-001 | Plugin Lifecycle E2E |
+| FR-POLICY | 8 | SES-001、AUD-001、OPS-001 | TC-POLICY-001–008、TC-AUDIT-CLI-001 |
+| FR-INTENT | 7 | INTENT-001、DOC-001 | TC-INTENT-001–008 |
+| FR-CONTEXT | 13 | CTX-001–004、PRIV-001 | TC-CTX-001–014 |
+| FR-SERVER | 7 | PKG-001、RUN-001、RUN-002、CON-001、SEC-002 | TC-SERVER-001–005 |
+| FR-PLAN | 8 | CON-001、PLAN-001–003 | TC-PLAN-001–013 |
+| FR-MEMORY | 7 | CON-001、MEM-001、MEM-002 | TC-MEM-001–013 |
+| FR-CHECKPOINT | 6 | CON-001、CP-001 | TC-CP-001–006 |
+| FR-OBS | 5 | RUN-002、AUD-001、PRIV-001、DOC-002 | Logging/Status/Redaction |
+| FR-SEC | 7 | PRIV-001、SEC-001、SEC-002、INS-001、INS-003 | TC-SEC-001–006 |
+| FR-QA | 9 | QA-ART-001、QA-001、QA-002、COMPAT-001、REL-006 | Fast/Integration/Release CI |
+| **合计** | **88** | — | 100 个 Test ID + E2E/审查证据 |
 
-## AC-04 Summary API 失败
+## 18. 产品决策与未决外部事实
 
-Given Provider 超时，When 触发压缩，Then 输出 messages 与输入语义和顺序一致，不删除历史。
+- ADR-P-001：`v3.0.0-beta.1` 保持与现有 2.x 的升级语义，不回退到 0.x。
+- ADR-P-002：Beta 不自动修改 crontab/systemd/launchd，正式入口为手工 `audit`。
+- ADR-P-003：Skill 自动创建不进入 Beta。
+- ADR-P-004：Harness Server 保持本地单机单进程。
+- ADR-P-005：当前 9 Tool 与目标 10 Tool 明确区分，M0 不提前注册 `memory_store`。
+- OQ-01：PyPI 名称与 Trusted Publisher 权限由 `REL-005` 验证。
+- OQ-02：目标 Hermes 正式版本由 `COMPAT-000` 选择。
 
-## AC-05 合并路径
-
-Given 摘要角色和尾部消息角色冲突，When 组装压缩结果，Then每条尾部消息只出现一次。
-
-## AC-06 Tool Contract
-
-Given LLM 按注册 Schema 生成合法参数，When 调用九个 Tool，Then不出现内部 422。
-
-## AC-07 Memory 重启
-
-Given同一批 Memory 文件，When Server 重启三次，Then数据库条目数不增加。
-
-## AC-08 DAG 更新
-
-Given更新依赖形成环，When提交，Then返回 conflict，数据库保持原状态。
-
-## AC-09 隐私
-
-Given Tool Result 含 API Key，When摘要，Then外部请求中 Key 被脱敏，日志不含 Key。
-
-## AC-10 卸载
-
-Given已安装并有用户数据，When普通卸载，Then程序停止并移除，用户数据保留。
-
----
-
-# 20. 需求追踪矩阵
-
-| Requirement | Test Layer | Release Blocking |
-|---|---|---|
-| FR-INSTALL-002 | Install E2E | Yes |
-| FR-INSTALL-003 | Install E2E | Yes |
-| FR-POLICY-001 | Unit + Concurrency | Yes |
-| FR-POLICY-005 | Integration | Yes |
-| FR-INTENT-003 | Dataset Test | No（Beta） |
-| FR-CONTEXT-008 | Fault Injection | Yes |
-| FR-CONTEXT-009 | Property/Regression | Yes |
-| FR-SERVER-003 | Process E2E | Yes |
-| FR-SERVER-005 | Test Isolation | Yes |
-| FR-PLAN-003 | Unit + Storage Integration | Yes |
-| FR-MEMORY-002 | Storage Integration | Yes |
-| FR-MEMORY-005 | Import E2E | Yes |
-| FR-CHECKPOINT-003 | Concurrency | No（Beta） |
-| FR-SEC-002 | Security Test | Yes |
-| FR-QA-005 | Install E2E | Yes |
-
-完整用例见 `docs/testing/TEST_PLAN.md`。
-
----
-
-# 21. Release Gate
-
-## Beta Gate
-
-- [ ] 所有 P0 关闭；
-- [ ] Python 3.10/3.11/3.12 CI 通过；
-- [ ] 安装 E2E 通过；
-- [ ] 九个 Tool Contract 通过；
-- [ ] Context 完整性测试通过；
-- [ ] Session 隔离通过；
-- [ ] Memory 幂等通过；
-- [ ] 外部发送说明和脱敏测试完成；
-- [ ] README 能力分级完成；
-- [ ] 有明确 Known Limitations。
-
-## Stable Gate
-
-除 Beta Gate 外：
-
-- [ ] Linux/macOS 均有真实环境验证；
-- [ ] 至少一个 Hermes 正式 Release E2E；
-- [ ] 至少 5 名外部用户完成安装；
-- [ ] 连续 14 天无 P0 数据完整性缺陷；
-- [ ] 版本、配置和 DB Migration 流程稳定；
-- [ ] 安全审查完成。
-
----
-
-# 22. 未决策事项
-
-| ID | 问题 | 建议 |
-|---|---|---|
-| OQ-01 | 是否将版本从 2.x 重置为 0.x Beta | 建议重置，避免成熟度误导 |
-| OQ-02 | Constraint Guard 是否阻断 Tool | Beta 只告警，后续增加 confirm mode |
-| OQ-03 | Memory 默认是否启动导入 | 建议默认关闭，安装时显式选择 |
-| OQ-04 | 是否保留 HTTP Server | Beta 保留，后续评估进程内调用 |
-| OQ-05 | 是否支持非 DeepSeek Summary Provider | 接口预留，Beta 只测试 DeepSeek + Fake |
-| OQ-06 | Hermes 最低兼容版本 | 必须通过真实 E2E 决定，不能只写 README |
-
----
-
-# 23. Definition of Done
-
-一个需求只有同时满足以下条件才算完成：
-
-1. 代码实现；
-2. 类型和错误处理完整；
-3. 自动测试覆盖正常、边界和故障路径；
-4. 不访问真实用户 HOME；
-5. 文档和配置更新；
-6. CI Python Matrix 通过；
-7. 对应 Requirement ID 写入测试或 PR；
-8. 无新增未披露数据发送；
-9. 对外文案与实现一致。
+除上述外部事实外，版本、CLI、Tool 分母、路径、安全默认值和发布顺序在本周期内均视为固定契约。

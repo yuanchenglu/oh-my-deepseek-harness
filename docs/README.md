@@ -2,68 +2,42 @@
 
 本目录是 `oh-my-deepseek-harness` 在 `develop` 分支上的产品、架构、质量和发布基线。
 
+> 当前状态：Plan Ready 已通过；M0 `REL-000` 正在同步规格；G0 尚未通过；M1、Public Beta 和 Stable 均未开始。
+
 ## 1. Review
 
-- [`reviews/CODE_REVIEW_2026-07-27.md`](reviews/CODE_REVIEW_2026-07-27.md)  
-  完整仓库 Code Review，包含 P0/P1/P2、证据、影响、修复原则和 Release Gate。
+- [`reviews/CODE_REVIEW_2026-07-27.md`](reviews/CODE_REVIEW_2026-07-27.md)：P0/P1/P2、证据和修复原则。
 
 ## 2. Architecture
 
-- [`architecture/PRODUCT_ARCHITECTURE.md`](architecture/PRODUCT_ARCHITECTURE.md)  
-  产品定位、用户、边界、能力域、用户旅程、产品原则和版本策略。
-
-- [`architecture/TECHNICAL_ARCHITECTURE.md`](architecture/TECHNICAL_ARCHITECTURE.md)  
-  当前架构、目标架构、Context Integrity、Session State、Server、Tool Contract、数据和安全设计。
+- [`architecture/PRODUCT_ARCHITECTURE.md`](architecture/PRODUCT_ARCHITECTURE.md)：产品定位、能力域、用户旅程、版本与边界。
+- [`architecture/TECHNICAL_ARCHITECTURE.md`](architecture/TECHNICAL_ARCHITECTURE.md)：目标源码、Context、Session、Server、Tool、数据、安全与 Release 架构。
 
 ## 3. Product
 
-- [`product/PRD.md`](product/PRD.md)  
-  Open-source Beta 完整 PRD：目标、非目标、12 个 Epic、功能/非功能需求、配置、状态机、验收和发布门槛。
+- [`product/PRD.md`](product/PRD.md)：88 个 `FR-*`、固定外部契约、验收和 Release Gate。
 
 ## 4. Testing
 
-- [`testing/TEST_PLAN.md`](testing/TEST_PLAN.md)  
-  测试分层、环境隔离、完整用例矩阵、CI 和退出标准。
-
-- [`testing/TEST_REPORT_2026-07-27.md`](testing/TEST_REPORT_2026-07-27.md)  
-  本次 GitHub Actions 实际执行结果和 Release 判断。
-
-### Executable regression specifications
-
-- [`../tests/test_context_integrity_regressions.py`](../tests/test_context_integrity_regressions.py)
-- [`../tests/test_release_readiness_regressions.py`](../tests/test_release_readiness_regressions.py)
-
-已确认但未修复的缺陷采用 `strict xfail`，修复后必须移除 xfail 并转为永久回归测试。
+- [`testing/TEST_PLAN.md`](testing/TEST_PLAN.md)：100 个唯一 Test ID、主责 Work ID、CI 通道和退出标准。
+- [`testing/TEST_REPORT_2026-07-27.md`](testing/TEST_REPORT_2026-07-27.md)：历史基线 144 Passed / 12 strict XFAIL；不代表 Beta 可发布。
+- [`testing/evidence/REL-000.md`](testing/evidence/REL-000.md)：本次规格同步证据。
 
 ## 5. Roadmap
 
-- [`roadmap/OPEN_SOURCE_RELEASE_PLAN.md`](roadmap/OPEN_SOURCE_RELEASE_PLAN.md)  
-  只围绕 Runtime Integrity、Data Integrity、Open-source Usability 和 Beta 验证，不新增功能。
+- [`roadmap/OPEN_SOURCE_RELEASE_PLAN.md`](roadmap/OPEN_SOURCE_RELEASE_PLAN.md)：v2.2 主计划。
+- [`roadmap/OPEN_SOURCE_RELEASE_PLAN_ERRATA_2.3.md`](roadmap/OPEN_SOURCE_RELEASE_PLAN_ERRATA_2.3.md)：RC/正式 Tag、REL-004、XFAIL ID、BETA-003 的规范性修正。
 
-## 6. 阅读顺序
+## 6. Traceability
 
-### 产品/决策者
+- [`traceability/RELEASE_TRACEABILITY.md`](traceability/RELEASE_TRACEABILITY.md)：Work ID → Requirement/Test/Issue/PR/Commit/Evidence。
 
-1. Product Architecture
-2. PRD
-3. Code Review
-4. Open-source Release Plan
+## 7. 阅读顺序
 
-### 研发
+- 产品/决策者：Product Architecture → PRD → Code Review → Release Plan。
+- 研发：Code Review → Technical Architecture → PRD → Test Plan → Evidence。
+- 外部贡献者：目标 Issue → 对应 Test ID → Architecture 边界 → Definition of Done。
 
-1. Code Review
-2. Technical Architecture
-3. PRD
-4. Test Plan
-5. Test Report
+## 8. 分支策略
 
-### 外部贡献者
-
-1. Code Review 的目标问题
-2. Test Plan 对应用例
-3. Technical Architecture 的目标边界
-4. PRD 的 Definition of Done
-
-## 7. 当前分支策略
-
-后续默认在 `develop` 操作。`master` 只接收通过 Release Gate 的变更。
+后续默认在 `develop` 操作。`master` 只接收通过 Release Gate 的可发布基线。
