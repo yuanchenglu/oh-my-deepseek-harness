@@ -1,4 +1,4 @@
-> **Security:** Do not disclose vulnerabilities, exploit details, secrets, private data, real user files, or unredacted logs in a public PR. Follow [`SECURITY.md`](../SECURITY.md) and use GitHub Private Vulnerability Reporting.
+> **Security:** Do not disclose vulnerabilities, exploit details, secrets, private data, real user files, or unredacted logs in a public PR. Follow [`SECURITY.md`](https://github.com/yuanchenglu/oh-my-deepseek-harness/blob/develop/SECURITY.md) and use GitHub Private Vulnerability Reporting.
 
 ## Work ID / Issue
 
@@ -86,7 +86,7 @@ Details / N/A reason:
 - [ ] Evidence document updated.
 - [ ] User-facing documentation matches actual behavior.
 - [ ] Known Limitations updated when applicable.
-- [ ] For release-surface changes, [`docs/release/RELEASE_CHECKLIST.md`](../docs/release/RELEASE_CHECKLIST.md) was reviewed and updated or marked not applicable.
+- [ ] For release-surface changes, [`docs/release/RELEASE_CHECKLIST.md`](https://github.com/yuanchenglu/oh-my-deepseek-harness/blob/develop/docs/release/RELEASE_CHECKLIST.md) was reviewed and updated or marked not applicable.
 
 Evidence path / links:
 
