@@ -1,0 +1,149 @@
+name: Bug report / 缺陷报告
+description: Report a reproducible non-security defect with redacted evidence.
+title: "[BUG] "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Security warning:** do not put vulnerability details, secrets, private data, exploit steps, real user databases, prompts, or unredacted logs here. Use the private channel in `SECURITY.md`.
+
+  - type: input
+    id: work_id
+    attributes:
+      label: Work ID / 工作编号
+      description: Maintainers may assign this after triage. Use the existing Work ID when known.
+      placeholder: "e.g. CTX-001 or Maintainer to assign"
+    validations:
+      required: false
+
+  - type: input
+    id: requirements
+    attributes:
+      label: Requirement IDs / 需求编号
+      description: List affected FR, CR, XF, or contract identifiers; write N/A when unknown.
+      placeholder: "e.g. FR-CONTEXT-009, XF-CTX-001, or N/A"
+    validations:
+      required: true
+
+  - type: input
+    id: tests
+    attributes:
+      label: Test IDs and command / 测试编号与命令
+      description: List the closest TC/pytest node and an exact command; write N/A only when no test exists yet.
+      placeholder: "TC-CTX-003; pytest tests/test_context_integrity_regressions.py -k duplicate -q"
+    validations:
+      required: true
+
+  - type: textarea
+    id: current_behavior
+    attributes:
+      label: Current behavior / 当前行为
+      description: State what happened, including stable error codes and redacted output.
+      placeholder: Describe the observed result.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected_behavior
+    attributes:
+      label: Expected behavior or invariant / 期望行为或不变量
+      description: State the precise postcondition that should hold.
+      placeholder: Describe the expected result.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction / 最小复现
+      description: Use a temporary HOME, DB, dynamic port, fake token, and the smallest deterministic steps.
+      render: shell
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment and artifact identity / 环境与制品身份
+      description: Include commit/tag, artifact hash or install source, OS, Python, Hermes version/source, and relevant configuration with secrets removed.
+      placeholder: |
+        Commit/tag:
+        Artifact/install source:
+        OS:
+        Python:
+        Hermes:
+        Configuration differences:
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Initial severity / 初始严重度
+      description: Select the highest plausible impact; maintainers make the final classification.
+      options:
+        - P0 / Critical — active exploitation, destructive loss, secret/private-data exposure, or release compromise
+        - P1 / High — serious correctness/security failure blocking Beta without waiver
+        - P2 / Medium — limited impact or effective workaround
+        - P3 / Low — minor defect or defense-in-depth
+        - Unknown — needs maintainer triage
+    validations:
+      required: true
+
+  - type: textarea
+    id: data_privacy_security
+    attributes:
+      label: Data, privacy, and security impact / 数据、隐私与安全影响
+      description: State affected data and trust boundary, or write None. Do not include sensitive contents.
+      placeholder: "None, or a redacted impact description."
+    validations:
+      required: true
+
+  - type: textarea
+    id: compatibility_migration
+    attributes:
+      label: Compatibility and migration impact / 兼容与迁移影响
+      description: Note Python/OS/Hermes scope and Config/DB/JSONL/runtime-state impact; write None when not applicable.
+      placeholder: "Compatibility: ...; Migration: ..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: rollback
+    attributes:
+      label: Workaround, rollback, and recovery / 规避、回滚与恢复
+      description: Describe a verified safe workaround or rollback; write None if none is known.
+      placeholder: "Workaround: ...; Rollback: ...; Recovery: ..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Redacted evidence / 脱敏证据
+      description: Include the smallest logs, screenshots, JUnit node, or artifact metadata needed. Replace secrets and private content with placeholders.
+      placeholder: Paste redacted evidence or links to public, non-sensitive artifacts.
+    validations:
+      required: false
+
+  - type: textarea
+    id: out_of_scope
+    attributes:
+      label: Out of scope / 明确不做
+      description: List nearby behavior this report does not ask to change.
+      placeholder: "This report does not request ..."
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: confirmations
+    attributes:
+      label: Confirmations / 确认
+      options:
+        - label: I searched existing Issues and the release plan for the same defect.
+          required: true
+        - label: The reproduction uses no real secrets or private user data.
+          required: true
+        - label: This is not a security vulnerability requiring private disclosure.
+          required: true
