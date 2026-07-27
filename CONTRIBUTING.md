@@ -2,15 +2,15 @@
 
 感谢你考虑为 `oh-my-deepseek-harness` 贡献代码。本仓库处于 Open-source Beta 稳定化周期，当前唯一目标是完成可安装性、数据完整性、安全边界、测试和发布闭环。
 
-> 当前状态：Plan Ready 已通过；M0 正在执行；G0 尚未通过。贡献不得绕过 `docs/roadmap/OPEN_SOURCE_RELEASE_PLAN.md` 与规范性 Errata。
+> 当前状态：Plan Ready 已通过；M0 正在执行；G0 尚未通过。贡献必须遵循 `docs/roadmap/OPEN_SOURCE_RELEASE_PLAN.md` v2.3。
 
 ## 1. 开始前必读 | Required Reading
 
 按顺序阅读：
 
 1. `docs/roadmap/OPEN_SOURCE_RELEASE_PLAN.md`
-2. `docs/roadmap/OPEN_SOURCE_RELEASE_PLAN_ERRATA_2.3.md`
-3. 目标 GitHub Issue 中的 Work ID、依赖、允许文件和验收条件
+2. 目标 Work ID 在 `docs/roadmap/archive/OPEN_SOURCE_RELEASE_PLAN_2.2.md` 中的完整任务条目
+3. 目标 GitHub Issue 中的依赖、允许文件和验收条件
 4. `docs/architecture/TECHNICAL_ARCHITECTURE.md`
 5. `docs/product/PRD.md`
 6. `docs/testing/TEST_PLAN.md`
@@ -85,7 +85,7 @@ env \
 
 | 分支 | 用途 | 规则 |
 |---|---|---|
-| `develop` | 唯一开发集成分支与目标默认分支 | 普通 PR 的唯一目标；不得直接推送业务变更 |
+| `develop` | 唯一开发集成分支与默认分支 | 普通 PR 的唯一目标；不得直接推送业务变更 |
 | `master` | Release Gate 通过后的可发布基线 | 只接收 G3 通过后的 `develop → master` RC PR |
 | `fix/<scope>` | P0/P1 修复 | 从 `develop` 创建，PR 回 `develop` |
 | `test/<scope>` | 测试基础设施或回归规格 | 从 `develop` 创建，PR 回 `develop` |
