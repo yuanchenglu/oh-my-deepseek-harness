@@ -1,13 +1,13 @@
 name: deepseek-harness
-version: 2.2.0
-description: 数字分身插件 v2.2。实现 13 个创新设计模式（I-01~I-13，I-14 已移除）+ I-17 推理提示路由 + I-18 时效注入 + 9 个注册工具（I-06/I-11/I-12）。
+version: 3.0.0-beta.1
+description: Open-source Beta 稳定化清单。当前运行时注册 9 个工具；Beta 目标第 10 个 memory_store 由后续 Contract/Memory Work ID 实现。
 author: yuanchenglu
 
 # 依赖声明：Context Engine Plugin（软依赖，不强制）
 depends_on:
   context_engine: deepseek-context
 
-# 暴露给 LLM 的工具列表（通过 ctx.register_tool 注册）
+# 当前运行时暴露给 LLM 的 9 个工具（Beta 目标为 10 个）
 provides_tools:
   - plan_create
   - plan_update_step

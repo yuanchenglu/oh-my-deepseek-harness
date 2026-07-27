@@ -7,6 +7,23 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ---
 
+## [Unreleased]
+
+Planned release identity: Git/GitHub `v3.0.0-beta.1`, Python distribution `3.0.0b1`, Plugin manifests `3.0.0-beta.1`.
+
+### Changed
+
+- Unified the coordinated distribution and plugin version semantics for the Open-source Beta stabilization cycle.
+- Limited declared Python support to `>=3.10,<3.13`, matching the tested Python 3.10–3.12 matrix.
+- Added a permanent regression test for the PEP 440 ↔ Plugin SemVer mapping.
+
+### Notes
+
+- This entry does not mean a Beta package, tag, or GitHub Release has been published.
+- Historical `v1.0.0` and `v2.0.0` records remain unchanged.
+
+---
+
 ## [v2.0.0] - 2026-07-16
 
 Major restructure from v1.0.0 with 4-layer architecture (Hermes Plugin + Context Engine + MCP Microservices + Platform Core) and 14 innovation patterns (I-01 through I-14) fully implemented.
@@ -117,5 +134,6 @@ d05be4a feat(plugin): implement gate.py with pre_llm_call cognitive gate
 
 ---
 
+[Unreleased]: https://github.com/yuanchenglu/oh-my-deepseek-harness/compare/v2.0.0...HEAD
 [v2.0.0]: https://github.com/yuanchenglu/oh-my-deepseek-harness/releases/tag/v2.0.0
 [v1.0.0]: https://github.com/yuanchenglu/oh-my-deepseek-harness/releases/tag/v1.0.0

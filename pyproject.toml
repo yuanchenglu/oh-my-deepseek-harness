@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "oh-my-deepseek-harness"
-version = "2.0.0"
+version = "3.0.0b1"
 description = "DeepSeek 深度优化插件 -- 14 项物理特性全激发"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.10,<3.13"
 license = {text = "MIT"}
 authors = [{name = "yuanchenglu"}]
 

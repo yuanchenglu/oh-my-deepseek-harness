@@ -119,13 +119,30 @@ def test_runtime_dependencies_include_openai() -> None:
     assert re.search(r'["\']openai(?:[<>=!~].*)?["\']', pyproject)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="已知缺陷：根包、Harness 插件、Context 插件版本号不一致",
-)
+def _manifest_version_from_python(python_version: str) -> str:
+    """Map PEP 440 prerelease syntax to the plugin manifest SemVer syntax."""
+    beta_match = re.fullmatch(r"(\d+)\.(\d+)\.(\d+)b(\d+)", python_version)
+    if beta_match:
+        major, minor, patch, beta = beta_match.groups()
+        return f"{major}.{minor}.{patch}-beta.{beta}"
+
+    if re.fullmatch(r"\d+\.\d+\.\d+", python_version):
+        return python_version
+
+    raise AssertionError(f"unsupported release version syntax: {python_version}")
+
+
 def test_project_versions_are_consistent() -> None:
     pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
-    root_version = re.search(r'^version\s*=\s*["\']([^"\']+)', pyproject, re.MULTILINE).group(1)
+    root_version_match = re.search(r'^version\s*=\s*["\']([^"\']+)', pyproject, re.MULTILINE)
+    requires_python_match = re.search(
+        r'^requires-python\s*=\s*["\']([^"\']+)', pyproject, re.MULTILINE
+    )
+    assert root_version_match is not None
+    assert requires_python_match is not None
+
+    root_version = root_version_match.group(1)
+    expected_manifest_version = _manifest_version_from_python(root_version)
 
     harness = yaml.safe_load(
         (ROOT / "plugins" / "deepseek-harness" / "plugin.yaml").read_text(encoding="utf-8")
@@ -134,7 +151,11 @@ def test_project_versions_are_consistent() -> None:
         (ROOT / "plugins" / "deepseek-context" / "plugin.yaml").read_text(encoding="utf-8")
     )
 
-    assert root_version == str(harness["version"]) == str(context["version"])
+    assert root_version == "3.0.0b1"
+    assert expected_manifest_version == "3.0.0-beta.1"
+    assert str(harness["version"]) == expected_manifest_version
+    assert str(context["version"]) == expected_manifest_version
+    assert requires_python_match.group(1) == ">=3.10,<3.13"
 
 
 @pytest.mark.xfail(

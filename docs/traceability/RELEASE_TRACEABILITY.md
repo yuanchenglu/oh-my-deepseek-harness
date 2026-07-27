@@ -4,4 +4,5 @@
 
 | Work ID | Requirement / Contract | Test | Issue | PR | Commit | Evidence | Status |
 |---|---|---|---|---|---|---|---|
-| `REL-000` | 版本、Tool、CLI、路径、安全默认值、支持范围、RC/Tag 顺序 | 100 Test ID 规格唯一性与冲突搜索 | #3 | #4 | Squash merge 后回填 | [`REL-000.md`](../testing/evidence/REL-000.md) | In Review |
+| `REL-000` | 版本、Tool、CLI、路径、安全默认值、支持范围、RC/Tag 顺序 | 100 Test ID 规格唯一性与冲突搜索 | #3 | #4 | `e18db7e` | [`REL-000.md`](../testing/evidence/REL-000.md) | Complete |
+| `REL-001` | Python/Plugin/Git 版本映射与 Python 支持范围 | `test_project_versions_are_consistent` | #5 | 待创建 | 待合入 | [`REL-001.md`](../testing/evidence/REL-001.md) | In Progress |
