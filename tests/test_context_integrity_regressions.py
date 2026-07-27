@@ -40,10 +40,12 @@ def _fix_boundaries(monkeypatch: pytest.MonkeyPatch, engine: DeepSeekContextEngi
         "prune_old_tool_results",
         lambda messages, **kwargs: (messages, 0),
     )
+    # Force compress_start=2 and compress_end=4. With the message roles above,
+    # the summary must merge into the first tail message, exercising _merge=True.
     monkeypatch.setattr(
         engine._compressor,
         "align_boundary_forward",
-        lambda messages, start: start,
+        lambda messages, start: 2,
     )
     monkeypatch.setattr(
         engine._compressor,
