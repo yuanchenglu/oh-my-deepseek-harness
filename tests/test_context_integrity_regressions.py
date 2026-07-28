@@ -1,9 +1,11 @@
 """Context Engine 数据完整性回归测试。
 
-这些用例记录 Code Review 中已确认、尚未修复的缺陷。使用 strict xfail：
+尚未修复的缺陷继续使用 strict xfail：
 - 当前缺陷存在时，测试记为 XFAIL，CI 可继续提供完整基线；
 - 缺陷被修复后，用例会 XPASS 并使 CI 失败，提醒维护者移除 xfail 标记，
   将其转为永久回归测试。
+
+已进入 canonical Work ID 修复的用例必须移除 xfail，先成为普通失败测试。
 """
 
 from __future__ import annotations
@@ -29,8 +31,8 @@ def _messages() -> list[dict]:
         {"role": "user", "content": "head-user"},
         {"role": "assistant", "content": "middle-assistant"},
         {"role": "user", "content": "middle-user"},
-        {"role": "assistant", "content": "tail-a"},
-        {"role": "user", "content": "tail-b"},
+        {"id": "tail-a-id", "role": "assistant", "content": "tail-a"},
+        {"id": "tail-b-id", "role": "user", "content": "tail-b"},
     ]
 
 
@@ -59,20 +61,20 @@ def _fix_boundaries(monkeypatch: pytest.MonkeyPatch, engine: DeepSeekContextEngi
     )
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="已知缺陷：摘要与首条尾消息合并时，尾部消息被追加两次",
-)
 def test_merge_path_does_not_duplicate_tail_messages(monkeypatch: pytest.MonkeyPatch) -> None:
+    """TC-CTX-003: every protected tail ID appears exactly once, in source order."""
     engine = _engine()
     _fix_boundaries(monkeypatch, engine)
     monkeypatch.setattr(engine._compressor, "generate_summary", lambda turns: "SUMMARY")
 
     result = engine.compress(_messages(), current_tokens=8_000)
-    contents = [m.get("content") for m in result]
+    tail_ids = [message.get("id") for message in result if message.get("id")]
+    contents = [message.get("content") for message in result]
 
-    assert contents.count("tail-a") == 1
-    assert contents.count("tail-b") == 1
+    assert tail_ids == ["tail-a-id", "tail-b-id"]
+    assert len(tail_ids) == len(set(tail_ids))
+    assert sum("tail-a" in str(content) for content in contents) == 1
+    assert sum("tail-b" in str(content) for content in contents) == 1
 
 
 @pytest.mark.xfail(
@@ -105,4 +107,4 @@ def test_hard_constraint_message_survives_verbatim(monkeypatch: pytest.MonkeyPat
 
     result = engine.compress(messages, current_tokens=8_000)
 
-    assert any(m.get("content") == constraint for m in result)
+    assert any(message.get("content") == constraint for message in result)
