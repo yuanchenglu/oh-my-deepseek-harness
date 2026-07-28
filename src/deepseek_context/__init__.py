@@ -42,7 +42,7 @@ except ModuleNotFoundError as exc:
         _created_context_engine = True
 
 try:
-    from ._engine import DeepSeekContextEngine
+    from ._public_engine import DeepSeekContextEngine
 finally:
     if _created_context_engine:
         sys.modules.pop("agent.context_engine", None)
