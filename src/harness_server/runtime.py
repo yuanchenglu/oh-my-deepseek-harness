@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import shlex
 import stat
 import subprocess
 import sys
@@ -12,7 +13,7 @@ import tempfile
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Iterator
+from typing import Any
 
 from .config import (
     ENV_DB_PATH,
@@ -22,12 +23,24 @@ from .config import (
     ENV_PORT,
 )
 
-STATE_SCHEMA_VERSION = 1
+STATE_SCHEMA_VERSION = 2
 DEFAULT_DATA_ROOT = "~/.hermes/oh-my-deepseek-harness"
 
 
 class RuntimeStateError(RuntimeError):
     """Runtime state is missing required fields or contains invalid data."""
+
+
+def _enforce_mode(path: Path, mode: int) -> None:
+    """Apply and verify private POSIX permissions; Windows ACL work is deferred."""
+    if os.name == "nt":  # pragma: no cover - Windows release matrix is later work
+        return
+    path.chmod(mode)
+    actual = stat.S_IMODE(path.stat().st_mode)
+    if actual != mode:
+        raise PermissionError(
+            f"failed to apply private permissions to {path}: {oct(actual)} != {oct(mode)}"
+        )
 
 
 @dataclass(frozen=True)
@@ -56,10 +69,7 @@ class RuntimePaths:
     def ensure(self) -> None:
         for directory in (self.data_root, self.runtime_dir, self.logs_dir):
             directory.mkdir(parents=True, exist_ok=True)
-            try:
-                directory.chmod(0o700)
-            except OSError:
-                pass
+            _enforce_mode(directory, 0o700)
 
 
 @dataclass(frozen=True)
@@ -67,6 +77,7 @@ class RuntimeState:
     schema_version: int
     instance_id: str
     pid: int
+    process_start_token: str
     host: str
     port: int
     version: str
@@ -85,11 +96,16 @@ class RuntimeState:
         version: str,
         log_path: str,
         db_path: str,
+        start_token: str | None = None,
     ) -> "RuntimeState":
+        identity = start_token or process_start_token(pid)
+        if not identity:
+            raise RuntimeStateError("could not determine process start identity")
         return cls(
             schema_version=STATE_SCHEMA_VERSION,
             instance_id=instance_id,
             pid=int(pid),
+            process_start_token=identity,
             host=host,
             port=int(port),
             version=version,
@@ -105,6 +121,7 @@ class RuntimeState:
                 schema_version=int(payload["schema_version"]),
                 instance_id=str(payload["instance_id"]),
                 pid=int(payload["pid"]),
+                process_start_token=str(payload["process_start_token"]),
                 host=str(payload["host"]),
                 port=int(payload["port"]),
                 version=str(payload["version"]),
@@ -118,12 +135,17 @@ class RuntimeState:
             raise RuntimeStateError(
                 f"unsupported runtime state schema: {state.schema_version}"
             )
-        if not state.instance_id or state.pid <= 0 or not 1 <= state.port <= 65535:
+        if (
+            not state.instance_id
+            or state.pid <= 0
+            or not state.process_start_token
+            or not 1 <= state.port <= 65535
+        ):
             raise RuntimeStateError("runtime state values are invalid")
         return state
 
     def public_dict(self) -> dict[str, Any]:
-        """Return non-sensitive status fields; DB path is intentionally excluded."""
+        """Return non-sensitive status fields; DB path and identity are excluded."""
         return {
             "schema_version": self.schema_version,
             "instance_id": self.instance_id,
@@ -164,10 +186,7 @@ def write_state(paths: RuntimePaths, state: RuntimeState) -> None:
             handle.flush()
             os.fsync(handle.fileno())
         os.replace(temporary_path, paths.state_file)
-        try:
-            paths.state_file.chmod(0o600)
-        except OSError:
-            pass
+        _enforce_mode(paths.state_file, 0o600)
     except Exception:
         try:
             os.close(file_descriptor)
@@ -191,10 +210,7 @@ class ProcessLock:
     def __enter__(self) -> "ProcessLock":
         self.paths.ensure()
         self._handle = self.paths.lock_file.open("a+b")
-        try:
-            self.paths.lock_file.chmod(0o600)
-        except OSError:
-            pass
+        _enforce_mode(self.paths.lock_file, 0o600)
         if os.name == "nt":  # pragma: no cover - Windows release matrix is later work
             import msvcrt
 
@@ -237,20 +253,21 @@ def pid_is_alive(pid: int) -> bool:
     return True
 
 
-def process_command(pid: int) -> str | None:
-    proc_cmdline = Path(f"/proc/{pid}/cmdline")
-    if proc_cmdline.is_file():
+def process_start_token(pid: int) -> str | None:
+    """Return an OS process-start identity that changes when a PID is reused."""
+    proc_stat = Path(f"/proc/{pid}/stat")
+    if proc_stat.is_file():
         try:
-            return proc_cmdline.read_bytes().replace(b"\0", b" ").decode(
-                "utf-8", errors="replace"
-            )
-        except OSError:
+            fields_after_comm = proc_stat.read_text(encoding="utf-8").rsplit(")", 1)[1]
+            fields = fields_after_comm.strip().split()
+            return f"linux:{fields[19]}"
+        except (IndexError, OSError):
             return None
 
     if os.name != "nt":
         try:
             completed = subprocess.run(
-                ["ps", "-p", str(pid), "-o", "command="],
+                ["ps", "-ww", "-p", str(pid), "-o", "lstart="],
                 check=False,
                 text=True,
                 stdout=subprocess.PIPE,
@@ -260,24 +277,62 @@ def process_command(pid: int) -> str | None:
         except (OSError, subprocess.TimeoutExpired):
             return None
         if completed.returncode == 0:
-            return completed.stdout.strip() or None
+            rendered = completed.stdout.strip()
+            return f"ps:{rendered}" if rendered else None
+    return None
+
+
+def process_arguments(pid: int) -> tuple[str, ...] | None:
+    """Read process argv without relying on substring matching."""
+    proc_cmdline = Path(f"/proc/{pid}/cmdline")
+    if proc_cmdline.is_file():
+        try:
+            arguments = [
+                item.decode("utf-8", errors="replace")
+                for item in proc_cmdline.read_bytes().split(b"\0")
+                if item
+            ]
+            return tuple(arguments) or None
+        except OSError:
+            return None
+
+    if os.name != "nt":
+        try:
+            completed = subprocess.run(
+                ["ps", "-ww", "-p", str(pid), "-o", "command="],
+                check=False,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.DEVNULL,
+                timeout=2,
+            )
+        except (OSError, subprocess.TimeoutExpired):
+            return None
+        if completed.returncode == 0 and completed.stdout.strip():
+            try:
+                return tuple(shlex.split(completed.stdout.strip()))
+            except ValueError:
+                return None
     return None
 
 
 def process_is_owned(state: RuntimeState) -> bool:
     if not pid_is_alive(state.pid):
         return False
-    command = process_command(state.pid)
-    if not command:
+    if process_start_token(state.pid) != state.process_start_token:
         return False
-    return all(
-        marker in command
-        for marker in (
-            "harness_server.runtime",
-            "child",
-            state.instance_id,
-        )
+    arguments = process_arguments(state.pid)
+    if not arguments:
+        return False
+    expected = (
+        "-m",
+        "harness_server.runtime",
+        "child",
+        "--instance-id",
+        state.instance_id,
     )
+    width = len(expected)
+    return any(arguments[index : index + width] == expected for index in range(len(arguments)))
 
 
 def file_mode(path: Path) -> int:
