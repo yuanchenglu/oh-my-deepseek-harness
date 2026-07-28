@@ -4,9 +4,9 @@
 >
 > 审查基线：`develop@37e4016`
 >
-> 当前已合并实施基线：`develop@31366ceb1cb1ff375496bed2cdaf504ac11763ae`
+> 当前已合并实施基线：`develop@f1c04697fcb43e1862cf9d5d4c6ddfa465b4c44b`
 >
-> 当前远程工作分支：`feat/run-002-supervisor@5e0e9eaf11da28a0b181981b8c4ebd30b26d199e`
+> 最新完成 Work ID：`RUN-002`（PR #65 / Squash `f1c04697`）
 >
 > 计划状态：`IN_IMPLEMENTATION`
 >
@@ -34,7 +34,7 @@
 4. v2.2 归档中的未修改任务细节；
 5. 历史测试报告，仅作为不可变历史证据。
 
-当旧文档只写“Python 3.10–3.12”而未区分运行层级时，解释为包级/纯模块 CI；完整 Hermes v0.19.0 集成支持仅为 Python 3.11–3.12。不得把 Python 3.10 的包级绿色 CI描述为真实 Hermes E2E 通过。
+当旧文档只写“Python 3.10–3.12”而未区分运行层级时，解释为包级/纯模块 CI；完整 Hermes v0.19.0 集成支持仅为 Python 3.11–3.12。不得把 Python 3.10 的包级绿色 CI 描述为真实 Hermes E2E 通过。
 
 ## 更新记录（Update Log）
 
@@ -43,13 +43,13 @@
 | 2026-07-27 | 1.0–2.2 | 建立并严格化 48 Work ID、88 FR、17 CR、100 Test ID、Gate、Migration、Security 和 Release 基线 |
 | 2026-07-28 | 2.3 | 合并 Errata，归档 v2.2 全量账本，修正 RC/Tag、Tool 分母、XFAIL 和 BETA-003 |
 | 2026-07-28 | 2.3.1–2.3.3 | 完成治理/追踪并固定 Hermes v0.19.0、Python 支持分层和 COMPAT-001 矩阵 |
-| 2026-07-28 | 2.3.4 | 记录 G0 PASS、PKG-001/002、RUN-001 完成和 RUN-002 WIP；更新整体进度、下一步和跨会话交接 |
+| 2026-07-28 | 2.3.4 | 记录 G0 PASS、PKG-001/002、RUN-001/RUN-002 完成；同步整体进度、下一项和跨会话交接 |
 
 ## 1. 当前结论与整体进度
 
 ### 1.1 发布判断
 
-当前产品仍是 **Experimental Preview**，尚未达到 Public Beta 或 Stable。G0、包布局、依赖分层和 App Factory 完成，只证明实施基线成立；Installer、Doctor、Context Integrity、Session Isolation、10 Tool Contract、Migration、安全强化、真实 Hermes E2E 和最终 Release Artifact 仍未完成。
+当前产品仍是 **Experimental Preview**，尚未达到 Public Beta 或 Stable。G0、包布局、依赖分层、App Factory 和本地单进程 Supervisor 完成，只证明 M1 的前四项已建立；Installer、Doctor、Context Integrity、Session Isolation、10 Tool Contract、Migration、安全强化、真实 Hermes E2E 和最终 Release Artifact 仍未完成。
 
 ### 1.2 任务账本进度
 
@@ -57,8 +57,8 @@
 
 | 状态 | 数量 | 比例 |
 |---|---:|---:|
-| Complete | 11 | 22.9% |
-| In progress | 1 | 2.1% |
+| Complete | 12 | 25.0% |
+| In progress | 0 | 0.0% |
 | Not started / dependency blocked | 36 | 75.0% |
 | Total | 48 | 100% |
 
@@ -69,8 +69,8 @@
 | Gate | 状态 | 说明 |
 |---|---|---|
 | Plan Ready | PASS | 48 Issue、88 FR、17 CR、100 Test ID 和执行协议已固定 |
-| G0 | PASS | 治理、版本、发布渠道、Hermes 候选和实施基线已完成 |
-| G1 | NOT_EVALUATED | M1 尚有 RUN-002、INS-001/002/003、QA-ART-001 未完成 |
+| G0 | PASS | 治理、版本、发布渠道、Hermes 候选和实施基线已完成；G0 does not claim product release readiness |
+| G1 | NOT_EVALUATED | M1 尚有 INS-001/002/003、QA-ART-001 未完成 |
 | G2–G5 | NOT_STARTED | 必须按硬依赖串行推进 |
 
 ## 2. 已完成的 M0 / G0
@@ -102,26 +102,40 @@ PKG-001 → PKG-002 → RUN-001 → RUN-002 → INS-001 → INS-002 → INS-003 
 | `PKG-001` | #18 | Complete | PR #62 · `2098dffc` | 唯一 `src/` 生产实现；wheel/外部导入通过 |
 | `PKG-002` | #19 | Complete | PR #63 · `ae277d1d` | base/context/server/all/dev Extras；关闭 `XF-DEPS-001` |
 | `RUN-001` | #20 | Complete | PR #64 · `31366ceb` | 无副作用 App Factory；health/ready/version；真实子进程 |
-| `RUN-002` | #21 | **In progress** | branch `feat/run-002-supervisor` · WIP `5e0e9eaf` | 完成审计、测试、CI 和 PR 收口 |
-| `INS-001` | #22 | Blocked | — | 仅在 RUN-002 合并完成后启动 |
+| `RUN-002` | #21 | **Complete** | PR #65 · Squash `f1c04697` · [`RUN-002.md`](../testing/evidence/RUN-002.md) | 安全本地 Supervisor、CLI、状态、ownership、日志和进程 E2E |
+| `INS-001` | #22 | **Open — eligible** | — | 依赖已满足；尚未启动 |
 | `INS-002` | #23 | Blocked | — | 依赖 INS-001 |
 | `INS-003` | #24 | Blocked | — | 依赖 INS-002 |
 | `QA-ART-001` | #25 | Blocked | — | 依赖 INS-003；完成后生成 G1 Evidence |
 
-M1 当前为 **3/8 Complete、1/8 In progress、4/8 Blocked**。G1 不得提前判定。
+M1 当前为 **4/8 Complete、0/8 In progress、1/8 Open eligible、3/8 Blocked**。G1 不得提前判定。
 
-## 4. RUN-002 当前远程保存状态
+## 4. RUN-002 完成证据
 
-远程分支 `feat/run-002-supervisor` 已保存以下 WIP：
+RUN-002 已通过 protected feature branch → PR → Required CI → Squash Merge 流程完成：
 
-- `src/harness_server/runtime.py`：数据根、0700/0600 权限、原子 state、跨进程 lock、PID/instance ownership；
-- `src/harness_server/supervisor.py`：start/status/stop/restart、端口和 probe 验证、日志、foreign PID 拒绝；
-- `src/deepseek_harness/cli.py`：`deepseek-harness server start|status|stop|restart` 和 JSON 输出；
-- `src/deepseek_harness/tools.py`：Hermes Tool 自动启动统一使用 Supervisor；
-- `pyproject.toml`：console script；
-- `tests/test_server_process.py`：并发 start、restart、幂等 stop、foreign PID、端口占用、权限和日志测试。
+- Final PR head：`094c4c56f7d75d96ce6aed17132729b4196ed9d5`；
+- PR #65：Ready 后 Squash Merge；
+- Squash Commit：`f1c04697fcb43e1862cf9d5d4c6ddfa465b4c44b`；
+- Issue #21：Closed / completed；
+- Final Required CI：Run #108 / ID `30330735858`；
+- Duplicate same-head CI：Run #109 / ID `30330754105`；
+- Python 3.10/3.11/3.12：每版本 200 tests、0 failures、0 errors、10 个既有 strict XFAIL。
 
-该提交是 **WIP 保存点，不代表 RUN-002 已通过 CI 或完成**。新会话必须先审查差异、运行 Required CI、修复失败并补齐 Evidence，再决定是否合入 develop。
+核心验收：
+
+- CLI 与 Tool 自动启动共享唯一 Supervisor；
+- 两个独立 CLI 并发 start 只产生一个 PID；
+- ownership 使用 PID、随机 instance ID、OS process-start token 和精确 argv；
+- PID reuse、foreign PID、marker spoof、SIGTERM→SIGKILL 竞争均 fail-closed；
+- stale/corrupt/failed-start state 安全处理；
+- state 原子写入，POSIX 目录/文件权限为 0700/0600；
+- stdout/stderr 写入用户可访问日志；
+- 外部 wheel 安装、导入和 console script 契约通过；
+- 测试只使用临时 HOME、DB、data root、port，不使用真实 Secret；
+- Windows 未支持的 process matrix 明确 skip，未伪装通过。
+
+该完成证据仍不表示 G1、Public Beta、master 或 publication ready。
 
 ## 5. 固定发布契约
 
@@ -160,7 +174,7 @@ Beta 目标为 10 个 Tool，当前 Runtime 为 9 个；`memory_store` 只能由
 
 - `XF-RELEASE-001`：已由 REL-001 修复；
 - `XF-DEPS-001`：已由 PKG-002 修复并删除 strict XFAIL；
-- RUN-001 最终完整套件为 189 tests、0 failures、0 errors、10 个既有 strict XFAIL；
+- RUN-002 最终完整套件为每版本 200 tests、0 failures、0 errors、10 个既有 strict XFAIL；
 - 其余 XFAIL 必须由各自 canonical Work ID 修复，不得重命名、复制或弱化。
 
 ## 7. 分支、CI 与执行协议
@@ -191,9 +205,9 @@ M6 → G5 → v3.0.0
 
 ## 9. 当前下一步
 
-1. 在 `feat/run-002-supervisor` 上审查 WIP Commit `5e0e9eaf`；
-2. 验证 Supervisor 不会误杀 foreign/PID-reuse 进程，重复 start 只有一个 PID，stop 幂等，stderr/log 可访问；
-3. 运行 Python 3.10/3.11/3.12 Required CI，并修复真实失败；
-4. 补齐 `docs/testing/evidence/RUN-002.md`、Traceability 和 PR 描述；
-5. RUN-002 合并并关闭 Issue #21 后，才启动 `INS-001` #22；
+1. RUN-002 保持 Closed，不并行回开实现范围；
+2. 下一项唯一可启动 Work ID 为 `INS-001` #22；
+3. INS-001 必须从当前 `develop` 新建专用功能分支，先读取 Issue #22、Installer/Plugin/Security 契约和 `TC-INSTALL-001–003`；
+4. 实现 dry-run、clean install 和 idempotent install，只使用临时 HOME/data/port/fake secrets；
+5. 不越界实施 Doctor、Upgrade、Uninstall、pip self-management 或 package layout；
 6. 不合入 master，不创建 Tag/Release/PyPI，不提前声明 G1/Public Beta。
