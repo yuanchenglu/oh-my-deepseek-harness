@@ -1,15 +1,17 @@
 # Open-source Release Traceability
 
-- Normative plan: [`OPEN_SOURCE_RELEASE_PLAN.md`](../roadmap/OPEN_SOURCE_RELEASE_PLAN.md) v2.3.6
+- Normative plan: [`OPEN_SOURCE_RELEASE_PLAN.md`](../roadmap/OPEN_SOURCE_RELEASE_PLAN.md) v2.3.7
 - Complete task ledger: [`OPEN_SOURCE_RELEASE_PLAN_2.2.md`](../roadmap/archive/OPEN_SOURCE_RELEASE_PLAN_2.2.md)
 - Test ownership source: [`TEST_PLAN.md`](../testing/TEST_PLAN.md)
 - Last synchronized: 2026-07-29
 - Fixed scope: **48 Work IDs · 48 unique GitHub Issues · 88 FR IDs · 17 CR IDs · 100 Test IDs**
-- Current Gate: **G1 FAIL**
+- Current Gate: **G1 PASS**
 - Gate evidence: [`GATE-G1.md`](../testing/evidence/GATE-G1.md)
-- Gate PR: #77
+- Initial Gate PR: #77
+- Remediation PR: #78
+- PASS re-evaluation PR: #79
 
-> 一个 Work ID 只有一个 canonical Issue。G1 FAIL 不创建第 49 个 Work ID；缺口回收到原 canonical owner `QA-ART-001` #25。M2 在 G1 PASS 前保持阻塞。
+> 一个 Work ID 只有一个 canonical Issue。G1 初评失败回收到原 owner `QA-ART-001` #25，并由 PR #78 完成 remediation；没有创建第 49 个 Work ID。G1 PASS 后按单任务纪律先执行 `CTX-001` #26。
 
 ## 1. Work ID → Issue → Delivery
 
@@ -30,12 +32,12 @@
 | M1 | `INS-001` | RUN-002 | install dry-run/transaction/idempotence | #22 | PR #68 · `2e5438a7` · `INS-001.md` | Complete |
 | M1 | `INS-002` | INS-001 | read-only Doctor、support matrix | #23 | PR #70 · `d1d3269d` · `INS-002.md` | Complete |
 | M1 | `INS-003` | INS-002 | upgrade/recover/uninstall/purge safety | #24 | PR #72 · `9e5295ac` · `INS-003.md` | Complete |
-| M1 | `QA-ART-001` | INS-003 | final artifact source isolation；G1 artifact owner | #25 | PR #74 · `7adbb0cb` · `QA-ART-001.md` | Complete implementation；**reopen for sdist/twine remediation** |
-| M2 | `CTX-001` | G1 | `CR-P0-002`；`TC-CTX-003` | #26 | `CTX-001.md` when executed | Blocked by G1 |
-| M2 | `CTX-002` | CTX-001 | `CR-P0-003`；`TC-CTX-004–006` | #27 | `CTX-002.md` when executed | Blocked |
-| M2 | `CTX-003` | CTX-002 | `CR-P0-004`；`TC-CTX-007–009/014` | #28 | `CTX-003.md` when executed | Blocked |
-| M2 | `CTX-004` | CTX-003 | compression/rollback invariants | #29 | `CTX-004.md` when executed | Blocked |
-| M2 | `SES-001` | G1 + PKG-001 | `CR-P0-005`；`TC-POLICY-001–005` | #30 | `SES-001.md` when executed | Blocked by G1 |
+| M1 | `QA-ART-001` | INS-003 | final wheel+sdist source isolation；G1 artifact owner | #25 | PR #74 · `7adbb0cb`; remediation PR #78 · `5ebb3a0c` · `QA-ART-001.md` | Complete |
+| M2 | `CTX-001` | G1 | `CR-P0-002`；`TC-CTX-003` | #26 | `CTX-001.md` when executed | **Next serial task** |
+| M2 | `CTX-002` | CTX-001 | `CR-P0-003`；`TC-CTX-004–006` | #27 | `CTX-002.md` when executed | Queued |
+| M2 | `CTX-003` | CTX-002 | `CR-P0-004`；`TC-CTX-007–009/014` | #28 | `CTX-003.md` when executed | Queued |
+| M2 | `CTX-004` | CTX-003 | compression/rollback invariants | #29 | `CTX-004.md` when executed | Queued |
+| M2 | `SES-001` | G1 + PKG-001 | `CR-P0-005`；`TC-POLICY-001–005` | #30 | `SES-001.md` when executed | Dependency satisfied; serially queued |
 | M2 | `PRIV-001` | CTX-003 + SES-001 | redaction/outbound/log privacy | #31 | `PRIV-001.md` when executed | Blocked |
 | M3 | `CON-001` | G2 + PKG-001 | 10 Tool generated contract；`TC-CONTRACT-001–010` | #32 | `CON-001.md` when executed | Blocked |
 | M3 | `MEM-001` | CON-001 | Memory store/query/dedup | #33 | `MEM-001.md` when executed | Blocked |
@@ -121,9 +123,9 @@ The G0 contract verifies exactly 48 unique canonical Issue URLs in this section:
 
 | Gate clause | Current evidence | Result | Canonical owner |
 |---|---|---|---|
-| clean snapshot wheel + sdist | wheel built and lifecycle-tested；sdist absent | **FAIL** | `QA-ART-001` #25 |
-| `python -m twine check dist/*` | no Required evidence | **FAIL** | `QA-ART-001` #25 |
-| wheel package data | 39-file inventory / resources verified | PASS | closed by M1 |
+| clean snapshot wheel + sdist | PR #78 builds both from one snapshot; SHA256 + inventories | PASS | `QA-ART-001` #25 closed |
+| `python -m twine check dist/*` | Run #183/#184 checks wheel+sdist in all Required jobs | PASS | `QA-ART-001` #25 closed |
+| wheel package data | 39-file wheel inventory / resources | PASS | closed by M1 |
 | external public imports | non-editable venv / outside cwd / empty PYTHONPATH | PASS | closed by M1 |
 | no source symlink/path dependency | module origin and sys.path assertions | PASS | closed by M1 |
 | Console Server lifecycle | CLI/Supervisor/install/uninstall E2E | PASS | closed by M1 |
@@ -132,7 +134,7 @@ The G0 contract verifies exactly 48 unique canonical Issue URLs in this section:
 | repeat/port/interruption/data preservation | INS-001–003 Required evidence | PASS | closed by M1 |
 | no real `~/.hermes` access | isolated HOME/data/DB/port/fake secret | PASS | closed by M1 |
 
-G1 conclusion: **FAIL (8 PASS / 2 FAIL / 0 BLOCKED)**.
+G1 conclusion: **PASS (10 PASS / 0 FAIL / 0 BLOCKED)**.
 
 ## 3. Requirement-domain ownership — 88 FR IDs
 
@@ -156,8 +158,8 @@ G1 conclusion: **FAIL (8 PASS / 2 FAIL / 0 BLOCKED)**.
 
 | CR ID | Primary owner | Gate / state |
 |---|---|---|
-| `CR-P0-001` Server install/start invalid | PKG-001；关联 PKG-002、RUN-001/002、INS-001–003、QA-ART-001 | G1 implementation closed；artifact remediation remains |
-| `CR-P0-002` duplicate tail | CTX-001 | G2 open |
+| `CR-P0-001` Server install/start invalid | PKG-001；关联 PKG-002、RUN-001/002、INS-001–003、QA-ART-001 | Complete / G1 closed |
+| `CR-P0-002` duplicate tail | CTX-001 | G2 open / next |
 | `CR-P0-003` Summary failure loses history | CTX-002 | G2 open |
 | `CR-P0-004` hard constraint not verbatim | CTX-003 | G2 open |
 | `CR-P0-005` cross-Session contamination | SES-001 | G2 open |
@@ -171,14 +173,14 @@ G1 conclusion: **FAIL (8 PASS / 2 FAIL / 0 BLOCKED)**.
 | `CR-P2-001` Skill naming mismatch | DOC-001 | G3 open |
 | `CR-P2-002` version mismatch | REL-001 | Complete |
 | `CR-P2-003` CI only pytest | QA-001/QA-002 | G3 open |
-| `CR-P2-004` tests touch real HOME | QA-ART-001；关联 QA-001 | G1/G3 implementation protected |
+| `CR-P2-004` tests touch real HOME | QA-ART-001；关联 QA-001 | G1 protected; G3 continues |
 | `CR-P2-005` README over-promises | DOC-001/DOC-002 | G3 open |
 
 ## 5. Canonical strict-XFAIL ownership
 
 | XF ID / test family | Exact owner | State |
 |---|---|---|
-| `XF-CTX-001` | CTX-001 #26 | Open |
+| `XF-CTX-001` | CTX-001 #26 | Next to close |
 | `XF-CTX-002` | CTX-002 #27 | Open |
 | `XF-CTX-003` | CTX-003 #28 | Open |
 | `XF-POLICY-001` | SES-001 #30 | Open |
@@ -226,9 +228,9 @@ Current suite has 9 strict XFAIL tests and no orphan owner.
 
 ```text
 M0 → G0 PASS
-M1 8/8 → G1 evaluation FAIL
-G1 FAIL → QA-ART-001 #25 remediation → independent G1 re-evaluation
-G1 PASS → M2 → G2
+M1 8/8 → G1 initial FAIL
+G1 initial FAIL → QA-ART-001 #25 remediation → G1 PASS
+G1 PASS → CTX-001 → CTX-002 → CTX-003 → CTX-004 → SES-001 → PRIV-001 → G2
 G2 PASS → M3
 M2 + M3 → M4 → G3
 G3 → exact-master verification → BETA-001

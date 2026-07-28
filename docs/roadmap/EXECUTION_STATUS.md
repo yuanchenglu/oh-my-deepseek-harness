@@ -1,17 +1,18 @@
 # Open-source Release Execution Status
 
 - Status date: 2026-07-29
-- Normative contract: [`OPEN_SOURCE_RELEASE_PLAN.md`](OPEN_SOURCE_RELEASE_PLAN.md) v2.3.6
+- Normative contract: [`OPEN_SOURCE_RELEASE_PLAN.md`](OPEN_SOURCE_RELEASE_PLAN.md) v2.3.7
 - Complete task ledger: [`archive/OPEN_SOURCE_RELEASE_PLAN_2.2.md`](archive/OPEN_SOURCE_RELEASE_PLAN_2.2.md)
-- Remote fact baseline: `develop@8260c671786aa2ea994d61e6bde09ad57992ef36`
-- G1 evaluation branch: `docs/gate-g1-evaluation`
-- G1 evaluation PR: #77
+- Remote fact baseline: `develop@5ebb3a0c9b44cd5f2a2be789f9224740d47894f8`
+- G1 re-evaluation branch: `docs/gate-g1-pass-re-evaluation`
+- G1 re-evaluation PR: #79
 - G1 evidence: [`GATE-G1.md`](../testing/evidence/GATE-G1.md)
-- Current decision: **G0 PASS; M1 8/8 COMPLETE; G1 FAIL**
+- Current decision: **G0 PASS; M1 8/8 COMPLETE; G1 PASS**
 - Current product maturity: **Experimental Preview**
+- Next serial Work ID after PR #79: **CTX-001 / Issue #26**
 - Session handoff: [`SESSION_HANDOFF_PROMPT.md`](SESSION_HANDOFF_PROMPT.md)
 
-> Work-ID completion is not release readiness. M1 remains 8/8 Complete, but the independent G1 evaluation found two missing artifact clauses. M2 remains blocked until remediation and a separate G1 re-evaluation produce PASS.
+> G1 PASS closes only artifact、Runtime、install lifecycle and isolation readiness. It does not establish Public Beta、master、Tag、Release、PyPI or Stable readiness.
 
 ## 1. Overall progress
 
@@ -22,7 +23,7 @@
 | Not started / dependency blocked | 32 | 66.7% |
 | Total | 48 | 100% |
 
-QA-ART-001 will be reopened for remediation after PR #77 merges. Reopening a canonical Issue to close Gate evidence does not change the fixed 48 Work ID denominator or erase its previously merged implementation.
+PR #79 合并并启动 CTX-001 后，状态将变为 Complete 16 / In progress 1 / Not started 31。
 
 ## 2. Gate status
 
@@ -30,13 +31,13 @@ QA-ART-001 will be reopened for remediation after PR #77 merges. Reopening a can
 |---|---|---|
 | Plan Ready | PASS | 48 Work IDs、48 Issues、88 FR、17 CR、100 Test IDs |
 | G0 | PASS | PR #61 · `ee516c9b` · [`GATE-G0.md`](../testing/evidence/GATE-G0.md) |
-| G1 | **FAIL** | PR #77 · [`GATE-G1.md`](../testing/evidence/GATE-G1.md)；sdist 未构建，`twine check` 未执行 |
-| G2 | NOT_STARTED | 依赖 G1 PASS |
+| G1 | **PASS** | 初评 PR #77；remediation PR #78；复评 PR #79 · [`GATE-G1.md`](../testing/evidence/GATE-G1.md) |
+| G2 | NOT_STARTED | M2 尚未完成 |
 | G3 | NOT_STARTED | 依赖 M2、M3、M4 和 RC Evidence |
 | G4 | NOT_STARTED | 依赖 Beta 反馈闭环 |
 | G5 | NOT_STARTED | 依赖 Stable 阶段与 soak |
 
-G1 checklist: **8 PASS / 2 FAIL / 0 BLOCKED**.
+G1 checklist: **10 PASS / 0 FAIL / 0 BLOCKED**.
 
 ## 3. M0 / G0 status
 
@@ -63,59 +64,68 @@ G1 checklist: **8 PASS / 2 FAIL / 0 BLOCKED**.
 | `INS-001` | #22 | PR #68 · `2e5438a7` | Complete |
 | `INS-002` | #23 | PR #70 · `d1d3269d` | Complete |
 | `INS-003` | #24 | PR #72 · `9e5295ac` | Complete |
-| `QA-ART-001` | #25 | PR #74 · `7adbb0cb` | Complete implementation; remediation required by G1 FAIL |
+| `QA-ART-001` | #25 | PR #74 · `7adbb0cb`; remediation PR #78 · `5ebb3a0c` | Complete |
 
-M1 implementation progress: **8/8 Complete**.
+M1 progress: **8/8 Complete**.
 
-## 5. QA-ART-001 existing acceptance
+## 5. QA-ART-001 remediation acceptance
 
 ```text
-Squash Commit: 7adbb0cb00e781e31fee0ee5d360f52c4bdce5eb
-Final PR Head: 2a0263b3fe5dec75f6dae89203ecda6b6275ec9f
-Final Required CI: Run #166 / ID 30343118259
+Issue #25: Closed / completed
+Remediation PR #78: Merged
+Code acceptance Head: 7dbe10bef7035a5ce948fd9202c995a303c084b3
+Code acceptance CI: Run #183 / ID 30382373294
+Final PR Head: 531aa0e3fd327dc9a096668432ebd1d0b2bff43b
+Final Required CI: Run #184 / ID 30382668758
+Squash Commit: 5ebb3a0c9b44cd5f2a2be789f9224740d47894f8
 
-Python 3.10: 230 tests / 0 failures / 0 errors / 9 strict XFAIL
-Python 3.11: 230 tests / 0 failures / 0 errors / 9 strict XFAIL
-Python 3.12: 230 tests / 0 failures / 0 errors / 9 strict XFAIL
-artifact JUnit per job: 1 / 0 failures / 0 errors
+Python 3.10: 231 tests / 0 failures / 0 errors / 9 strict XFAIL
+Python 3.11: 231 tests / 0 failures / 0 errors / 9 strict XFAIL
+Python 3.12: 231 tests / 0 failures / 0 errors / 9 strict XFAIL
+artifact JUnit per job: 1 / 0 failures / 0 errors / 0 skipped
+wheel inventory: 39 files
+sdist inventory: 75 files
+twine check: wheel + sdist PASS in all jobs
 ```
 
-Verified:
+## 6. G1 PASS basis
 
-- build input from clean `git archive HEAD`;
-- fresh non-editable venv and outside-source imports;
-- 39-file wheel inventory and SHA256;
-- install dry-run, clean install and ready Server;
-- Doctor support/rejection matrix;
-- `/health`, `/ready`, `/version`, minimal API smoke;
-- same-version idempotent upgrade;
-- ordinary uninstall preserving distribution/config/DB;
-- explicit pip uninstall only inside the disposable test venv;
-- temporary HOME/data/DB/port and fake Secret.
+All original clauses pass:
 
-## 6. G1 failure detail
+1. one clean frozen snapshot builds wheel + sdist;
+2. twine check passes for both artifacts;
+3. package data/inventory is complete;
+4. public packages import outside source;
+5. no editable/source symlink/path dependency;
+6. Console Server lifecycle works;
+7. health/ready/version satisfy contract;
+8. empty-HOME full lifecycle succeeds;
+9. repeat install/port/interruption/uninstall preservation passes;
+10. no real `~/.hermes` access.
 
-Original G1 artifact clauses not met:
+Non-blocking later scope:
 
-1. **wheel and sdist from clean source** — wheel exists; sdist does not;
-2. **`python -m twine check dist/*`** — no Required evidence exists.
+- byte reproducibility/SBOM/provenance → `REL-006`;
+- real Hermes E2E → `COMPAT-001` / G3;
+- 9 strict XFAIL → canonical M2/M3 owners;
+- Python 3.10 remains package/core/artifact-only with expected full-Hermes rejection.
 
-The other eight original clauses PASS: wheel contents, external imports, no source symlink/path dependency, console lifecycle, runtime probes, empty-HOME full lifecycle, repeated install/port/interruption/uninstall preservation, and no real `~/.hermes` access.
+## 7. M2 serial queue
 
-## 7. Non-blocking findings
+```text
+CTX-001 → CTX-002 → CTX-003 → CTX-004 → SES-001 → PRIV-001 → G2
+```
 
-- Three independently built wheel hashes differ; byte-for-byte reproducibility remains `REL-006`, not G1.
-- Real Hermes discovery/Hook/Context/Tool E2E remains `COMPAT-001` in M4/G3; it cannot be a G1 dependency without creating a cycle.
-- Nine strict XFAIL all have canonical later owners; none is orphaned.
-- Python 3.10 remains package/core/artifact-only with expected full-Hermes rejection; full candidate matrix is Python 3.11–3.12.
+`SES-001` also has satisfied hard dependencies, but is deliberately queued to preserve the one-Work-ID-at-a-time rule.
 
 ## 8. Current authorized work
 
-1. Merge the independent G1 FAIL evaluation PR #77 after Required CI.
-2. Reopen Issue #25 and comment the exact two failed clauses.
-3. Create `test/qa-art-001-sdist-twine-remediation` from the resulting latest `develop`.
-4. Add wheel+sdist build, SHA256/inventory, `twine check`, JUnit/log uploads and Required matrix evidence.
-5. Merge remediation through PR + Required CI.
-6. Re-evaluate G1 independently.
-7. Do not start CTX-001, SES-001 or any M2 work before G1 PASS.
-8. Do not merge to `master`, create Tag/Release or publish to PyPI.
+1. Complete PR #79 through final Required CI and expected-Head Squash Merge.
+2. Re-read latest `develop`.
+3. Fetch Issue #26 and comments.
+4. Start only `CTX-001` from latest `develop`.
+5. Convert only `TC-CTX-003` from strict XFAIL to an ordinary failing regression.
+6. Fix Merge-path duplicate assembly without implementing later Context tasks.
+7. Record `docs/testing/evidence/CTX-001.md` and merge through Required CI.
+8. Automatically continue to `CTX-002`.
+9. Do not merge to master, create Tag/Release or publish PyPI.
