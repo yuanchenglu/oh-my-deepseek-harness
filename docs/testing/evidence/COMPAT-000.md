@@ -19,7 +19,7 @@ license: MIT
 upstream requires-python: >=3.11,<3.14
 ```
 
-这是 2026-07-28 核对到的最新正式签名 Release。COMPAT-000 冻结候选、接口、已知缺口和执行计划；不声明真实兼容性已通过。
+这是 2026-07-28 核对到的最新正式签名 Release。COMPAT-000 冻结候选、接口和执行计划；不声明真实兼容性已通过。
 
 ## 2. Python 版本调查
 
@@ -80,7 +80,7 @@ pre_gateway_dispatch
 
 当前 Manifest Hook 是上述集合的子集。早期只阅读 Plugins 概览表时曾误以为 `subagent_start` 缺失；完整 Hook 文档确认该 Hook 存在，误判已纠正且未形成代码变更。
 
-## 5. ContextEngine 静态接口与已知缺口
+## 5. ContextEngine 静态接口
 
 Hermes v0.19.0 ABC 要求：
 
@@ -94,17 +94,14 @@ attributes: last_prompt_tokens, last_completion_tokens, last_total_tokens,
 当前 `DeepSeekContextEngine` 静态结果：
 
 ```text
+required property `name`: present as @property; value = deepseek-context
 required methods: present
 required counters: present
-required property `name`: missing
 ```
 
-因此当前源码不是完整的 Hermes v0.19.0 ContextEngine 实现。该缺口已登记到：
+PR #60 的第一次探针曾错误地把 `name` 记为缺失。失败的三版本 CI 证明该假设与源码不一致；随后 fixture、probe、矩阵与本 Evidence 已全部改为正向验证。没有为不存在的缺口修改生产代码，也没有把错误责任转移到 `PKG-001`。
 
-- `PKG-001` #18：在标准 package 布局中补齐 property 并验证源码外 import；
-- `COMPAT-001` #46：在真实 Hermes discovery/selection/ABC E2E 中验证。
-
-COMPAT-000 不在文档任务中偷改运行时实现。静态 probe 的正确通过条件是：候选契约精确、已有方法/属性精确、缺失 `name` 被机器记录且有 Owner；不是假装缺口不存在。
+静态符合不等于真实兼容。`COMPAT-001` #46 仍需在 Hermes v0.19.0 中完成 discovery、instantiation、explicit selection、ABC 调用和生命周期 E2E。
 
 ## 6. 机器可读资产
 
@@ -119,8 +116,8 @@ COMPAT-000 不在文档任务中偷改运行时实现。静态 probe 的正确�
 - candidate identity 和 Python 分层；
 - Project Hook ⊆ official Hook；
 - 10 target / 9 current Tool 契约未回退；
-- ContextEngine 必需 methods/counters 存在；
-- 缺失 `name` property 与 Owner Work IDs 被精确记录；
+- ContextEngine 必需 property/methods/counters 全部存在；
+- `name` 必须由真实 `@property` 提供；
 - 主计划与双语 README 使用相同支持口径；
 - Plugin 与 Context Engine 激活均为显式配置契约。
 
@@ -141,11 +138,11 @@ macOS × Python 3.12 × Hermes v0.19.0
 Linux/macOS × Python 3.10 × Hermes v0.19.0 → expected rejection/diagnostic
 ```
 
-每个支持单元必须从固定 Release source 完成 clean install、Plugin discovery/enablement、Hook lifecycle、Context Engine discovery/selection/ABC 和全部实现 Tool E2E，并保存确切 commit/artifact/JUnit。`name` 未补齐前，COMPAT-001 必须失败而不是豁免。
+每个支持单元必须从固定 Release source 完成 clean install、Plugin discovery/enablement、Hook lifecycle、Context Engine discovery/selection/ABC 和全部实现 Tool E2E，并保存确切 commit/artifact/JUnit。
 
 ## 8. 文件范围
 
-修改/新增仅用于候选、契约、静态 probes、已知缺口和公开支持口径：
+修改/新增仅用于候选、契约、静态 probes 和公开支持口径：
 
 - `docs/compatibility/HERMES_MATRIX.md`
 - `tests/fixtures/hermes/v0.19.0-contract.yaml`
@@ -167,13 +164,13 @@ Linux/macOS × Python 3.10 × Hermes v0.19.0 → expected rejection/diagnostic
 
 ## 9. Gate 判定
 
-COMPAT-000 的完成条件是候选、静态契约、已知缺口和 E2E 计划冻结，不是 E2E 成功。
+COMPAT-000 的完成条件是候选、静态契约和 E2E 计划冻结，不是 E2E 成功。
 
 完成后：
 
-- G0 的“外部候选明确、风险有 Owner、验证计划可执行”条件可满足；
-- G1/G3 的真实兼容性仍由 `PKG-001`/`COMPAT-001` 阻断；
-- 如果静态 probe、缺口 Owner 或 active support wording 不一致，则 COMPAT-000 不得关闭；
+- G0 的“外部候选明确、验证计划可执行”条件可满足；
+- G1/G3 的真实兼容性仍由 `COMPAT-001` 阻断；
+- 如果静态 probe 或 active support wording 不一致，则 COMPAT-000 不得关闭；
 - G0 仍需独立 Gate Evidence。
 
 ## 10. Merge-time completion fields
