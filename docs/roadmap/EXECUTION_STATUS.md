@@ -3,7 +3,8 @@
 - Status date: 2026-07-28
 - Normative contract: [`OPEN_SOURCE_RELEASE_PLAN.md`](OPEN_SOURCE_RELEASE_PLAN.md) v2.3.4
 - Complete task ledger: [`archive/OPEN_SOURCE_RELEASE_PLAN_2.2.md`](archive/OPEN_SOURCE_RELEASE_PLAN_2.2.md)
-- Current merged baseline: `develop@f1c04697fcb43e1862cf9d5d4c6ddfa465b4c44b`
+- RUN-002 implementation baseline: `develop@f1c04697fcb43e1862cf9d5d4c6ddfa465b4c44b`
+- Post-merge documentation closure: PR #66
 - Latest completed Work ID: `RUN-002`
 - Delivery: PR #65 · Squash Commit `f1c04697fcb43e1862cf9d5d4c6ddfa465b4c44b`
 - Final PR head: `094c4c56f7d75d96ce6aed17132729b4196ed9d5`
