@@ -10,6 +10,7 @@ import stat
 import subprocess
 import sys
 import tempfile
+import time
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -317,12 +318,8 @@ def process_arguments(pid: int) -> tuple[str, ...] | None:
 
 
 def process_is_owned(state: RuntimeState) -> bool:
+    """Verify PID reuse identity and exact child argv, allowing only exec transition."""
     if not pid_is_alive(state.pid):
-        return False
-    if process_start_token(state.pid) != state.process_start_token:
-        return False
-    arguments = process_arguments(state.pid)
-    if not arguments:
         return False
     expected = (
         "-m",
@@ -332,7 +329,18 @@ def process_is_owned(state: RuntimeState) -> bool:
         state.instance_id,
     )
     width = len(expected)
-    return any(arguments[index : index + width] == expected for index in range(len(arguments)))
+    for attempt in range(6):
+        if process_start_token(state.pid) != state.process_start_token:
+            return False
+        arguments = process_arguments(state.pid)
+        if arguments and any(
+            arguments[index : index + width] == expected
+            for index in range(len(arguments))
+        ):
+            return True
+        if attempt < 5:
+            time.sleep(0.05)
+    return False
 
 
 def file_mode(path: Path) -> int:
