@@ -5,118 +5,115 @@
 ```text
 你现在继续负责 GitHub 仓库：yuanchenglu/oh-my-deepseek-harness。
 
-目标：严格继续开源发布计划。先核对并完整收口 INS-003；只有 PR #72 已合并且 Issue #24 已关闭时，下一项唯一允许启动的 Work ID 才是 `QA-ART-001` #25。不得并行启动 G1、CTX-001 或其他后继任务。
+目标：严格继续开源发布计划。先核对并完整收口 QA-ART-001；只有 PR #74 已合并、Issue #25 已关闭且 post-merge 文档收口已合并时，才允许执行独立 G1 Gate 评估。G1 未形成明确 PASS Evidence 前，不得启动 CTX-001 #26、SES-001 #30 或其他 G1 后继任务。
 
 一、必须先读取和核对的远程信息
 
 1. docs/roadmap/OPEN_SOURCE_RELEASE_PLAN.md（规范版本 v2.3.4）
 2. docs/roadmap/EXECUTION_STATUS.md
 3. docs/roadmap/SESSION_HANDOFF_PROMPT.md
-4. docs/testing/evidence/INS-003.md
-5. docs/traceability/RELEASE_TRACEABILITY.md
-6. INS-003 Canonical Issue：#24
-7. INS-003 Delivery PR：#72
-8. INS-003 代码验收 Head：e2b82c727a3dedaa1c8cc71de38a54dec3c079b6
-9. INS-003 Required CI：Run #149 / ID 30339801279
-10. QA-ART-001 Canonical Issue：#25
-11. 当前 develop Head：必须通过 GitHub 重新读取，不得根据提示词猜测。
+4. docs/testing/evidence/QA-ART-001.md
+5. docs/testing/evidence/INS-001.md
+6. docs/testing/evidence/INS-002.md
+7. docs/testing/evidence/INS-003.md
+8. docs/traceability/RELEASE_TRACEABILITY.md
+9. QA-ART-001 Canonical Issue：#25
+10. QA-ART-001 Delivery PR：#74
+11. QA-ART-001 代码验收 Head：81195f844b681e85ccf2c0a15fc4935b2b396ed6
+12. QA-ART-001 Required CI：Run #161 / ID 30342161995
+13. 当前 develop Head：必须通过 GitHub 重新读取，不得根据提示词猜测。
+14. 主计划与 v2.2 归档中的 G1 Gate 原始判定标准。
 
 远程事实优先：
 
-- 若 PR #72 尚未合并或 Issue #24 尚未关闭，只允许继续 INS-003 收口，不得启动 QA-ART-001；
-- 若 #72 已 protected Squash Merge 且 #24 Closed / completed，才允许从最新 develop 启动 QA-ART-001。
+- 若 PR #74 尚未合并或 Issue #25 尚未关闭，只允许继续 QA-ART-001 收口；
+- 若 QA-ART-001 已合并但 post-merge 文档尚未收口，只允许完成该 docs-only 收口；
+- 只有上述两项均完成，才允许建立独立 G1 Evidence；
+- G1 评估必须根据规范标准判定 PASS、FAIL 或 BLOCKED，不得因 M1 任务数量达到 8/8 自动 PASS。
 
-二、INS-003 验收状态
+二、QA-ART-001 验收状态
 
-固定总分母：48 个 Work ID。INS-003 合并后：
+固定总分母：48 个 Work ID。QA-ART-001 合并后：
 
-- Complete：15/48（31.3%）
+- Complete：16/48（33.3%）
 - In progress：0/48
-- Not started / dependency blocked：33/48
+- Not started / dependency blocked：32/48
 - M0 已完成，G0 PASS
-- M1：7/8 Complete、0/8 In progress、1/8 Open eligible
-- G1 尚未评估
+- M1：8/8 Complete
+- G1：仅具备独立评估条件，尚未判定
 - 产品成熟度仍为 Experimental Preview
 
-INS-003 代码验收：
+QA-ART-001 代码验收：
 
-- Run #149 / ID 30339801279
-- Head e2b82c727a3dedaa1c8cc71de38a54dec3c079b6
+- Run #161 / ID 30342161995
+- Head 81195f844b681e85ccf2c0a15fc4935b2b396ed6
 - Python 3.10、3.11、3.12 全绿
-- 每版本 228 tests、0 failures、0 errors、9 个 strict XFAIL
+- 每版本 230 tests、0 failures、0 errors、9 个 strict XFAIL
+- 每版本另有 artifact JUnit 1 test、0 failures、0 errors
 
 已验证：
 
-- upgrade dry-run 零写入；
-- same-version upgrade 幂等、无 backup growth、同 PID；
-- version-changing upgrade backup-first；
-- 普通失败恢复 deployment/config/DB/events/process；
-- interrupted transaction marker + explicit recover + retry；
-- ordinary uninstall 保留 distribution 与用户数据；
-- CLI 只打印、不执行 `python -m pip uninstall oh-my-deepseek-harness`；
-- purge 缺 confirm 返回 2 且零变化；
-- confirmed purge 仅删除 canonical owned product root；
-- symlink parent/descendant、unknown path、noncanonical root、manifest traversal fail-closed；
-- external DB 保留，external DB symlink 在 process change 前拒绝。
+- clean `git archive HEAD` 构建 wheel；
+- fresh non-editable venv 只安装最终 wheel distribution 与声明依赖；
+- repository、archived source 不在 product import origin 或 sys.path；
+- wheel 39 files，不包含 plugins/mcp/tests tree；
+- install dry-run、clean install、Server health/ready/version、memory-tag smoke；
+- Python 3.10 Doctor 按预期退出 5；Python 3.11/3.12 Doctor 退出 0；
+- same-version upgrade 幂等并复用 PID；
+- ordinary uninstall 保留 distribution/config/DB，并打印精确 pip command；
+- 显式 pip uninstall 仅由测试脚本在临时 venv 执行；
+- fake Secret 不出现在上传文本证据；
+- 三个独立 wheel hash 不同，因此本 Work ID 不声明 reproducible-build PASS，最终 reproducibility 属于 REL-006。
 
-三、QA-ART-001 固定目标
+三、G1 独立评估目标
 
-Canonical Issue：#25。
+G1 不是 Work ID 数量统计。必须从规范计划/归档提取精确 Gate 条款，并至少核对：
 
-目标：从 clean source snapshot 构建最终 wheel，仅安装该 wheel 到源码目录外的临时环境，并执行完整 artifact lifecycle，覆盖 `FR-INSTALL-001–006`、`FR-PLUGIN-001–005`、`FR-QA-005` 与 `CR-P2-004`。
-
-必须证明：
-
-1. clean snapshot 构建 wheel，记录文件名、SHA256、metadata 和 inventory；
-2. 临时 venv 只安装最终 wheel，不使用 editable install，不把仓库路径加入 PYTHONPATH；
-3. 所有 product imports 的 `__file__` 均位于临时 environment，不位于 source tree；
-4. 使用临时 HOME/data/DB/dynamic port/fake secret；
-5. 执行 install dry-run、clean install、Doctor、Server health/ready/version；
-6. 执行最小 Tool/API smoke，但不改变 10 target / 9 runtime Tool contract；
-7. 执行 upgrade dry-run/幂等 upgrade、ordinary uninstall；
-8. ordinary uninstall 后 distribution 仍可 import，并输出精确 pip uninstall 命令；
-9. 测试脚本显式执行 pip uninstall distribution，仅作用于临时 venv；
-10. 可增加 confirmed purge 的独立临时环境验证，但不得触碰真实 HOME；
-11. CI 必须上传 artifact/JUnit 和记录 source-external 证据；
-12. QA-ART-001 完成后仍需独立 G1 Evidence 判定，不能自动声明 G1 PASS。
+1. M1 八个 Work ID 的 Issue、PR、Squash Commit、Evidence 和 Required CI 是否全部闭环；
+2. package/import/install/Doctor/Supervisor/upgrade/uninstall/purge/final-wheel artifact lifecycle 是否具备来源明确的证据；
+3. `CR-P0-001` 是否已由 M1 证据闭环，是否仍有属于 G1 的开放 P0 blocker；
+4. strict XFAIL 是否只剩后续 M2/M3 canonical owners，M1 不得留下未归属 XFAIL；
+5. Python 支持分层是否一致：3.10 仅 package/core/artifact，3.11–3.12 才是完整 Hermes 候选组合；
+6. QA-ART-001 wheel hash 不同是否属于 G1 blocker，必须按 Gate 原始条款判断，不得擅自把 REL-006 reproducibility 提前到 G1；
+7. 真实 Hermes discovery/Hook/Context/Tool E2E 是否属于 G1，必须按主计划和 HERMES_MATRIX 原始依赖判断，不能自行提前或豁免；
+8. 是否存在真实用户 HOME/DB/Secret 污染、foreign PID、symlink/traversal 或 destructive-operation 未闭环风险；
+9. Gate Evidence 必须列出每条标准、证据、判定和明确 exclusions；
+10. G1 PASS 只解锁 M2 的合法入口，不代表 Public Beta、master 或 publication ready。
 
 四、执行顺序
 
-1. 读取 Issue #25 全文和评论。
-2. 读取 `tests/test_package_artifact.py`、`scripts/test_artifact.sh`、`.github/workflows/ci.yml` 及 artifact/lifecycle 契约。
-3. 从最新 develop 创建专用分支，建议 `test/qa-art-001-external-lifecycle`，立即建立 Draft PR。
-4. 先建立 source-path contamination assertions、wheel inventory/SHA256 与临时环境 fixture。
-5. 只在源码外环境执行完整生命周期；不得从工作区导入 product code。
-6. 运行 Python 3.10、3.11、3.12 Required CI，修复真实根因。
-7. 更新 QA-ART-001 Evidence、Traceability、Execution Status、主计划和 PR 描述。
-8. 全绿后标记 Ready，protected Squash Merge 到 develop，并关闭 Issue #25。
-9. 完成 post-merge 文档收口后，单独评估 G1；不得把 QA-ART-001 合并等同于 G1 PASS。
-10. G1 未形成独立 PASS Evidence 前，不得启动 CTX-001 或其他 G1 后继任务。
+1. 重新读取最新 develop、PR #74、Issue #25 和所有 M1 Evidence。
+2. 完成 QA-ART-001 post-merge docs closure（若尚未完成）。
+3. 从最新 develop 创建独立 Gate 分支，建议 `docs/gate-g1-evaluation`，建立 Draft PR。
+4. 读取 G1 的规范条款，建立逐条 Gate checklist，不得先写结论。
+5. 核对所有 M1 PR/Issue/CI/Artifact 与开放 blocker。
+6. 创建 `docs/testing/evidence/GATE-G1.md`，结论只能是 PASS、FAIL 或 BLOCKED。
+7. 同步 Execution Status、主计划、Traceability 和 guarded handoff。
+8. 运行 Python 3.10、3.11、3.12 Required CI。
+9. 全绿后合并 Gate PR，并完成 post-merge 事实收口。
+10. 只有 G1 明确 PASS 后，才允许按主计划确定下一个唯一 Work ID；不得并行启动多个 M2 任务。
 
 五、严格约束
 
 - develop 为开发分支；master 为发布分支。
-- 功能分支 → PR → Required CI → Squash Merge develop；不得直推 develop。
+- 功能/文档分支 → PR → Required CI → Squash Merge develop；不得直推 develop。
 - 不合入 master，不创建 Tag、GitHub Release 或 PyPI publication。
-- QA-ART-001 不修改 package/runtime/lifecycle 实现；发现实现缺陷时记录到 Issue #25，并仅在明确必要时扩大路径。
-- 不使用 editable install、source PYTHONPATH 或当前工作目录导入造成假绿。
-- 不使用真实用户 HOME、DB、Memory、Secret 或固定端口。
-- pip install/uninstall 只能发生在临时 venv；产品 CLI 仍不得调用 pip。
-- 不实现 MIG-001、Context、Session、Tool/API/DB/domain 或 marketing scope。
+- Gate 评估不得修改 Runtime、Tool/API/DB/domain 实现。
+- 不把 fake Hermes CLI 或 package-level CI 描述为真实 Hermes integration E2E。
+- 不把 QA-ART-001 的绿色 CI描述为 reproducible-build、G1 或 Public Beta PASS。
 - 保持 10 个目标 Tool、9 个当前 Runtime Tool；不得创建 placeholder memory_store。
-- Python 3.10 仅为 package/core/artifact lifecycle；完整 Hermes v0.19.0 支持为 Python 3.11–3.12。
-- 不向无法证明归属的 PID 发送任何信号。
-- 不把绿色 CI 描述为 G1/Public Beta Ready。
+- 不读取或修改真实用户 HOME、DB、Memory、Secret。
+- 不向无法证明归属的 PID 发送信号。
+- 若 Gate 条款证据不足，结论必须是 BLOCKED，不得猜测 PASS。
 
 最终报告：
 
-1. QA-ART-001 审查发现；
-2. 修改文件和 Commit；
-3. PR 状态；
-4. Python 3.10、3.11、3.12 CI；
-5. wheel inventory/SHA256/source-external import 与 lifecycle 证据；
-6. QA-ART-001 是否真正完成；
-7. develop 新基线；
-8. G1 是否具备独立评估条件；
-9. CTX-001 是否仍被 Gate 阻塞。
+1. QA-ART-001 是否真正完成及最终 Squash Commit；
+2. M1 8/8 的闭环清单；
+3. G1 每条标准及证据；
+4. G1 最终判定与 exclusions；
+5. Gate PR、CI 和 develop 新基线；
+6. 下一个 Work ID 是否合法解锁；
+7. CTX-001/SES-001 是否仍被 Gate 阻塞；
+8. master、Tag、Release、PyPI 状态。
 ```
