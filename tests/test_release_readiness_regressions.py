@@ -106,13 +106,17 @@ def test_plan_status_schema_matches_service_enum() -> None:
     assert set(status_schema.get("enum", [])) == {s.value for s in PlanStatus}
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="已知缺陷：安装脚本未安装或复制 mcp/harness_server",
-)
-def test_install_script_installs_harness_server_runtime() -> None:
+def test_install_path_deploys_packaged_harness_server_runtime() -> None:
+    """XF-INSTALL-001 closed: one installed CLI path starts the packaged Supervisor."""
     install_text = (ROOT / "scripts" / "install.sh").read_text(encoding="utf-8")
-    assert "mcp/harness_server" in install_text or "harness_server" in install_text
+    installer_text = (
+        ROOT / "src" / "deepseek_harness" / "installer.py"
+    ).read_text(encoding="utf-8")
+
+    assert "deepseek_harness.cli install" in install_text
+    assert "from harness_server.supervisor import Supervisor" in installer_text
+    assert "supervisor.start(" in installer_text
+    assert "pip install" not in installer_text
 
 
 def test_runtime_dependencies_include_openai() -> None:
