@@ -1,6 +1,6 @@
 """Transactional Hermes deployment for the installed distribution.
 
-The Python distribution is managed only by pip.  This module deploys the two
+The Python distribution is managed only by pip. This module deploys the two
 thin Hermes adapters, initializes the product data root and starts the single
 Supervisor-managed local Server.
 """
@@ -11,7 +11,6 @@ import importlib.metadata
 import importlib.util
 import os
 import shutil
-import stat
 import sys
 import tempfile
 from dataclasses import dataclass
@@ -29,11 +28,10 @@ from harness_server.config import (
     RuntimeConfig,
 )
 from harness_server.runtime import RuntimePaths
-from harness_server.supervisor import RuntimeStatus, Supervisor
+from harness_server.supervisor import Supervisor
 
 ENV_DATA_ROOT = "HARNESS_DATA_ROOT"
 DISTRIBUTION_NAME = "oh-my-deepseek-harness"
-DEFAULT_DATA_ROOT = "~/.hermes/oh-my-deepseek-harness"
 _REQUIRED_SERVER_MODULES = ("fastapi", "uvicorn", "pydantic")
 
 _HARNESS_ADAPTER = '''"""Hermes directory-plugin adapter for the installed deepseek_harness package."""\n\nfrom deepseek_harness import register\n\n__all__ = ["register"]\n'''
@@ -170,20 +168,25 @@ def _render_config(runtime: RuntimeConfig) -> str:
 
 
 def build_install_plan(
-    *, environ: Mapping[str, str] | None = None, data_root: str | os.PathLike[str] | None = None
+    *,
+    environ: Mapping[str, str] | None = None,
+    data_root: str | os.PathLike[str] | None = None,
 ) -> InstallPlan:
     env = os.environ if environ is None else environ
     home = _home_path(env)
     hermes_home = home / ".hermes"
-    root = Path(
-        data_root or env.get(ENV_DATA_ROOT, DEFAULT_DATA_ROOT)
-    ).expanduser().resolve()
+    if data_root is not None:
+        root = Path(data_root).expanduser().resolve()
+    elif env.get(ENV_DATA_ROOT):
+        root = Path(env[ENV_DATA_ROOT]).expanduser().resolve()
+    else:
+        root = (hermes_home / "oh-my-deepseek-harness").resolve()
+
     runtime = _runtime_config(env, data_root=root, hermes_home=hermes_home)
     paths = RuntimePaths.from_root(root)
     config_path = root / "config" / "config.yaml"
     harness_plugin = hermes_home / "plugins" / "deepseek-harness"
     context_plugin = hermes_home / "plugins" / "deepseek-context"
-
     desired_files = {
         harness_plugin / "__init__.py": _HARNESS_ADAPTER,
         harness_plugin / "plugin.yaml": _resource_text(
@@ -223,8 +226,15 @@ def build_install_plan(
     )
 
 
-def _mode(path: Path) -> int:
-    return stat.S_IMODE(path.stat().st_mode)
+def _same_managed_content(path: Path, content: str) -> bool:
+    if path.is_symlink():
+        raise InstallConflictError(f"refusing symlink managed file: {path}")
+    if not path.is_file():
+        raise InstallConflictError(f"managed path is not a regular file: {path}")
+    try:
+        return path.read_text(encoding="utf-8") == content
+    except OSError as exc:
+        raise InstallConflictError(f"cannot read existing managed file: {path}") from exc
 
 
 def _preflight(plan: InstallPlan) -> None:
@@ -235,17 +245,9 @@ def _preflight(plan: InstallPlan) -> None:
             raise InstallConflictError(f"deployment directory is not a directory: {directory}")
 
     for path, content in plan.desired_files.items():
-        if path.is_symlink():
-            raise InstallConflictError(f"refusing symlink managed file: {path}")
         if not path.exists():
             continue
-        if not path.is_file():
-            raise InstallConflictError(f"managed path is not a regular file: {path}")
-        try:
-            existing = path.read_text(encoding="utf-8")
-        except OSError as exc:
-            raise InstallConflictError(f"cannot read existing managed file: {path}") from exc
-        if existing != content:
+        if not _same_managed_content(path, content):
             raise InstallConflictError(
                 f"existing file differs from the managed same-version content: {path}"
             )
@@ -253,6 +255,8 @@ def _preflight(plan: InstallPlan) -> None:
 
 def _ensure_directory(path: Path, created_directories: list[Path]) -> bool:
     if path.exists():
+        if not path.is_dir() or path.is_symlink():
+            raise InstallConflictError(f"deployment directory is unsafe: {path}")
         return False
     missing: list[Path] = []
     current = path
@@ -262,17 +266,29 @@ def _ensure_directory(path: Path, created_directories: list[Path]) -> bool:
         if parent == current:
             break
         current = parent
+    changed = False
     for directory in reversed(missing):
-        directory.mkdir()
+        try:
+            directory.mkdir()
+        except FileExistsError:
+            if not directory.is_dir() or directory.is_symlink():
+                raise InstallConflictError(f"deployment directory is unsafe: {directory}")
+            continue
         if os.name != "nt":
             directory.chmod(0o700)
         created_directories.append(directory)
-    return bool(missing)
+        changed = True
+    return changed
 
 
 def _atomic_create(path: Path, content: str, created_files: list[Path]) -> bool:
     if path.exists():
-        return False
+        if _same_managed_content(path, content):
+            return False
+        raise InstallConflictError(
+            f"existing file differs from the managed same-version content: {path}"
+        )
+
     descriptor, temporary_name = tempfile.mkstemp(
         prefix=f".{path.name}-", suffix=".tmp", dir=path.parent
     )
@@ -284,18 +300,24 @@ def _atomic_create(path: Path, content: str, created_files: list[Path]) -> bool:
             handle.write(content)
             handle.flush()
             os.fsync(handle.fileno())
-        os.replace(temporary, path)
+        try:
+            os.link(temporary, path)
+        except FileExistsError:
+            if _same_managed_content(path, content):
+                return False
+            raise InstallConflictError(
+                f"concurrent install created conflicting managed content: {path}"
+            )
         if os.name != "nt":
             path.chmod(0o600)
         created_files.append(path)
         return True
-    except Exception:
+    finally:
         try:
             os.close(descriptor)
         except OSError:
             pass
         temporary.unlink(missing_ok=True)
-        raise
 
 
 def _remove_if_created(path: Path, existed_before: bool) -> None:
@@ -319,13 +341,16 @@ def _rollback(
     created_directories: list[Path],
     runtime_artifacts_before: dict[Path, bool],
 ) -> None:
-    failures: list[str] = []
     if not runtime_state_existed and plan.runtime_paths.state_file.exists():
         try:
             supervisor.stop(timeout=5)
-        except Exception as exc:  # pragma: no cover - failure injection owns this path
-            failures.append(f"server stop failed: {exc}")
+        except Exception as exc:
+            raise InstallRollbackError(
+                "server stop failed during rollback; deployment and runtime state were "
+                f"retained for safe diagnosis: {exc}"
+            ) from exc
 
+    failures: list[str] = []
     for path in reversed(created_files):
         try:
             path.unlink(missing_ok=True)
@@ -348,7 +373,9 @@ def _rollback(
         raise InstallRollbackError("; ".join(failures))
 
 
-def execute_install(plan: InstallPlan, *, dry_run: bool, timeout: float = 20) -> dict[str, Any]:
+def execute_install(
+    plan: InstallPlan, *, dry_run: bool, timeout: float = 20
+) -> dict[str, Any]:
     payload = plan.public_dict(dry_run=dry_run)
     if dry_run:
         return payload
