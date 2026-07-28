@@ -11,7 +11,6 @@ import sys
 import time
 import uuid
 from dataclasses import asdict, dataclass
-from pathlib import Path
 from typing import Any
 
 import httpx
@@ -132,10 +131,8 @@ class Supervisor:
             os.O_WRONLY | os.O_CREAT | os.O_APPEND,
             0o600,
         )
-        try:
+        if os.name != "nt":
             self.paths.log_file.chmod(0o600)
-        except OSError:
-            pass
         return os.fdopen(descriptor, "ab", buffering=0)
 
     def _log_tail(self, maximum_bytes: int = 4096) -> str:
@@ -263,6 +260,27 @@ class Supervisor:
             time.sleep(0.05)
         return False
 
+    def _terminate_child_handle(
+        self,
+        process: subprocess.Popen,
+        *,
+        timeout: float = 2,
+    ) -> None:
+        """Terminate only the exact child represented by this Popen handle."""
+        if process.poll() is None:
+            process.terminate()
+            try:
+                process.wait(timeout=timeout)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                try:
+                    process.wait(timeout=3)
+                except subprocess.TimeoutExpired as exc:
+                    raise SupervisorError(
+                        "spawned Harness Server child did not exit after force kill"
+                    ) from exc
+        self._children.pop(process.pid, None)
+
     def _terminate_owned(self, state: RuntimeState, *, timeout: float) -> None:
         if not process_is_owned(state):
             raise ProcessOwnershipError(
@@ -286,11 +304,23 @@ class Supervisor:
             raise SupervisorError("Harness Server did not exit after SIGKILL")
 
     def _cleanup_failed_start(self, state: RuntimeState) -> None:
-        if pid_is_alive(state.pid) and process_is_owned(state):
-            try:
-                self._terminate_owned(state, timeout=2)
-            except SupervisorError:
-                pass
+        child = self._children.get(state.pid)
+        if child is not None:
+            self._terminate_child_handle(child)
+            remove_state(self.paths)
+            return
+        if not pid_is_alive(state.pid):
+            remove_state(self.paths)
+            return
+        if not process_is_owned(state):
+            raise ProcessOwnershipError(
+                "failed-start process identity changed; retaining state and refusing signal"
+            )
+        self._terminate_owned(state, timeout=2)
+        if pid_is_alive(state.pid):
+            raise SupervisorError(
+                "failed-start Harness Server is still alive; retaining runtime state"
+            )
         remove_state(self.paths)
 
     def _start_unlocked(
@@ -335,15 +365,19 @@ class Supervisor:
             log_handle.close()
 
         self._children[process.pid] = process
-        state = RuntimeState.create(
-            instance_id=instance_id,
-            pid=process.pid,
-            host=config.host,
-            port=config.port,
-            version=self.distribution_version(),
-            log_path=str(self.paths.log_file),
-            db_path=config.db_path,
-        )
+        try:
+            state = RuntimeState.create(
+                instance_id=instance_id,
+                pid=process.pid,
+                host=config.host,
+                port=config.port,
+                version=self.distribution_version(),
+                log_path=str(self.paths.log_file),
+                db_path=config.db_path,
+            )
+        except Exception:
+            self._terminate_child_handle(process)
+            raise
         try:
             write_state(self.paths, state)
         except Exception:
@@ -387,10 +421,7 @@ class Supervisor:
             return self._start_unlocked(runtime, timeout=timeout)
 
     def _stop_unlocked(self, *, timeout: float) -> RuntimeStatus:
-        try:
-            state = read_state(self.paths)
-        except RuntimeStateError:
-            raise
+        state = read_state(self.paths)
         if state is None:
             return RuntimeStatus(
                 state="stopped",
