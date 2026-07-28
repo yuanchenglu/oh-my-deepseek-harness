@@ -6,7 +6,7 @@
 - Last synchronized: 2026-07-28
 - Fixed scope: **48 Work IDs · 48 unique GitHub Issues · 88 FR IDs · 17 CR IDs · 100 Test IDs**
 
-> 一个 Work ID 只有一个 canonical Issue。表中 `Open/Blocked` 表示 Issue 已创建，但硬依赖尚未满足；不表示允许并行实施。PR、Commit 和 Evidence 只能在实际合并后填写。INS-002 的最终 Squash Commit 在合并后记录于 Issue #23。
+> 一个 Work ID 只有一个 canonical Issue。表中 `Open/Blocked` 表示 Issue 已创建，但硬依赖尚未满足；不表示允许并行实施。PR、Commit 和 Evidence 只能在实际合并后填写。INS-003 的最终 Squash Commit 在合并后记录于 Issue #24。
 
 ## 1. Work ID → Issue → Delivery
 
@@ -25,9 +25,9 @@
 | M1 | `RUN-001` | PKG-002 | `FR-SERVER-001–007`; `CR-P0-001` | `TC-SERVER-001–003`; import-side-effect matrix | [#20](https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/20) | PR #64 · `31366ceb` | [`RUN-001.md`](../testing/evidence/RUN-001.md) | Complete |
 | M1 | `RUN-002` | RUN-001 | `FR-SERVER-003–005`, `FR-OBS-004–005`; `CR-P0-001` | `TC-SERVER-004`; process/PID/log E2E | [#21](https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/21) | PR #65 · `f1c04697` | [`RUN-002.md`](../testing/evidence/RUN-002.md) | Complete |
 | M1 | `INS-001` | RUN-002 | `FR-INSTALL-001–003`, Plugin/Security install contract; close `XF-INSTALL-001` | `TC-INSTALL-001–003`; external-wheel install transaction E2E | [#22](https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/22) | PR #68 · `2e5438a7` | [`INS-001.md`](../testing/evidence/INS-001.md) | Complete |
-| M1 | `INS-002` | INS-001 | `FR-INSTALL-006`, `FR-OBS-003/005`; read-only Doctor | `TC-INSTALL-004/005/009`; human/JSON parity; no-write snapshots | [#23](https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/23) | PR #70 · Squash SHA in #23 | [`INS-002.md`](../testing/evidence/INS-002.md) | Complete on protected merge |
-| M1 | `INS-003` | INS-002 | `FR-INSTALL-004–005`; safe lifecycle | `TC-INSTALL-006–008/010`; recovery fixtures | [#24](https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/24) | — | `INS-003.md` when executed | Open — eligible only after #23 closes |
-| M1 | `QA-ART-001` | INS-003 | `FR-QA-005`; `CR-P2-004` | source-external artifact lifecycle E2E | [#25](https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/25) | — | `QA-ART-001.md` when executed | Blocked |
+| M1 | `INS-002` | INS-001 | `FR-INSTALL-006`, `FR-OBS-003/005`; read-only Doctor | `TC-INSTALL-004/005/009`; human/JSON parity; no-write snapshots | [#23](https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/23) | PR #70 · `d1d3269d` | [`INS-002.md`](../testing/evidence/INS-002.md) | Complete |
+| M1 | `INS-003` | INS-002 | `FR-INSTALL-004–005`; safe lifecycle and destructive-operation boundary | `TC-INSTALL-006–008/010`; rollback/recovery/path-security fixtures | [#24](https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/24) | PR #72 · Squash SHA in #24 | [`INS-003.md`](../testing/evidence/INS-003.md) | Complete on protected merge |
+| M1 | `QA-ART-001` | INS-003 | `FR-QA-005`; `CR-P2-004` | source-external artifact lifecycle E2E | [#25](https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/25) | — | `QA-ART-001.md` when executed | Open — eligible only after #24 closes |
 | M2 | `CTX-001` | G1 | `FR-CONTEXT-002/003/009/010`; `CR-P0-002`; `XF-CTX-001` | `TC-CTX-003` | [#26](https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/26) | — | `CTX-001.md` when executed | Blocked |
 | M2 | `CTX-002` | CTX-001 | `FR-CONTEXT-007–010`; `CR-P0-003`; `XF-CTX-002` | `TC-CTX-004–006` | [#27](https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/27) | — | `CTX-002.md` when executed | Blocked |
 | M2 | `CTX-003` | CTX-002 | `FR-CONTEXT-003–005/009`; `CR-P0-004`; `XF-CTX-003` | `TC-CTX-007–009/014`; property tests | [#28](https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/28) | — | `CTX-003.md` when executed | Blocked |
