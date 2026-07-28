@@ -7,8 +7,12 @@
 - Remediation Work ID：`QA-ART-001` / Issue #25
 - Remediation PR：#78（Merged）
 - Remediation Squash：`5ebb3a0c9b44cd5f2a2be789f9224740d47894f8`
+- 复评 PR：#79
 - 复评分支：`docs/gate-g1-pass-re-evaluation`
 - 复评基线：`develop@5ebb3a0c9b44cd5f2a2be789f9224740d47894f8`
+- 代码验收 Head：`2a2b3f3d738fb7b8e3ac28437127f7b2be1fc9b0`
+- 代码验收 CI：Run #192 / ID `30383825672`
+- Final PR Head / CI：PENDING after this Evidence commit
 - 发布分支基线：`master@398701c5cf6495180a7a7566f09921cf126a054a`
 - 规范来源：`docs/roadmap/archive/OPEN_SOURCE_RELEASE_PLAN_2.2.md` §5 G1
 - 评估日期：2026-07-29
@@ -25,6 +29,7 @@
 | M1 | 8/8 Complete | 全部 canonical Issues 已关闭 |
 | G1 初评 | PR #77 / `9a8c3a8f...` | FAIL，证据保留 |
 | QA remediation | PR #78 / `5ebb3a0c...` | Complete |
+| G1 复评代码验收 | Run #192 / `30383825672` | Python 3.10/3.11/3.12 全绿 |
 | 当前产品成熟度 | Experimental Preview | G1 PASS 不等于 Public Beta |
 | Tag / GitHub Release / PyPI | 均未执行；PyPI 按 `REL-005` 禁用 | 符合阶段边界 |
 | 历史开放 PR #13 | 早期过时自动合并工作流 PR | 不属于当前发布链路 |
@@ -85,6 +90,15 @@ Run #177 曾因 Traceability 缺少 48 个 canonical Issue URL 而三版本失�
 - PR #78 Squash `5ebb3a0c9b44cd5f2a2be789f9224740d47894f8`；
 - Issue #25 closed / completed。
 
+### PASS 复评
+
+- PR #79；
+- Run #191 / ID `30383573466` 因主计划遗漏固定 Hermes 候选标识 `v0.19.0` / `v2026.7.20` 导致兼容性静态契约失败；
+- 恢复候选标识，未修改测试或业务代码；
+- 代码验收 Head `2a2b3f3d738fb7b8e3ac28437127f7b2be1fc9b0`；
+- 代码验收 CI Run #192 / ID `30383825672` 在 Python 3.10、3.11、3.12 全绿；
+- 本 Evidence commit 后必须再执行同一最终 Head Required CI。
+
 ## 5. `CR-P0-001` 与后续 P0
 
 `CR-P0-001` 的 package/runtime/installability 链路已由 M1 八个 Work ID 与 artifact remediation 完整关闭。当前 G1 范围内 P0 = 0。
@@ -116,6 +130,7 @@ M1/G1 没有无主 strict XFAIL。后续 Work ID 必须逐项转为普通 Pass�
 
 ## 7. Python / Hermes 支持分层
 
+- 固定候选：Hermes Agent v0.19.0 / Git tag `v2026.7.20`；
 - Python 3.10：package/core/artifact lifecycle，以及对 Hermes v0.19.0 完整组合的预期拒绝；
 - Python 3.11–3.12：完整 Hermes v0.19.0 候选组合；
 - Python 3.10 绿色 CI 不得描述为真实 Hermes integration E2E；
@@ -155,4 +170,4 @@ G1 PASS 仅表示 M1 artifact、Runtime、install lifecycle 与隔离 Gate 通�
 
 M2 有两个依赖已满足的入口：`CTX-001` 与 `SES-001`。为遵守单一 Work ID 串行执行，本计划按 canonical §6.4 表格和 Issue 顺序选择 **`CTX-001` #26** 作为唯一当前实施任务；`SES-001` 保持合法但排队，不并行启动。
 
-`CTX-001` 完成后继续按强制链：`CTX-002 → CTX-003 → CTX-004`，再执行尚未完成的 `SES-001` 与 `PRIV-001`，最后独立评估 G2。
+`CTX-001` 完成后继续按强制串行顺序：`CTX-002 → CTX-003 → CTX-004 → SES-001 → PRIV-001`，最后独立评估 G2。
