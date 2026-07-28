@@ -81,7 +81,7 @@ def test_target_and_runtime_tool_name_contract_remains_10_and_9() -> None:
     assert len([name for name in target if name not in pending]) == 9
 
 
-def test_context_engine_source_matches_methods_and_records_property_gap() -> None:
+def test_context_engine_source_covers_selected_required_abc() -> None:
     fixture = _fixture()
     module = ast.parse(CONTEXT_SOURCE.read_text(encoding="utf-8"))
     engine = next(
@@ -97,17 +97,20 @@ def test_context_engine_source_matches_methods_and_records_property_gap() -> Non
     }
     required_methods = set(fixture["context_engine_required"]["methods"])
     required_properties = set(fixture["context_engine_required"]["properties"])
-    recorded_missing = set(
-        fixture["known_compatibility_gaps"]["context_engine_missing_properties"]
-    )
 
     assert required_methods <= methods
-    assert recorded_missing == {"name"}
-    assert required_properties - methods == recorded_missing
-    assert fixture["known_compatibility_gaps"]["owner_work_ids"] == [
-        "PKG-001",
-        "COMPAT-001",
-    ]
+    assert required_properties <= methods
+
+    property_names = {
+        node.name
+        for node in engine.body
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+        and any(
+            isinstance(decorator, ast.Name) and decorator.id == "property"
+            for decorator in node.decorator_list
+        )
+    }
+    assert required_properties <= property_names
 
     init = next(
         node
