@@ -3,14 +3,16 @@
 - Status date: 2026-07-28
 - Normative contract: [`OPEN_SOURCE_RELEASE_PLAN.md`](OPEN_SOURCE_RELEASE_PLAN.md) v2.3.4
 - Complete task ledger: [`archive/OPEN_SOURCE_RELEASE_PLAN_2.2.md`](archive/OPEN_SOURCE_RELEASE_PLAN_2.2.md)
-- Incoming develop delivery: PR #65 (`RUN-002`); Squash Commit is recorded in Issue #21 after merge
-- Code acceptance head: `65d5d0039a3ffa0899d93ee7e5d99eef35f03abd`
-- Code acceptance CI: Run #104 / ID `30330399378`
-- Current decision on merge: **G0 PASS; M1 4/8 COMPLETE; G1 NOT EVALUATED**
+- Current merged baseline: `develop@f1c04697fcb43e1862cf9d5d4c6ddfa465b4c44b`
+- Latest completed Work ID: `RUN-002`
+- Delivery: PR #65 · Squash Commit `f1c04697fcb43e1862cf9d5d4c6ddfa465b4c44b`
+- Final PR head: `094c4c56f7d75d96ce6aed17132729b4196ed9d5`
+- Final Required CI: Run #108 / ID `30330735858`; duplicate same-head Run #109 / ID `30330754105`
+- Current decision: **G0 PASS; M1 4/8 COMPLETE; G1 NOT EVALUATED**
 - Current product maturity: **Experimental Preview**
 - Session handoff: [`SESSION_HANDOFF_PROMPT.md`](SESSION_HANDOFF_PROMPT.md)
 
-> 本文件内容在 PR #65 Squash Merge 到 `develop` 时生效。它是当前执行状态账本，不替代主计划、v2.2 归档、PRD、Architecture、Test Plan 或 Traceability 中的规范契约。
+> 本文件是当前执行状态账本，不替代主计划、v2.2 归档、PRD、Architecture、Test Plan 或 Traceability 中的规范契约。
 
 ## 1. Overall progress
 
@@ -21,7 +23,7 @@
 | Not started / dependency blocked | 36 | 75.0% |
 | Total | 48 | 100% |
 
-Work-ID progress does not represent release readiness. Public Beta still requires G0–G3 and final artifact verification.
+Work-ID progress does not represent release readiness. G0 **does not** claim product release readiness. Public Beta still requires G1–G3 and final artifact verification.
 
 ## 2. Gate status
 
@@ -56,23 +58,26 @@ Work-ID progress does not represent release readiness. Public Beta still require
 | `PKG-001` | #18 | PR #62 · `2098dffc` | Complete |
 | `PKG-002` | #19 | PR #63 · `ae277d1d` | Complete |
 | `RUN-001` | #20 | PR #64 · `31366ceb` | Complete |
-| `RUN-002` | #21 | PR #65 · [`RUN-002.md`](../testing/evidence/RUN-002.md) | **Complete on protected squash merge** |
-| `INS-001` | #22 | — | **Open — eligible only after PR #65 merges and #21 closes** |
+| `RUN-002` | #21 | PR #65 · `f1c04697` · [`RUN-002.md`](../testing/evidence/RUN-002.md) | **Complete** |
+| `INS-001` | #22 | — | **Open — dependency eligible; not started** |
 | `INS-002` | #23 | — | Blocked by INS-001 |
 | `INS-003` | #24 | — | Blocked by INS-002 |
 | `QA-ART-001` | #25 | — | Blocked by INS-003 |
 
-M1 progress on merge: **4/8 Complete, 0/8 In progress, 1/8 Open eligible, 3/8 Blocked**.
+M1 progress: **4/8 Complete, 0/8 In progress, 1/8 Open eligible, 3/8 Blocked**.
 
-## 5. Latest verified acceptance
+## 5. RUN-002 verified acceptance
 
-RUN-002 code Required CI Run #104 / ID `30330399378`, Head `65d5d0039a3ffa0899d93ee7e5d99eef35f03abd`:
+Final PR-head Required CI:
 
 ```text
+Run #108 / ID 30330735858 / head 094c4c56f7d75d96ce6aed17132729b4196ed9d5
 Python 3.10: success — package/core CI
 Python 3.11: success
 Python 3.12: success
 200 tests / 0 failures / 0 errors / 10 pre-existing strict XFAIL per version
+
+Run #109 / ID 30330754105: duplicate same-head three-version success
 ```
 
 Verified:
@@ -89,12 +94,13 @@ Verified:
 - temporary HOME/DB/data-root/port test isolation;
 - 10 target Tool names / 9 current Runtime Tool names; no placeholder `memory_store`.
 
+The workflow is configured for PR and `develop` push events. The available connector did not enumerate a distinct push-event Run ID for the squash SHA during closure; no post-merge Run ID is invented. The protected final PR-head Required Checks passed before merge.
+
 This acceptance does not establish G1, Hermes real-environment compatibility, Public Beta readiness, master readiness or publication readiness.
 
 ## 6. Next authorized work
 
-1. Squash Merge PR #65 through the protected `develop` flow only after its final Required Checks pass.
-2. Record the Squash Commit and final PR-head CI in Issue #21, then close #21.
-3. Verify the new `develop` Head and post-merge CI.
-4. Only then is `INS-001` #22 legally unlocked; do not start it inside RUN-002.
-5. Do not merge to `master`, create Tag/Release or publish to PyPI.
+1. `RUN-002` is closed; do not reopen its implementation scope without a new defect Issue.
+2. `INS-001` #22 is dependency eligible but remains not started.
+3. A new session may start only `INS-001`, from current `develop`, using a dedicated feature branch and protected PR flow.
+4. Do not merge to `master`, create Tag/Release or publish to PyPI.
