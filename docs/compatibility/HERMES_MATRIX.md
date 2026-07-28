@@ -6,7 +6,7 @@
 - Selected candidate: **Hermes Agent v0.19.0**
 - Git tag: **`v2026.7.20`**
 - Upstream repository: `NousResearch/hermes-agent`
-- Candidate status: formal signed release; target and known gaps selected, real E2E remains `COMPAT-001`
+- Candidate status: formal signed release; static contract selected, real E2E remains `COMPAT-001`
 
 ## 1. Decision
 
@@ -14,7 +14,7 @@ The Open-source Beta validation target is Hermes Agent v0.19.0 from tag `v2026.7
 
 This is the newest formal release observed during COMPAT-000 and contains the current general Plugin system, Hook contracts, `PluginContext.register_tool`, `PluginContext.register_context_engine`, pip entry-point discovery and ContextEngine ABC documentation.
 
-COMPAT-000 freezes the target, known compatibility gaps and executable probes. It does **not** claim the current project has passed real Hermes E2E; that responsibility remains `COMPAT-001`.
+COMPAT-000 freezes the target and executable probes. It does **not** claim the current project has passed real Hermes E2E; that responsibility remains `COMPAT-001`.
 
 ## 2. Python support distinction
 
@@ -104,7 +104,7 @@ subagent_stop
 
 Static subset validation is part of COMPAT-000. `COMPAT-001` must verify real registration and lifecycle payloads, including missing/optional fields and failure isolation.
 
-## 6. ContextEngine contract and known gap
+## 6. ContextEngine contract
 
 Hermes v0.19.0 requires a ContextEngine implementation to provide:
 
@@ -129,15 +129,15 @@ Only one Context Engine can be active, and activation is explicit through `conte
 
 Static inspection of the current `DeepSeekContextEngine` found:
 
-| ABC surface | Current source | Owner |
-|---|---|---|
-| `update_from_response` | Present | — |
-| `should_compress` | Present | — |
-| `compress` | Present | — |
-| required token counters | Present | — |
-| property `name` | **Missing** | `PKG-001` #18 + `COMPAT-001` #46 |
+| ABC surface | Current source |
+|---|---|
+| property `name` | Present as `@property`; value `deepseek-context` |
+| `update_from_response` | Present |
+| `should_compress` | Present |
+| `compress` | Present |
+| required token counters | Present |
 
-The missing property is an explicit pre-E2E blocker. COMPAT-000 records it rather than modifying runtime code in a documentation/selection task. `COMPAT-001` must fail until the packaged Context Engine exposes `name` and real discovery/selection/ABC calls pass.
+This is source-level contract evidence only. `COMPAT-001` must still verify real discovery, instantiation, explicit selection and lifecycle behavior against Hermes v0.19.0.
 
 ## 7. Static COMPAT-000 probes
 
@@ -146,8 +146,7 @@ The committed probe suite verifies:
 - fixture version/tag/Python range;
 - current Plugin hook names are a subset of the selected Hook list;
 - current target Tool count remains 10 and runtime count remains 9 until `CON-001 + MEM-001`;
-- `DeepSeekContextEngine` contains required v0.19.0 methods and counters;
-- the missing `name` property is exactly recorded with `PKG-001`/`COMPAT-001` ownership;
+- `DeepSeekContextEngine` contains the required v0.19.0 methods, counters and `name` property;
 - active support documents distinguish package/core Python from full Hermes-integrated Python.
 
 Static probes do not replace installation or real lifecycle tests.
@@ -181,15 +180,13 @@ Stop and reopen the compatibility decision if:
 
 - the tag or release provenance cannot be resolved;
 - actual v0.19.0 code contradicts the documented interface;
-- a required Hook/Context/Tool interface is absent and has no explicit owner/plan;
+- a required Hook/Context/Tool interface is absent;
 - Plugin activation requires an unsupported modification to Hermes core;
 - a supported cell cannot install from a clean environment;
 - product documentation continues to claim full Python 3.10 Hermes support.
-
-The known missing `name` property does not invalidate candidate selection because it is precisely recorded and assigned; it blocks G1/G3 compatibility evidence until fixed.
 
 ## 10. Scope impact
 
 This decision narrows only the **full integrated product support** to Python 3.11–3.12. It does not remove Python 3.10 package/core CI, change `pyproject.toml`, implement adapters, or claim COMPAT-001 has passed.
 
-G0 may proceed after active specifications, known gaps and static probes are synchronized. G1/G3 still require the real compatibility evidence assigned to `PKG-001` and `COMPAT-001`.
+G0 may proceed after active specifications and static probes are synchronized. G1/G3 still require the real compatibility evidence assigned to `COMPAT-001`.
