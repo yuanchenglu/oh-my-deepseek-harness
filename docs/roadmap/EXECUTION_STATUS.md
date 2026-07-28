@@ -3,25 +3,22 @@
 - Status date: 2026-07-28
 - Normative contract: [`OPEN_SOURCE_RELEASE_PLAN.md`](OPEN_SOURCE_RELEASE_PLAN.md) v2.3.4
 - Complete task ledger: [`archive/OPEN_SOURCE_RELEASE_PLAN_2.2.md`](archive/OPEN_SOURCE_RELEASE_PLAN_2.2.md)
-- INS-003 implementation baseline: `develop@9e5295ac7ec51e87d1051857d676cc13f478d063`
-- Latest completed Work ID: `INS-003`
-- Delivery: PR #72 · Squash Commit `9e5295ac7ec51e87d1051857d676cc13f478d063`
-- Code acceptance Head: `e2b82c727a3dedaa1c8cc71de38a54dec3c079b6`
-- Final PR Head: `28576a408a2ac6e2954178b9cc8dc09c5035ea10`
-- Final Required CI: Run #154 / ID `30340534593`
-- Current decision: **G0 PASS; M1 7/8 COMPLETE; G1 NOT EVALUATED**
+- Current incoming delivery: PR #74 (`QA-ART-001`)
+- QA-ART-001 code acceptance Head: `81195f844b681e85ccf2c0a15fc4935b2b396ed6`
+- QA-ART-001 Required CI: Run #161 / ID `30342161995`
+- Current decision on merge: **G0 PASS; M1 8/8 COMPLETE; G1 READY FOR SEPARATE EVALUATION**
 - Current product maturity: **Experimental Preview**
 - Session handoff: [`SESSION_HANDOFF_PROMPT.md`](SESSION_HANDOFF_PROMPT.md)
 
-> 本文件是当前执行状态账本，不替代主计划、v2.2 归档、PRD、Architecture、Test Plan 或 Traceability 中的规范契约。
+> 本文件中的 QA-ART-001 完成状态在 PR #74 protected Squash Merge 到 `develop` 且 Issue #25 关闭时生效。M1 完成不自动等于 G1 PASS；Gate 必须使用独立 Evidence 判定。
 
-## 1. Overall progress
+## 1. Overall progress on merge
 
 | Status | Work IDs | Ratio |
 |---|---:|---:|
-| Complete | 15 | 31.3% |
+| Complete | 16 | 33.3% |
 | In progress | 0 | 0.0% |
-| Not started / dependency blocked | 33 | 68.8% |
+| Not started / dependency blocked | 32 | 66.7% |
 | Total | 48 | 100% |
 
 Work-ID progress does not represent release readiness. G0 **does not** claim product release readiness. Public Beta still requires G1–G3 and final artifact verification.
@@ -32,8 +29,8 @@ Work-ID progress does not represent release readiness. G0 **does not** claim pro
 |---|---|---|
 | Plan Ready | PASS | 48 Work IDs、48 Issues、88 FR、17 CR、100 Test IDs |
 | G0 | PASS | PR #61 · `ee516c9b` · [`GATE-G0.md`](../testing/evidence/GATE-G0.md) |
-| G1 | NOT_EVALUATED | QA-ART-001 未完成；Hermes v0.19.0 完整支持仍限 Python 3.11–3.12 |
-| G2 | NOT_STARTED | 依赖 G1 |
+| G1 | READY_FOR_EVALUATION on merge | M1 Work IDs complete；需独立核对 INS/Doctor/Lifecycle/Artifact Evidence 与 open P0 blockers |
+| G2 | NOT_STARTED | 依赖 G1 PASS |
 | G3 | NOT_STARTED | 依赖 M2、M3、M4 和 RC Evidence |
 | G4 | NOT_STARTED | 依赖 Beta 反馈闭环 |
 | G5 | NOT_STARTED | 依赖 Stable 阶段 |
@@ -52,7 +49,7 @@ Work-ID progress does not represent release readiness. G0 **does not** claim pro
 | `COMPAT-000` | #17 | PR #60 · `c7f6212a` | Complete — Hermes v0.19.0 fixed |
 | G0 | — | PR #61 · `ee516c9b` | PASS |
 
-## 4. M1 status
+## 4. M1 status on merge
 
 | Work ID | Issue | Delivery | Status |
 |---|---:|---|---|
@@ -62,42 +59,43 @@ Work-ID progress does not represent release readiness. G0 **does not** claim pro
 | `RUN-002` | #21 | PR #65 · `f1c04697` | Complete |
 | `INS-001` | #22 | PR #68 · `2e5438a7` | Complete |
 | `INS-002` | #23 | PR #70 · `d1d3269d` | Complete |
-| `INS-003` | #24 | PR #72 · `9e5295ac` · [`INS-003.md`](../testing/evidence/INS-003.md) | **Complete** |
-| `QA-ART-001` | #25 | — | **Open — dependency eligible; not started** |
+| `INS-003` | #24 | PR #72 · `9e5295ac` | Complete |
+| `QA-ART-001` | #25 | PR #74 · [`QA-ART-001.md`](../testing/evidence/QA-ART-001.md) | **Complete on protected merge** |
 
-M1 progress: **7/8 Complete, 0/8 In progress, 1/8 Open eligible**.
+M1 progress on merge: **8/8 Complete**. This only unlocks a separate G1 evaluation.
 
-## 5. INS-003 verified acceptance
+## 5. QA-ART-001 verified acceptance
 
-Final PR-head Required CI：
+Code Required CI Run #161 / ID `30342161995`, Head `81195f844b681e85ccf2c0a15fc4935b2b396ed6`：
 
 ```text
-Run #154 / ID 30340534593 / head 28576a408a2ac6e2954178b9cc8dc09c5035ea10
-Python 3.10: success — package/core CI
-Python 3.11: success
-Python 3.12: success
-228 tests / 0 failures / 0 errors / 9 strict XFAIL per version
+Python 3.10: success — 230 tests / 0 failures / 0 errors / 9 strict XFAIL
+Python 3.11: success — 230 tests / 0 failures / 0 errors / 9 strict XFAIL
+Python 3.12: success — 230 tests / 0 failures / 0 errors / 9 strict XFAIL
 ```
 
-Verified:
+Verified in every Required job:
 
-- canonical upgrade, recovery, ordinary uninstall and confirmed purge lifecycle;
-- backup-first version-changing upgrade and idempotent same-version reuse;
-- rollback and interrupted-transaction recovery of deployment/data/process state;
-- ordinary uninstall preserves distribution and user data;
-- CLI prints but never executes the exact pip uninstall command;
-- confirmation is checked before destructive mutation;
-- canonical-root allowlist and symlink/traversal/unknown-path fail-closed boundaries;
-- external DB preservation and external DB symlink rejection;
-- temporary HOME/data/DB/port and fake secrets only;
-- 10 target Tool names / 9 current Runtime Tool names unchanged.
+- wheel built only from clean `git archive HEAD`;
+- non-editable fresh venv installs only the final wheel distribution with declared `all` dependencies;
+- product module origins and `sys.path` exclude repository and archived source;
+- wheel inventory has 39 files and no `plugins/`, `mcp/` or `tests/` tree;
+- install dry-run, clean install, Server health/ready/version and `/memory/tag` smoke;
+- Python 3.10 Doctor expected exit 5; Python 3.11/3.12 Doctor exit 0 with fake Hermes 0.19.0;
+- same-version upgrade is idempotent and reuses the Server PID;
+- ordinary uninstall preserves distribution/config/DB and prints the exact pip command;
+- explicit pip uninstall occurs only in the temporary test venv;
+- fake Secret does not appear in uploaded text evidence;
+- each job uploads wheel, SHA256, inventory, JSON/log evidence, pytest JUnit and artifact JUnit.
 
-This acceptance does not establish QA-ART-001, full Beta migration, real Hermes compatibility, G1, Public Beta, master or publication readiness.
+Wheel hashes differ across independently built jobs; QA-ART-001 records each actual artifact but does not claim reproducible-build PASS. Final reproducibility remains owned by REL-006.
+
+This acceptance does not establish G1, real Hermes compatibility, complete migration, Public Beta, master or publication readiness.
 
 ## 6. Next authorized work
 
-1. `INS-003` is closed; do not reopen its scope without a new defect Issue.
-2. `QA-ART-001` #25 is dependency eligible but remains not started until this post-merge closure is merged.
-3. The next feature branch may implement only `QA-ART-001`, from latest `develop`, through protected PR and Required CI.
-4. QA-ART-001 completion does not automatically pass G1; create a separate G1 Evidence decision afterward.
+1. Squash Merge PR #74 through protected `develop` only after final Required Checks pass.
+2. Record the Squash Commit and final PR-head CI in Issue #25, then close #25.
+3. Complete post-merge documentation closure.
+4. Only then perform a separate G1 Evidence evaluation; do not start CTX-001 before G1 PASS.
 5. Do not merge to `master`, create Tag/Release or publish to PyPI.
