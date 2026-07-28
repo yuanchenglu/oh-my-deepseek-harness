@@ -16,6 +16,11 @@ def _read(path: str) -> str:
     return (ROOT / path).read_text(encoding="utf-8")
 
 
+def _plain_markdown(text: str) -> str:
+    """Remove presentation-only emphasis before checking policy semantics."""
+    return text.replace("**", "").replace("__", "")
+
+
 def _literal_value(node: ast.AST):
     if (
         isinstance(node, ast.Call)
@@ -110,12 +115,13 @@ def test_g0_traceability_has_48_unique_work_ids_and_issue_urls() -> None:
 
 
 def test_g0_publishing_decision_is_safe_and_explicit() -> None:
-    publishing = _read("docs/release/PUBLISHING.md")
+    publishing = _plain_markdown(_read("docs/release/PUBLISHING.md"))
     evidence = _read("docs/testing/evidence/REL-005.md")
 
     assert "GitHub Release is mandatory" in publishing
     assert "PyPI is disabled" in publishing
-    assert "not treated as proof" in publishing
+    assert "not treated as proof that the name is available" in publishing
+    assert "Absence of evidence is handled by disabling PyPI, not by guessing" in publishing
     assert "Trusted Publisher" in publishing
     assert "GitHub Release" in evidence
     assert "PyPI" in evidence
