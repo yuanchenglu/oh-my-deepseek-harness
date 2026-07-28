@@ -1,26 +1,28 @@
 # 开源发布执行计划（Open-source Release Execution Plan）
 
-> 文档版本：2.3.4（Execution Progress + Session Handoff）
+> 文档版本：2.3.5（M1 Closure + G1 Handoff）
 >
-> 审查基线：`develop@37e4016`
+> 状态日期：2026-07-29
 >
-> 当前已合并实施基线：`develop@fc21430b54caac1a8de4cfb1a03940b2b83c25c4`
+> 规范审查基线：`develop@37e4016`
 >
-> 当前 incoming Work ID：`QA-ART-001`（PR #74）
+> QA-ART-001 实施基线：`develop@7adbb0cb00e781e31fee0ee5d360f52c4bdce5eb`
 >
-> 代码验收 Head：`81195f844b681e85ccf2c0a15fc4935b2b396ed6`
+> 最新完成 Work ID：`QA-ART-001`（Issue #25 / PR #74）
 >
-> 代码验收 CI：Run #161 / ID `30342161995`
+> 最终 PR Head：`2a0263b3fe5dec75f6dae89203ecda6b6275ec9f`
 >
-> 计划状态：`IN_IMPLEMENTATION`
+> 最终 Required CI：Run #166 / ID `30343118259`
 >
-> 当前 Gate：`G0 PASS`；`G1 READY_FOR_SEPARATE_EVALUATION ON MERGE`
+> 计划状态：`M1_COMPLETE / G1_EVALUATION_PENDING`
+>
+> 当前 Gate：`G0 PASS`；`G1 READY_FOR_SEPARATE_EVALUATION`
 >
 > 产品成熟度：`Experimental Preview`
 >
 > 发布目标：`v3.0.0-beta.1` → 按需增加 Beta → `v3.0.0`
 >
-> 完整 v2.2 任务账本归档：[`archive/OPEN_SOURCE_RELEASE_PLAN_2.2.md`](archive/OPEN_SOURCE_RELEASE_PLAN_2.2.md)
+> 完整 v2.2 任务账本：[`archive/OPEN_SOURCE_RELEASE_PLAN_2.2.md`](archive/OPEN_SOURCE_RELEASE_PLAN_2.2.md)
 >
 > 当前状态账本：[`EXECUTION_STATUS.md`](EXECUTION_STATUS.md)
 >
@@ -28,40 +30,52 @@
 
 ## 0. 规范性说明
 
-本文件是 Open-source Beta 发布周期的唯一主计划。v2.2 的完整任务表、文件所有权、依赖、测试入口、Gate、附录和 48 个 Work ID 已原样保存在只读归档中；除本文件明确修正、完成或替代的内容外，归档中的未修改条款继续按引用纳入本计划并保持规范效力。
+本文件是 Open-source Beta 发布周期的当前执行计划。v2.2 归档保留 48 个 Work ID、文件所有权、硬依赖、FR/CR/Test ID、Gate 和发布协议的完整细节；本文件负责记录最新事实、当前阶段、执行边界和下一步授权。
 
-执行优先级固定为：
+执行依据优先级：
 
-1. 本文件 v2.3.4 的明确规则和当前进展；
-2. `docs/compatibility/HERMES_MATRIX.md` 的 Hermes 候选、Python 分层和 COMPAT-001 验证计划；
-3. PRD、Product/Technical Architecture、Test Plan 和 Traceability 的已同步契约；
-4. v2.2 归档中的未修改任务细节；
-5. 历史测试报告，仅作为不可变历史证据。
+1. 本文件 v2.3.5 的当前事实、Gate 状态和执行规则；
+2. `docs/compatibility/HERMES_MATRIX.md` 的 Hermes/Python 支持分层；
+3. PRD、Product/Technical Architecture、Test Plan 和 Traceability；
+4. v2.2 归档中的未被本文件修正的条款；
+5. 历史测试报告，仅作为不可变证据，不作为当前状态源。
 
-当旧文档只写“Python 3.10–3.12”而未区分运行层级时，解释为包级/纯模块/制品生命周期 CI；完整 Hermes v0.19.0 集成支持仅为 Python 3.11–3.12。不得把 Python 3.10 的绿色 CI 描述为真实 Hermes E2E 通过。
+Python 支持口径固定为：
 
-## 更新记录（Update Log）
-
-| 日期 | 版本 | 更新内容 |
-|---|---|---|
-| 2026-07-27 | 1.0–2.2 | 建立并严格化 48 Work ID、88 FR、17 CR、100 Test ID、Gate、Migration、Security 和 Release 基线 |
-| 2026-07-28 | 2.3 | 合并 Errata，归档 v2.2 全量账本，修正 RC/Tag、Tool 分母、XFAIL 和 BETA-003 |
-| 2026-07-28 | 2.3.1–2.3.3 | 完成治理/追踪并固定 Hermes v0.19.0、Python 支持分层和 COMPAT-001 矩阵 |
-| 2026-07-28 | 2.3.4 | 记录 G0 PASS、M1 PKG/RUN/INS 完成以及 QA-ART-001 最终 wheel 验收；同步 G1 独立评估边界 |
+- Python 3.10：package/core/source-external artifact lifecycle，以及对完整 Hermes 组合的预期拒绝；
+- Python 3.11–3.12：完整 Hermes v0.19.0 候选组合；
+- 不得把 Python 3.10 的绿色 CI 描述为真实 Hermes integration E2E。
 
 ## 1. 当前结论与整体进度
 
 ### 1.1 发布判断
 
-当前产品仍是 **Experimental Preview**，尚未达到 Public Beta 或 Stable。G0、包布局、依赖分层、App Factory、本地单进程 Supervisor、installed-distribution 安装、read-only Doctor、安全 upgrade/uninstall/recovery，以及源码外最终 wheel 生命周期已经建立或达到 protected merge 条件。
+当前产品仍为 **Experimental Preview**，尚未达到 Public Beta 或 Stable。
 
-以下仍未完成：G1 独立 Gate 判定、Context Integrity、Session Isolation、目标 10 Tool Contract、完整 Migration、安全强化、真实 Hermes E2E、最终 RC reproducibility/provenance 与 Release Artifact 验证。
+已经完成：
 
-QA-ART-001 绿色 CI **不等于** G1 PASS，也不等于 Public Beta、master 或 publication ready。
+- M0 治理、版本、发布渠道、Traceability 与 Hermes 候选固定；
+- G0 独立 Gate PASS；
+- 唯一 `src/` 生产包布局和 dependency extras；
+- 无导入副作用的 App Factory；
+- 安全单进程 Supervisor、PID ownership、状态与日志边界；
+- installed-distribution dry-run、事务安装、幂等安装与 rollback；
+- read-only Doctor；
+- upgrade、recover、ordinary uninstall、confirmed purge 与破坏性路径防线；
+- clean source snapshot 构建最终 wheel，并在源码树外完成安装、Doctor、Server/API smoke、upgrade、uninstall 和显式临时 venv pip uninstall。
 
-### 1.2 任务账本进度
+仍未完成：
 
-PR #74 protected Squash Merge 且 Issue #25 关闭后，固定分母 48 个 Work ID 的状态为：
+- G1 独立 Gate 判定；
+- Context Integrity、Session Isolation、Privacy 与 Audit；
+- 目标 10 Tool Contract（当前 Runtime 仍为 9）；
+- 完整 Migration 与真实 Hermes discovery/Hook/Context/Tool E2E；
+- Security/SBOM/License/Dependency 审计；
+- RC reproducibility/provenance、master Release PR、Tag、GitHub Release 和发布后闭环。
+
+M1 全绿只表示 G1 **具备评估条件**，不等于 G1 PASS、Public Beta Ready、master Ready 或 publication Ready。
+
+### 1.2 固定 Work ID 进度
 
 | 状态 | 数量 | 比例 |
 |---|---:|---:|
@@ -70,55 +84,64 @@ PR #74 protected Squash Merge 且 Issue #25 关闭后，固定分母 48 个 Work
 | Not started / dependency blocked | 32 | 66.7% |
 | Total | 48 | 100% |
 
-该比例只表示 Work ID 账本进度，**不等于发布就绪度**。Gate 必须独立以 Evidence 判定。
+该比例只反映 Work ID 账本，不反映发布就绪度。Gate 必须独立以 Evidence 判定。
 
 ### 1.3 Gate 状态
 
 | Gate | 状态 | 说明 |
 |---|---|---|
-| Plan Ready | PASS | 48 Issue、88 FR、17 CR、100 Test ID 和执行协议已固定 |
-| G0 | PASS | 治理、版本、发布渠道、Hermes 候选和实施基线已完成；G0 does not claim product release readiness |
-| G1 | READY_FOR_EVALUATION on QA-ART merge | M1 8/8 Complete 后逐条核对规范 Gate 条款、P0 blocker 与 Evidence；不得自动 PASS |
-| G2–G5 | NOT_STARTED | 必须按硬依赖串行推进 |
+| Plan Ready | PASS | 48 Issues、88 FR、17 CR、100 Test IDs 与执行协议已固定 |
+| G0 | PASS | PR #61 · `ee516c9b` · `GATE-G0.md` |
+| G1 | READY_FOR_SEPARATE_EVALUATION | M1 8/8 Complete；尚未形成独立 Gate Evidence |
+| G2 | NOT_STARTED | 依赖 G1 PASS |
+| G3 | NOT_STARTED | 依赖 M2、M3、M4 与 RC Evidence |
+| G4 | NOT_STARTED | 依赖 Beta 反馈闭环 |
+| G5 | NOT_STARTED | 依赖 Stable 阶段与 soak |
 
-## 2. 已完成的 M0 / G0
+## 2. M0 / G0 完成状态
 
-| Work ID | 状态 | Delivery | 核心结果 |
+| Work ID / Gate | Delivery | 状态 | 核心结果 |
 |---|---|---|---|
-| `REL-000` | Complete | PR #4 · `e18db7e` | 规格、88 FR、100 Test ID 同步 |
-| `REL-001` | Complete | PR #6 · `a97dfe4` | Distribution/Manifest/Git 版本语义统一 |
-| `REL-002` | Complete | PR #8/#9 · `e7e1414e`/`61642f69` | develop 默认分支、Ruleset、治理和主计划 |
-| `REL-004` | Complete | PR #11 · `7d52de9f` | 唯一 10 Tool 目标分母；Runtime 保持真实 9 Tool |
-| `GOV-001` | Complete | PR #14 · `a0083ce1` | Security、Issue/PR Forms、Release Checklist |
-| `REL-003` | Complete | PR #58 · `fd5c212f` | 48 Issue、88 FR、17 CR、100 Test ID 追踪 |
-| `REL-005` | Complete | PR #59 · `49ad479f` | 首个 Beta 使用 GitHub Release；PyPI 安全禁用 |
-| `COMPAT-000` | Complete | PR #60 · `c7f6212a` | Hermes v0.19.0 候选和静态契约 |
-| `G0` | PASS | PR #61 · `ee516c9b` | 独立 Gate Evidence 完成 |
+| `REL-000` | PR #4 · `e18db7e` | Complete | 规格、88 FR、100 Test IDs 同步 |
+| `REL-001` | PR #6 · `a97dfe4` | Complete | Distribution/Manifest/Git 版本语义统一 |
+| `REL-002` | PR #8/#9 · `e7e1414e`/`61642f69` | Complete | develop、Ruleset、治理与主计划 |
+| `REL-004` | PR #11 · `7d52de9f` | Complete | 目标 10 Tool / 当前 Runtime 9 Tool 分母固定 |
+| `GOV-001` | PR #14 · `a0083ce1` | Complete | Security、Issue/PR Forms、Release Checklist |
+| `REL-003` | PR #58 · `fd5c212f` | Complete | 48 Issues 与完整 Traceability |
+| `REL-005` | PR #59 · `49ad479f` | Complete | 首个 Beta 采用 GitHub Release；PyPI 保持禁用 |
+| `COMPAT-000` | PR #60 · `c7f6212a` | Complete | Hermes v0.19.0 候选与支持矩阵 |
+| `G0` | PR #61 · `ee516c9b` | PASS | 独立 Gate Evidence 完成 |
 
 G0 不表示产品可发布，只授权 M1 实施。
 
-## 3. 当前 M1 状态
+## 3. M1 完成状态
+
+固定链路：
 
 ```text
 PKG-001 → PKG-002 → RUN-001 → RUN-002 → INS-001 → INS-002 → INS-003 → QA-ART-001 → G1
 ```
 
-| Work ID | Issue | 状态 | Delivery / remote evidence | 结果 |
+| Work ID | Issue | Delivery | 状态 | 核心结果 |
 |---|---:|---|---|---|
-| `PKG-001` | #18 | Complete | PR #62 · `2098dffc` | 唯一 `src/` 生产实现；wheel/外部导入通过 |
-| `PKG-002` | #19 | Complete | PR #63 · `ae277d1d` | dependency Extras；关闭 `XF-DEPS-001` |
-| `RUN-001` | #20 | Complete | PR #64 · `31366ceb` | 无副作用 App Factory；health/ready/version |
-| `RUN-002` | #21 | Complete | PR #65 · `f1c04697` | 安全 Supervisor、ownership、日志和进程 E2E |
-| `INS-001` | #22 | Complete | PR #68 · `2e5438a7` | dry-run、clean/idempotent install、事务 rollback、关闭 `XF-INSTALL-001` |
-| `INS-002` | #23 | Complete | PR #70 · `d1d3269d` | read-only Doctor、human/JSON、依赖/端口/支持矩阵诊断 |
-| `INS-003` | #24 | Complete | PR #72 · `9e5295ac` | upgrade、rollback/recover、ordinary uninstall、confirmed purge、destructive boundaries |
-| `QA-ART-001` | #25 | **Complete on protected merge** | PR #74 · [`QA-ART-001.md`](../testing/evidence/QA-ART-001.md) | clean snapshot final wheel 的源码外完整生命周期 |
+| `PKG-001` | #18 | PR #62 · `2098dffc` | Complete | 唯一 `src/` 生产实现；wheel/外部导入 |
+| `PKG-002` | #19 | PR #63 · `ae277d1d` | Complete | dependency extras；关闭 `XF-DEPS-001` |
+| `RUN-001` | #20 | PR #64 · `31366ceb` | Complete | App Factory；health/ready/version |
+| `RUN-002` | #21 | PR #65 · `f1c04697` | Complete | 安全 Supervisor、ownership、日志和进程 E2E |
+| `INS-001` | #22 | PR #68 · `2e5438a7` | Complete | dry-run、事务安装、幂等与 rollback |
+| `INS-002` | #23 | PR #70 · `d1d3269d` | Complete | read-only Doctor 与支持矩阵诊断 |
+| `INS-003` | #24 | PR #72 · `9e5295ac` | Complete | upgrade/recover/uninstall/purge 与 destructive boundaries |
+| `QA-ART-001` | #25 | PR #74 · `7adbb0cb` | **Complete** | 源码外最终 wheel 全生命周期与 Required artifact evidence |
 
-PR #74 合并后，M1 为 **8/8 Complete**。这只使 G1 具备独立评估条件，G1 不得提前判定。
+M1：**8/8 Complete**。
 
-## 4. QA-ART-001 验收证据
+## 4. QA-ART-001 最终验收
 
-QA-ART-001 代码验收 Head `81195f844b681e85ccf2c0a15fc4935b2b396ed6`，Required CI Run #161 / ID `30342161995`：
+- Squash Commit：`7adbb0cb00e781e31fee0ee5d360f52c4bdce5eb`
+- Code acceptance Head：`81195f844b681e85ccf2c0a15fc4935b2b396ed6`
+- Final PR Head：`2a0263b3fe5dec75f6dae89203ecda6b6275ec9f`
+- Code acceptance CI：Run #161 / ID `30342161995`
+- Final PR-head CI：Run #166 / ID `30343118259`
 
 ```text
 Python 3.10: success — 230 tests / 0 failures / 0 errors / 9 strict XFAIL
@@ -127,86 +150,50 @@ Python 3.12: success — 230 tests / 0 failures / 0 errors / 9 strict XFAIL
 artifact JUnit per job: 1 test / 0 failures / 0 errors / 0 skipped
 ```
 
-核心验收：
+已证明：
 
-- build input 只来自 clean `git archive HEAD`；
-- fresh non-editable venv 只安装最终 wheel distribution 与其 `all` 依赖；
-- `PYTHONPATH` 为空，执行 cwd 位于 repository 与 archived source 之外；
-- product module `__file__` 和 `sys.path` 均无 source contamination；
-- wheel 包含 39 files，不包含 `plugins/`、`mcp/` 或 `tests/`；
+- build input 仅来自 clean `git archive HEAD`；
+- fresh non-editable venv 仅安装最终 wheel 与声明依赖；
+- `PYTHONPATH` 为空，执行目录位于 repository/source snapshot 之外；
+- product import origins 和 `sys.path` 无源码树污染；
+- wheel 为 39 files，不包含 `plugins/`、`mcp/`、`tests/`；
 - install dry-run 零写入，clean install 启动一个 ready Server；
-- Python 3.10 Doctor 按支持分层退出 5；Python 3.11/3.12 Doctor 退出 0；
+- Python 3.10 Doctor 按支持分层退出 5，Python 3.11/3.12 退出 0；
 - `/health`、`/ready`、`/version` 与 `POST /memory/tag` smoke 通过；
-- same-version upgrade `up_to_date`、不变更、复用同 PID；
-- ordinary uninstall 保留 distribution/config/DB，并只打印精确 pip uninstall command；
-- 显式 pip uninstall 仅由测试脚本在临时 venv 执行；
-- fake Secret 未出现在上传文本证据；
-- 每个 Required job 上传 wheel、SHA256、inventory、JSON/log、pytest JUnit 和 artifact JUnit。
+- same-version upgrade 幂等并复用 PID；
+- ordinary uninstall 保留 distribution/config/DB，只打印精确 pip uninstall command；
+- 实际 pip uninstall 仅由测试脚本在临时 venv 执行；
+- fake Secret 未进入上传文本证据；
+- 每个 Required job 上传 wheel、SHA256、inventory、JSON/log 与两类 JUnit。
 
-三个 job 的 wheel SHA256 不同。QA-ART-001 记录并验证每个实际制品，但**不声明 byte-for-byte reproducible-build PASS**。最终 reproducibility/provenance 仍由 `REL-006` 负责，除非 G1 的原始规范条款明确另有要求。
+三个独立 job 的 wheel SHA256 不同。本 Work ID 不声明 byte-for-byte reproducible-build PASS；最终 reproducibility/provenance 仍由 `REL-006` 负责，除非 G1 原始条款明确将其前置。
 
-## 5. 固定发布契约
+## 5. G1 独立评估要求
 
-### 5.1 版本和 Python 分层
+G1 不是 Work ID 数量统计。必须先读取主计划、v2.2 归档、Test Plan、Traceability 和全部 M1 Evidence，建立逐条 Gate checklist，再判定：`PASS`、`FAIL` 或 `BLOCKED`。
 
-| Surface | Public Beta 1 | Stable |
-|---|---|---|
-| Git Tag / GitHub Release | `v3.0.0-beta.1` | `v3.0.0` |
-| Python Distribution | `3.0.0b1` | `3.0.0` |
-| Plugin Manifest | `3.0.0-beta.1` | `3.0.0` |
+至少核对：
 
-- Distribution metadata：`>=3.10,<3.13`；
-- package/core/artifact lifecycle CI：Python 3.10、3.11、3.12；
-- full Hermes v0.19.0 candidate：Python 3.11、3.12；
-- Python 3.10 的完整 Hermes 组合必须由 install/doctor 明确拒绝。
+1. M1 八个 Work ID 的 Issue、PR、Squash Commit、Evidence 与 Required CI 是否闭环；
+2. `CR-P0-001` 是否已关闭，是否仍有属于 G1 的开放 P0 blocker；
+3. package/import/Server/Supervisor/install/Doctor/lifecycle/final-wheel 证据是否来源明确；
+4. 9 个 strict XFAIL 是否全部归属于后续 canonical Work IDs，M1 是否没有无主 XFAIL；
+5. Python 3.10 与 3.11–3.12 支持分层是否一致；
+6. wheel hash 差异是否属于 G1 blocker，必须按原始 Gate 条款判断；
+7. 真实 Hermes E2E 是否属于 G1，必须按规范依赖判断，不得擅自提前或豁免；
+8. 是否存在真实 HOME/DB/Secret 污染、foreign PID、symlink/traversal 或 destructive-operation 未闭环风险；
+9. Gate Evidence 必须列出每条标准、证据、判定、风险与 exclusions。
 
-### 5.2 发布渠道
+G1 PASS 只解锁 M2 的合法入口，不表示 Public Beta Ready。
 
-首个 Beta 的必选渠道是 GitHub Release。PyPI 在名称归属、Owner/Maintainer、2FA 和 Trusted Publisher/OIDC 被认证验证前保持禁用。公开搜索缺失不构成名称可用或归属证据。
-
-### 5.3 Tool Contract
-
-Beta 目标为 10 个 Tool，当前 Runtime 为 9 个；`memory_store` 只能由 `CON-001 + MEM-001` 正式实现。禁止添加 placeholder Tool、Handler 或 Schema。
-
-### 5.4 Hermes 候选
-
-- Upstream：`NousResearch/hermes-agent`
-- Hermes：`0.19.0`
-- Tag：`v2026.7.20`
-- Full product OS/Python：Linux/macOS × Python 3.11/3.12
-- Python 3.10：package/core/artifact lifecycle 和预期拒绝验证
-
-`COMPAT-001` 必须执行真实 discovery、selection、Hook、ContextEngine 和 Tool E2E。G1 是否要求该真实矩阵，必须依据 G1 原始规范条款判定，不得自行提前或豁免。
-
-## 6. XFAIL 状态
-
-- `XF-RELEASE-001`：已由 REL-001 修复；
-- `XF-DEPS-001`：已由 PKG-002 修复；
-- `XF-INSTALL-001`：已由 INS-001 关闭；
-- QA-ART-001 完整套件为每版本 230 tests、0 failures、0 errors、9 个既有 strict XFAIL；
-- 剩余 strict XFAIL 均必须由后续 canonical Work ID 关闭，不得重命名、复制、skip 或弱化。
-
-## 7. 分支、CI 与执行协议
-
-- 默认/集成分支：`develop`；
-- 发布分支：`master`，仅接受 G3 PASS 后的 Release PR；
-- 功能分支 → PR → Required CI → Squash Merge develop；
-- develop Required Checks：`test (3.10)`、`test (3.11)`、`test (3.12)`；
-- 每个 Required Check 均执行 pytest 和源码外 final-wheel artifact lifecycle；
-- 单次只实施一个 Work ID 或一个 Gate 判定；
-- 每个 Work ID 必须有 Issue、分支、PR、Evidence、回滚和 Required CI；
-- 依赖未满足时不得启动后继；
-- 不以直推 develop 绕过 Ruleset；
-- 不创建 Tag、Release 或 PyPI publication，除非到达相应 Gate/Work ID。
-
-## 8. 发布路径
+## 6. 后续路线
 
 ```text
 M0 → G0 PASS
-M1 8/8 → 独立 G1 判定
-G1 PASS → M2 → G2
-G2 → M3
-M2 + M3 → M4 → G3 RC
+M1 8/8 Complete → 独立 G1 判定
+G1 PASS → 按硬依赖启动唯一 M2 Work ID → G2
+G2 PASS → M3
+M2 + M3 Complete → M4 → G3 RC
 G3 PASS → develop → master Release PR
 精确 master Commit 重建最终制品 + test-release
 PASS → BETA-001 不可变 GitHub Tag/Release
@@ -214,11 +201,58 @@ BETA-002 + BETA-003 + REL-007 → G4
 G4 → STABLE-001 → SOAK-001 → G5 → REL-008
 ```
 
-## 9. 当前下一步
+当前不得启动 CTX-001、SES-001 或其他 G1 后继任务，直到独立 `GATE-G1.md` 明确 PASS。
 
-1. PR #74 final Required Checks 通过后标记 Ready，protected Squash Merge 到 `develop`；
-2. 记录 QA-ART-001 Squash Commit、关闭 Issue #25，并同步 post-merge 状态；
-3. QA-ART-001 post-merge 收口后，创建独立 G1 Gate Evidence，不得直接启动 CTX-001；
-4. G1 逐条核对主计划/归档标准、M1 Evidence、P0 blocker、Python/Hermes 分层和 open XFAIL ownership；
-5. 只有 G1 明确 PASS 后，才按固定依赖确定下一个唯一 Work ID；
-6. 不合入 master，不创建 Tag/Release/PyPI，不提前声明 Public Beta。
+## 7. 分支、CI 与执行协议
+
+### 7.1 正常路径：PR 优先
+
+1. 从最新 `develop` 创建功能/文档分支；
+2. 建立 Pull Request，标题和描述清楚说明 Work ID、范围、风险与验证；
+3. 执行 Required CI：`test (3.10)`、`test (3.11)`、`test (3.12)`；
+4. CI 全绿后 Squash Merge 到 `develop`；
+5. 更新 Issue、Evidence、Traceability、状态账本和 post-merge 事实；
+6. `master` 仅接受达到相应 Release Gate 后的发布 PR。
+
+### 7.2 异常路径：直推 develop 仅作兜底
+
+`develop` 已取消 PR 强制保护，但直推不是默认方案。只有 PR 流程持续因环境、依赖、规则冲突或平台故障无法完成时，才允许：
+
+1. 先定位根因，区分代码缺陷与环境缺陷；
+2. 能修复则修复并继续 PR；
+3. 当前环境确实无法解决时，才可直推 `develop`，不得直推 `master`；
+4. Commit message 必须包含：
+
+```text
+<type>(<scope>): <变更说明>
+
+## 问题原因
+<PR/CI 无法完成的真实根因>
+
+## 技术债务
+- <未解决事项或后续工作>
+```
+
+5. 技术债务可记录在 Commit message，或记录到 `docs/TECH_DEBT.md`；格式：`[日期] 描述 | 遗留原因 | 状态`；
+6. 直推后仍需补齐 Evidence、状态账本和可追溯性。
+
+核心原则：能走 PR 就走 PR；直推必须说明原因和债务；不得以直推绕过安全、测试或发布 Gate。
+
+## 8. 当前唯一下一步
+
+1. 以 `develop@7adbb0cb00e781e31fee0ee5d360f52c4bdce5eb` 为 QA-ART 实施基线，完成本次 post-merge 文档收口；
+2. 从收口后的最新 `develop` 创建独立 `docs/gate-g1-evaluation` 分支和 Draft PR；
+3. 创建 `docs/testing/evidence/GATE-G1.md`，逐条评估 G1，结论只能为 PASS、FAIL 或 BLOCKED；
+4. 同步 Execution Status、主计划、Traceability 与下一会话 handoff；
+5. G1 未明确 PASS 前，不启动任何 M2 实现；
+6. 不合入 `master`，不创建 Tag/GitHub Release，不发布 PyPI。
+
+## 9. 明确边界
+
+当前完成状态不代表：
+
+- 真实 Hermes integration E2E 已通过；
+- 10 Tool Runtime Contract 已完成；
+- Context/Session/Privacy/Migration/Security 已完成；
+- reproducible build、SBOM、RC 或最终 Release Artifact 已完成；
+- Public Beta、master、Tag、GitHub Release 或 PyPI 已就绪。
