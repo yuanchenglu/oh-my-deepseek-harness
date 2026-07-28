@@ -6,7 +6,7 @@
 - Last synchronized: 2026-07-28
 - Fixed scope: **48 Work IDs · 48 unique GitHub Issues · 88 FR IDs · 17 CR IDs · 100 Test IDs**
 
-> 一个 Work ID 只有一个 canonical Issue。表中 `Open/Blocked` 表示 Issue 已创建，但硬依赖尚未满足；不表示允许并行实施。PR、Commit 和 Evidence 只能在实际合并后填写。
+> 一个 Work ID 只有一个 canonical Issue。表中 `Open/Blocked` 表示 Issue 已创建，但硬依赖尚未满足；不表示允许并行实施。PR、Commit 和 Evidence 只能在实际合并后填写。PR #65 的最终 Squash Commit 在合并后记录于 Issue #21。
 
 ## 1. Work ID → Issue → Delivery
 
@@ -17,14 +17,14 @@
 | M0 | `REL-002` | REL-001 | Branch governance, Rulesets, v2.3 plan | repository metadata, CI, archive Blob identity | [#7](https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/7) | PR #8/#9 · `e7e1414e`/`61642f69` | [`REL-002.md`](../testing/evidence/REL-002.md) | Complete |
 | M0 | `REL-004` | REL-002 | Current 9 / target 10 Tool denominator | `TestToolContract`; registry-set equality | [#10](https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/10) | PR #11 · `7d52de9f` | [`REL-004.md`](../testing/evidence/REL-004.md) | Complete |
 | M0 | `GOV-001` | REL-004 | Security policy, Issue/PR forms, release governance | YAML parse, link/field checks, Required CI | [#12](https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/12) | PR #14 · `a0083ce1` | [`GOV-001.md`](../testing/evidence/GOV-001.md) | Complete |
-| M0 | `REL-003` | GOV-001 | 48 canonical Issues and complete traceability | 48/48 uniqueness; 0 orphan FR/CR/Test owners | [#15](https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/15) | Current PR | [`REL-003.md`](../testing/evidence/REL-003.md) | In progress |
-| M0 | `REL-005` | REL-000 | PyPI ownership, 2FA, Trusted Publisher | credential-free external status evidence | [#16](https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/16) | — | `REL-005.md` when executed | Open — eligible |
-| M0 | `COMPAT-000` | REL-000 | Select one real Hermes validation target | source/version/probe/E2E plan | [#17](https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/17) | — | `COMPAT-000.md` when executed | Open — eligible |
-| M1 | `PKG-001` | G0 + COMPAT-000 | `FR-PLUGIN-001–005`, `FR-SERVER-001`; `CR-P0-001`; `XF-INSTALL-001` | clean-archive wheel inventory and external imports | [#18](https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/18) | — | `PKG-001.md` when executed | Blocked by G0 |
-| M1 | `PKG-002` | PKG-001 | Dependency extras; `CR-P0-001`; `XF-DEPS-001` | clean install/import matrix | [#19](https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/19) | — | `PKG-002.md` when executed | Blocked |
-| M1 | `RUN-001` | PKG-002 | `FR-SERVER-001–007`; `CR-P0-001` | `TC-SERVER-001–003`; import-side-effect matrix | [#20](https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/20) | — | `RUN-001.md` when executed | Blocked |
-| M1 | `RUN-002` | RUN-001 | `FR-SERVER-003–005`, `FR-OBS-004–005`; `CR-P0-001` | `TC-SERVER-004`; process/PID/log E2E | [#21](https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/21) | — | `RUN-002.md` when executed | Blocked |
-| M1 | `INS-001` | RUN-002 | `FR-INSTALL-001–003`, Plugin/Security install contract | `TC-INSTALL-001–003` | [#22](https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/22) | — | `INS-001.md` when executed | Blocked |
+| M0 | `REL-003` | GOV-001 | 48 canonical Issues and complete traceability | 48/48 uniqueness; 0 orphan FR/CR/Test owners | [#15](https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/15) | PR #58 · `fd5c212f` | [`REL-003.md`](../testing/evidence/REL-003.md) | Complete |
+| M0 | `REL-005` | REL-000 | PyPI ownership, 2FA, Trusted Publisher | credential-free external status evidence | [#16](https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/16) | PR #59 · `49ad479f` | [`REL-005.md`](../testing/evidence/REL-005.md) | Complete — GitHub-only Beta; PyPI disabled |
+| M0 | `COMPAT-000` | REL-000 | Select one real Hermes validation target | source/version/probe/E2E plan | [#17](https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/17) | PR #60 · `c7f6212a` | [`COMPAT-000.md`](../testing/evidence/COMPAT-000.md) | Complete |
+| M1 | `PKG-001` | G0 + COMPAT-000 | `FR-PLUGIN-001–005`, `FR-SERVER-001`; `CR-P0-001`; `XF-INSTALL-001` | clean-archive wheel inventory and external imports | [#18](https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/18) | PR #62 · `2098dffc` | [`PKG-001.md`](../testing/evidence/PKG-001.md) | Complete |
+| M1 | `PKG-002` | PKG-001 | Dependency extras; `CR-P0-001`; `XF-DEPS-001` | clean install/import matrix | [#19](https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/19) | PR #63 · `ae277d1d` | [`PKG-002.md`](../testing/evidence/PKG-002.md) | Complete |
+| M1 | `RUN-001` | PKG-002 | `FR-SERVER-001–007`; `CR-P0-001` | `TC-SERVER-001–003`; import-side-effect matrix | [#20](https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/20) | PR #64 · `31366ceb` | [`RUN-001.md`](../testing/evidence/RUN-001.md) | Complete |
+| M1 | `RUN-002` | RUN-001 | `FR-SERVER-003–005`, `FR-OBS-004–005`; `CR-P0-001` | `TC-SERVER-004`; process/PID/log E2E | [#21](https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/21) | PR #65 · Squash SHA in #21 | [`RUN-002.md`](../testing/evidence/RUN-002.md) | Complete on protected merge |
+| M1 | `INS-001` | RUN-002 | `FR-INSTALL-001–003`, Plugin/Security install contract | `TC-INSTALL-001–003` | [#22](https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/22) | — | `INS-001.md` when executed | Open — eligible after #21 closes |
 | M1 | `INS-002` | INS-001 | `FR-INSTALL-006`, `FR-OBS-003/005` | `TC-INSTALL-004/005/009`; human/JSON Doctor | [#23](https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/23) | — | `INS-002.md` when executed | Blocked |
 | M1 | `INS-003` | INS-002 | `FR-INSTALL-004–005`; safe lifecycle | `TC-INSTALL-006–008/010`; recovery fixtures | [#24](https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/24) | — | `INS-003.md` when executed | Blocked |
 | M1 | `QA-ART-001` | INS-003 | `FR-QA-005`; `CR-P2-004` | source-external artifact lifecycle E2E | [#25](https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/25) | — | `QA-ART-001.md` when executed | Blocked |
