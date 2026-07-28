@@ -131,7 +131,7 @@ G1 以冻结 Commit 的 `git archive HEAD` 作为 clean-source 证据。正式�
 
 ### 6.3 Real Hermes E2E
 
-真实 Hermes discovery、enablement、Hook、Context Engine、Tool E2E 属于 `COMPAT-001`（M4/G3），不属于 G1，否则形成循环依赖。
+兼容候选固定为 **Hermes Agent v0.19.0 / Git tag `v2026.7.20`**。真实 Hermes discovery、enablement、Hook、Context Engine、Tool E2E 属于 `COMPAT-001`（M4/G3），不属于 G1，否则形成循环依赖。
 
 ### 6.4 strict XFAIL
 
