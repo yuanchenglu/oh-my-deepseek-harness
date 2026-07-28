@@ -15,6 +15,13 @@ from harness_server.supervisor import (
     SupervisorError,
 )
 
+from .doctor import (
+    DOCTOR_MISSING_DEPENDENCY,
+    DoctorCheck,
+    DoctorReport,
+    diagnose,
+    render_human,
+)
 from .installer import InstallError, install
 
 
@@ -57,6 +64,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--dry-run", action="store_true", help="Report the transaction without writes"
     )
     install_command.add_argument("--timeout", type=float, default=20.0)
+
+    doctor_command = commands.add_parser(
+        "doctor", help="Run read-only environment and lifecycle diagnostics"
+    )
+    _add_common_runtime_options(doctor_command)
 
     server = commands.add_parser("server", help="Manage the local Harness Server")
     actions = server.add_subparsers(dest="server_command", required=True)
@@ -163,6 +175,37 @@ def _run_install(args: argparse.Namespace) -> int:
         return exc.exit_code
 
 
+def _config_error_report(message: str) -> DoctorReport:
+    return DoctorReport(
+        (
+            DoctorCheck(
+                "config",
+                "fail",
+                "Runtime configuration is invalid",
+                recovery="Correct the HARNESS_HOST, HARNESS_PORT and path settings, then rerun Doctor.",
+                failure_class="missing_dependency",
+                details={"error": message},
+            ),
+        ),
+        DOCTOR_MISSING_DEPENDENCY,
+    )
+
+
+def _run_doctor(args: argparse.Namespace) -> int:
+    try:
+        report = diagnose(data_root=args.data_root)
+    except ValueError as exc:
+        report = _config_error_report(str(exc))
+    if args.json:
+        print(
+            json.dumps(report.to_dict(), ensure_ascii=False, sort_keys=True),
+            file=sys.stdout,
+        )
+    else:
+        print(render_human(report), file=sys.stdout)
+    return report.exit_code
+
+
 def _run_server(args: argparse.Namespace) -> int:
     supervisor = _supervisor(args)
     try:
@@ -227,6 +270,8 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     if args.command == "install":
         return _run_install(args)
+    if args.command == "doctor":
+        return _run_doctor(args)
     if args.command == "server":
         return _run_server(args)
     parser.error("unsupported command")
