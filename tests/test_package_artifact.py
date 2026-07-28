@@ -182,7 +182,7 @@ def test_wheel_installs_and_imports_outside_repository(tmp_path: Path) -> None:
 
         console = entry_points.select(group="console_scripts", name="deepseek-harness")
         assert len(console) == 1
-        assert console[0].value == "deepseek_harness.cli:main"
+        assert next(iter(console)).value == "deepseek_harness.cli:main"
         """
     )
     _run(str(python), "-c", script, cwd=probe)
