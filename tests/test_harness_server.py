@@ -3,12 +3,6 @@
 用 FastAPI TestClient 测 3 组路由的核心端点，不依赖网络。
 """
 
-import sys
-from pathlib import Path
-
-# 把 mcp 目录加到 path，让 import 能找到 harness_server
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "mcp"))
-
 from fastapi.testclient import TestClient
 
 from harness_server.server import app
