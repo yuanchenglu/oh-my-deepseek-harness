@@ -5,7 +5,6 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from pathlib import Path
 
 from harness_server.config import RuntimeConfig
 from harness_server.runtime import RuntimePaths, RuntimeStateError
@@ -15,6 +14,8 @@ from harness_server.supervisor import (
     Supervisor,
     SupervisorError,
 )
+
+from .installer import InstallError, install
 
 
 def _add_common_runtime_options(parser: argparse.ArgumentParser) -> None:
@@ -47,6 +48,16 @@ def _add_start_options(parser: argparse.ArgumentParser) -> None:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="deepseek-harness")
     commands = parser.add_subparsers(dest="command", required=True)
+
+    install_command = commands.add_parser(
+        "install", help="Deploy Hermes adapters and one local Harness Server"
+    )
+    _add_common_runtime_options(install_command)
+    install_command.add_argument(
+        "--dry-run", action="store_true", help="Report the transaction without writes"
+    )
+    install_command.add_argument("--timeout", type=float, default=20.0)
+
     server = commands.add_parser("server", help="Manage the local Harness Server")
     actions = server.add_subparsers(dest="server_command", required=True)
 
@@ -95,7 +106,10 @@ def _emit(payload: dict, *, as_json: bool, stream=None) -> None:
     order = (
         "state",
         "message",
+        "dry_run",
+        "changed",
         "pid",
+        "server_pid",
         "host",
         "port",
         "version",
@@ -103,10 +117,20 @@ def _emit(payload: dict, *, as_json: bool, stream=None) -> None:
         "ready",
         "log_path",
     )
+    rendered: set[str] = set()
     for key in order:
         value = payload.get(key)
         if value is not None:
-            print(f"{key}: {value}", file=output)
+            print(f"{key}: {_human_value(value)}", file=output)
+            rendered.add(key)
+    for key in sorted(set(payload) - rendered):
+        print(f"{key}: {_human_value(payload[key])}", file=output)
+
+
+def _human_value(value) -> str:
+    if isinstance(value, (dict, list, tuple)):
+        return json.dumps(value, ensure_ascii=False, sort_keys=True)
+    return str(value)
 
 
 def _supervisor(args: argparse.Namespace) -> Supervisor:
@@ -114,12 +138,32 @@ def _supervisor(args: argparse.Namespace) -> Supervisor:
     return Supervisor(paths)
 
 
-def main(argv: list[str] | None = None) -> int:
-    parser = build_parser()
-    args = parser.parse_args(argv)
-    if args.command != "server":
-        parser.error("unsupported command")
+def _run_install(args: argparse.Namespace) -> int:
+    try:
+        payload = install(
+            dry_run=args.dry_run,
+            timeout=args.timeout,
+            data_root=args.data_root,
+        )
+        _emit(payload, as_json=args.json)
+        return 0
+    except ValueError as exc:
+        _emit(
+            {"state": "config_error", "message": str(exc)},
+            as_json=args.json,
+            stream=sys.stderr,
+        )
+        return 3
+    except InstallError as exc:
+        _emit(
+            {"state": "install_error", "message": str(exc)},
+            as_json=args.json,
+            stream=sys.stderr,
+        )
+        return exc.exit_code
 
+
+def _run_server(args: argparse.Namespace) -> int:
     supervisor = _supervisor(args)
     try:
         if args.server_command == "start":
@@ -175,7 +219,17 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 2
 
-    parser.error("unsupported server command")
+    raise AssertionError("unsupported server command")
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    if args.command == "install":
+        return _run_install(args)
+    if args.command == "server":
+        return _run_server(args)
+    parser.error("unsupported command")
     return 2
 
 
