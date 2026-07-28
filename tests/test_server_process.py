@@ -261,7 +261,7 @@ def test_console_script_metadata_is_installed() -> None:
         name="deepseek-harness",
     )
     assert len(entry_points) == 1
-    assert entry_points[0].value == "deepseek_harness.cli:main"
+    assert next(iter(entry_points)).value == "deepseek_harness.cli:main"
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Windows process matrix is later work")
