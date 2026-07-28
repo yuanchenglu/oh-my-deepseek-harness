@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[3]
 FIXTURE = ROOT / "tests" / "fixtures" / "hermes" / "v0.19.0-contract.yaml"
 PLUGIN_MANIFEST = ROOT / "src" / "deepseek_harness" / "resources" / "plugin.yaml"
 TOOLS_SOURCE = ROOT / "src" / "deepseek_harness" / "tools.py"
-CONTEXT_SOURCE = ROOT / "src" / "deepseek_context" / "__init__.py"
+CONTEXT_SOURCE = ROOT / "src" / "deepseek_context" / "_engine.py"
 
 
 def _fixture() -> dict:
