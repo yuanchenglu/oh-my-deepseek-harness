@@ -203,7 +203,7 @@ def test_artifact_runner_has_no_editable_or_source_import_escape_hatch() -> None
     assert "repository not in location.parents" in runner
     assert "archived_source not in location.parents" in runner
     assert "python -m pip uninstall oh-my-deepseek-harness" in runner
-    assert "${VENV_PY} -m pip uninstall" in runner
+    assert '"${VENV_PY}" -m pip uninstall' in runner
 
 
 @pytest.mark.skipif(os.name == "nt", reason="QA-ART-001 release process matrix is POSIX")
