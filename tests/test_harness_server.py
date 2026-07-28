@@ -1,94 +1,118 @@
-"""harness_server 合并服务端点测试。
+"""Harness Server App Factory and domain endpoint tests."""
 
-用 FastAPI TestClient 测 3 组路由的核心端点，不依赖网络。
-"""
+from __future__ import annotations
 
+import pytest
 from fastapi.testclient import TestClient
 
-from harness_server.server import app
+from harness_server.config import RuntimeConfig
+from harness_server.server import create_app
 
-client = TestClient(app)
+
+@pytest.fixture(scope="module")
+def client(tmp_path_factory: pytest.TempPathFactory):
+    root = tmp_path_factory.mktemp("harness-server")
+    config = RuntimeConfig(
+        db_path=str(root / "harness.db"),
+        import_memories=False,
+        memories_dir=str(root / "memories"),
+    )
+    with TestClient(create_app(config)) as test_client:
+        yield test_client
 
 
-class TestHealth:
-    def test_health_returns_ok(self):
-        """健康检查应返回 ok。"""
-        resp = client.get("/health")
-        assert resp.status_code == 200
-        data = resp.json()
+class TestRuntimeProbes:
+    def test_health_is_liveness_only(self, client: TestClient):
+        response = client.get("/health")
+        assert response.status_code == 200
+        assert response.json() == {"status": "ok", "service": "harness-server"}
+
+    def test_ready_checks_storage_without_exposing_path(self, client: TestClient):
+        response = client.get("/ready")
+        assert response.status_code == 200
+        assert response.json() == {"status": "ready"}
+        assert "db_path" not in response.text
+
+    def test_version_is_distinct(self, client: TestClient):
+        response = client.get("/version")
+        assert response.status_code == 200
+        data = response.json()
         assert data["status"] == "ok"
+        assert data["service"] == "harness-server"
+        assert data["version"] == "3.0.0b1"
+        assert data["api_version"] == "1"
 
 
 class TestPlanEndpoints:
-    """I-06 规划引擎端点。"""
-
-    def test_plan_create(self):
-        """创建 Plan 应返回 plan_id 和 steps。"""
-        resp = client.post("/plan/create", json={"task_description": "设计数据库 schema、实现 API、编写测试"})
-        assert resp.status_code == 200
-        data = resp.json()
+    def test_plan_create(self, client: TestClient):
+        response = client.post(
+            "/plan/create",
+            json={"task_description": "设计数据库 schema、实现 API、编写测试"},
+        )
+        assert response.status_code == 200
+        data = response.json()
         assert "plan_id" in data
         assert "steps" in data
         assert len(data["steps"]) >= 3
 
-    def test_plan_create_empty_description(self):
-        """空任务描述应返回 422。"""
-        resp = client.post("/plan/create", json={"task_description": ""})
-        assert resp.status_code == 422
+    def test_plan_create_empty_description(self, client: TestClient):
+        response = client.post("/plan/create", json={"task_description": ""})
+        assert response.status_code == 422
 
-    def test_plan_status_not_found(self):
-        """不存在的 plan_id 应返回 404。"""
-        resp = client.get("/plan/status/nonexistent-id")
-        assert resp.status_code == 404
+    def test_plan_status_not_found(self, client: TestClient):
+        response = client.get("/plan/status/nonexistent-id")
+        assert response.status_code == 404
 
 
 class TestMemoryEndpoints:
-    """I-12 记忆标签端点。"""
-
-    def test_memory_tag(self):
-        """标签分类应返回 layer 和 tags。"""
-        resp = client.post("/memory/tag", json={"content": "用户偏好简体中文注释"})
-        assert resp.status_code == 200
-        data = resp.json()
+    def test_memory_tag(self, client: TestClient):
+        response = client.post("/memory/tag", json={"content": "用户偏好简体中文注释"})
+        assert response.status_code == 200
+        data = response.json()
         assert "layer" in data
         assert "tags" in data
 
-    def test_memory_filter(self):
-        """λ 过滤应返回 entries 列表。"""
-        resp = client.post("/memory/filter", json={"lambda": 0.5})
-        assert resp.status_code == 200
-        data = resp.json()
+    def test_memory_filter(self, client: TestClient):
+        response = client.post("/memory/filter", json={"lambda": 0.5})
+        assert response.status_code == 200
+        data = response.json()
         assert "entries" in data
         assert "included_layers" in data
 
+    def test_default_startup_does_not_import_memory_files(
+        self,
+        client: TestClient,
+    ):
+        response = client.post("/memory/query", json={"limit": 100})
+        assert response.status_code == 200
+        assert response.json()["total"] == 0
+
 
 class TestCheckpointEndpoints:
-    """I-11 快照审查端点。"""
-
-    def test_checkpoint_create(self):
-        """创建 Checkpoint 应返回 checkpoint 对象。"""
-        resp = client.post("/checkpoint/create", json={
-            "plan_id": "test-plan-001",
-            "plan_steps": [
-                {"step_id": "s1", "text": "步骤一", "status": "completed"},
-                {"step_id": "s2", "text": "步骤二", "status": "pending"},
-            ],
-            "completed_step_ids": ["s1"],
-        })
-        assert resp.status_code == 200
-        data = resp.json()
+    def test_checkpoint_create(self, client: TestClient):
+        response = client.post(
+            "/checkpoint/create",
+            json={
+                "plan_id": "test-plan-001",
+                "plan_steps": [
+                    {"step_id": "s1", "text": "步骤一", "status": "completed"},
+                    {"step_id": "s2", "text": "步骤二", "status": "pending"},
+                ],
+                "completed_step_ids": ["s1"],
+            },
+        )
+        assert response.status_code == 200
+        data = response.json()
         assert "checkpoint" in data
         assert data["checkpoint"]["plan_id"] == "test-plan-001"
 
-    def test_checkpoint_review_not_found(self):
-        """不存在的 checkpoint_id 应返回 404。"""
-        resp = client.post("/checkpoint/review/nonexistent-id", json={})
-        assert resp.status_code == 404
+    def test_checkpoint_review_not_found(self, client: TestClient):
+        response = client.post("/checkpoint/review/nonexistent-id", json={})
+        assert response.status_code == 404
 
-    def test_checkpoint_chain(self):
-        """获取 Checkpoint 链应返回列表。"""
-        resp = client.get("/checkpoint/chain/test-plan-001")
-        assert resp.status_code == 200
-        data = resp.json()
+    def test_checkpoint_chain(self, client: TestClient):
+        response = client.get("/checkpoint/chain/test-plan-001")
+        assert response.status_code == 200
+        data = response.json()
         assert "checkpoints" in data
         assert data["plan_id"] == "test-plan-001"
