@@ -242,8 +242,23 @@ class ProcessLock:
         self._handle = None
 
 
+def _linux_process_state(pid: int) -> str | None:
+    """Return the one-letter Linux process state without parsing the comm field."""
+    proc_stat = Path(f"/proc/{pid}/stat")
+    if not proc_stat.is_file():
+        return None
+    try:
+        fields_after_comm = proc_stat.read_text(encoding="utf-8").rsplit(")", 1)[1]
+        fields = fields_after_comm.strip().split()
+        return fields[0]
+    except (IndexError, OSError):
+        return None
+
+
 def pid_is_alive(pid: int) -> bool:
     if pid <= 0:
+        return False
+    if _linux_process_state(pid) == "Z":
         return False
     try:
         os.kill(pid, 0)
@@ -251,7 +266,7 @@ def pid_is_alive(pid: int) -> bool:
         return False
     except PermissionError:
         return True
-    return True
+    return _linux_process_state(pid) != "Z"
 
 
 def process_start_token(pid: int) -> str | None:

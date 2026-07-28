@@ -6,7 +6,7 @@
 - Last synchronized: 2026-07-28
 - Fixed scope: **48 Work IDs · 48 unique GitHub Issues · 88 FR IDs · 17 CR IDs · 100 Test IDs**
 
-> 一个 Work ID 只有一个 canonical Issue。表中 `Open/Blocked` 表示 Issue 已创建，但硬依赖尚未满足；不表示允许并行实施。PR、Commit 和 Evidence 只能在实际合并后填写。INS-001 的最终 Squash Commit 在合并后记录于 Issue #22。
+> 一个 Work ID 只有一个 canonical Issue。表中 `Open/Blocked` 表示 Issue 已创建，但硬依赖尚未满足；不表示允许并行实施。PR、Commit 和 Evidence 只能在实际合并后填写。INS-002 的最终 Squash Commit 在合并后记录于 Issue #23。
 
 ## 1. Work ID → Issue → Delivery
 
@@ -24,9 +24,9 @@
 | M1 | `PKG-002` | PKG-001 | Dependency extras; `CR-P0-001`; `XF-DEPS-001` | clean install/import matrix | [#19](https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/19) | PR #63 · `ae277d1d` | [`PKG-002.md`](../testing/evidence/PKG-002.md) | Complete |
 | M1 | `RUN-001` | PKG-002 | `FR-SERVER-001–007`; `CR-P0-001` | `TC-SERVER-001–003`; import-side-effect matrix | [#20](https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/20) | PR #64 · `31366ceb` | [`RUN-001.md`](../testing/evidence/RUN-001.md) | Complete |
 | M1 | `RUN-002` | RUN-001 | `FR-SERVER-003–005`, `FR-OBS-004–005`; `CR-P0-001` | `TC-SERVER-004`; process/PID/log E2E | [#21](https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/21) | PR #65 · `f1c04697` | [`RUN-002.md`](../testing/evidence/RUN-002.md) | Complete |
-| M1 | `INS-001` | RUN-002 | `FR-INSTALL-001–003`, Plugin/Security install contract; close `XF-INSTALL-001` | `TC-INSTALL-001–003`; external-wheel install transaction E2E | [#22](https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/22) | PR #68 · Squash SHA in #22 | [`INS-001.md`](../testing/evidence/INS-001.md) | Complete on protected merge |
-| M1 | `INS-002` | INS-001 | `FR-INSTALL-006`, `FR-OBS-003/005` | `TC-INSTALL-004/005/009`; human/JSON Doctor | [#23](https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/23) | — | `INS-002.md` when executed | Open — eligible only after #22 closes |
-| M1 | `INS-003` | INS-002 | `FR-INSTALL-004–005`; safe lifecycle | `TC-INSTALL-006–008/010`; recovery fixtures | [#24](https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/24) | — | `INS-003.md` when executed | Blocked |
+| M1 | `INS-001` | RUN-002 | `FR-INSTALL-001–003`, Plugin/Security install contract; close `XF-INSTALL-001` | `TC-INSTALL-001–003`; external-wheel install transaction E2E | [#22](https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/22) | PR #68 · `2e5438a7` | [`INS-001.md`](../testing/evidence/INS-001.md) | Complete |
+| M1 | `INS-002` | INS-001 | `FR-INSTALL-006`, `FR-OBS-003/005`; read-only Doctor | `TC-INSTALL-004/005/009`; human/JSON parity; no-write snapshots | [#23](https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/23) | PR #70 · Squash SHA in #23 | [`INS-002.md`](../testing/evidence/INS-002.md) | Complete on protected merge |
+| M1 | `INS-003` | INS-002 | `FR-INSTALL-004–005`; safe lifecycle | `TC-INSTALL-006–008/010`; recovery fixtures | [#24](https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/24) | — | `INS-003.md` when executed | Open — eligible only after #23 closes |
 | M1 | `QA-ART-001` | INS-003 | `FR-QA-005`; `CR-P2-004` | source-external artifact lifecycle E2E | [#25](https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/25) | — | `QA-ART-001.md` when executed | Blocked |
 | M2 | `CTX-001` | G1 | `FR-CONTEXT-002/003/009/010`; `CR-P0-002`; `XF-CTX-001` | `TC-CTX-003` | [#26](https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/26) | — | `CTX-001.md` when executed | Blocked |
 | M2 | `CTX-002` | CTX-001 | `FR-CONTEXT-007–010`; `CR-P0-003`; `XF-CTX-002` | `TC-CTX-004–006` | [#27](https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/27) | — | `CTX-002.md` when executed | Blocked |
@@ -74,7 +74,7 @@
 | `FR-PLAN-001–008` | 8 | CON-001 [#32], PLAN-001–003 [#35–#37] | `TC-PLAN-001–013` |
 | `FR-MEMORY-001–007` | 7 | CON-001 [#32], MEM-001 [#33], MEM-002 [#34] | `TC-MEM-001–013` |
 | `FR-CHECKPOINT-001–006` | 6 | CON-001 [#32], CP-001 [#38] | `TC-CP-001–006` |
-| `FR-OBS-001–005` | 5 | RUN-002 [#21], AUD-001 [#39], PRIV-001 [#31], DOC-002 [#43] | log/status/audit/privacy tests |
+| `FR-OBS-001–005` | 5 | RUN-002 [#21], INS-002 [#23], AUD-001 [#39], PRIV-001 [#31], DOC-002 [#43] | Doctor/log/status/audit/privacy tests |
 | `FR-SEC-001–007` | 7 | PRIV-001 [#31], SEC-001 [#47], SEC-002 [#49], INS-001/003 [#22/#24] | `TC-SEC-001–006`, install security |
 | `FR-QA-001–009` | 9 | QA-ART-001 [#25], QA-001 [#44], QA-002 [#45], COMPAT-001 [#46], REL-006 [#50] | Fast/Integration/Release/compatibility gates |
 | **Total** | **88** | **0 orphan domains** | — |
@@ -111,8 +111,8 @@
 | `XF-POLICY-001` | SES-001 [#30] | Open |
 | `XF-AUDIT-001` | AUD-001 [#39] | Open |
 | `XF-CONTRACT-001–003` | CON-001 [#32] | Open |
-| `XF-INSTALL-001` | PKG-001 [#18] | Fixed by INS-001 PR #68; closure evidence in #22 |
-| `XF-DEPS-001` | PKG-002 [#19] | Open; historical alias `XF-PKG-001` deprecated |
+| `XF-INSTALL-001` | PKG-001 [#18] | Fixed by INS-001 PR #68 / `2e5438a7` |
+| `XF-DEPS-001` | PKG-002 [#19] | Fixed by PR #63; historical alias `XF-PKG-001` deprecated |
 | `XF-RELEASE-001` | REL-001 [#5] | Fixed by PR #6; historical alias `XF-VERSION-001` deprecated |
 | `XF-MEM-001` | MEM-002 [#34] | Open |
 
