@@ -20,7 +20,7 @@
 | Not started / dependency blocked | 36 | 75.0% |
 | Total | 48 | 100% |
 
-任务比例不是发布就绪度。Public Beta 必须通过 G0–G3 和最终制品验证。
+Work-ID progress does not represent release readiness. Public Beta still requires G0–G3 and final artifact verification.
 
 ## 2. Gate status
 
