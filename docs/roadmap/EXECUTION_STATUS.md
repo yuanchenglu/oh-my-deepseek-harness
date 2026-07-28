@@ -3,25 +3,22 @@
 - Status date: 2026-07-28
 - Normative contract: [`OPEN_SOURCE_RELEASE_PLAN.md`](OPEN_SOURCE_RELEASE_PLAN.md) v2.3.4
 - Complete task ledger: [`archive/OPEN_SOURCE_RELEASE_PLAN_2.2.md`](archive/OPEN_SOURCE_RELEASE_PLAN_2.2.md)
-- INS-002 implementation baseline: `develop@d1d3269de389258cc988c04b682de465d2da77c7`
-- Latest completed Work ID: `INS-002`
-- Delivery: PR #70 · Squash Commit `d1d3269de389258cc988c04b682de465d2da77c7`
-- Code acceptance Head: `ef4363cd8972c0e9bba64ae91a84a6efa8806e2e`
-- Final PR Head: `92d6cf2bd97763089809efa4130c187dd55e5456`
-- Final Required CI: Run #139 / ID `30335805610`
-- Current decision: **G0 PASS; M1 6/8 COMPLETE; G1 NOT EVALUATED**
+- Current incoming delivery: PR #72 (`INS-003`)
+- INS-003 code acceptance Head: `e2b82c727a3dedaa1c8cc71de38a54dec3c079b6`
+- INS-003 Required CI: Run #149 / ID `30339801279`
+- Current decision on merge: **G0 PASS; M1 7/8 COMPLETE; G1 NOT EVALUATED**
 - Current product maturity: **Experimental Preview**
 - Session handoff: [`SESSION_HANDOFF_PROMPT.md`](SESSION_HANDOFF_PROMPT.md)
 
-> 本文件是当前执行状态账本，不替代主计划、v2.2 归档、PRD、Architecture、Test Plan 或 Traceability 中的规范契约。
+> 本文件中的 INS-003 完成状态在 PR #72 protected Squash Merge 到 `develop` 且 Issue #24 关闭时生效。本文件不替代主计划、v2.2 归档、PRD、Architecture、Test Plan 或 Traceability 中的规范契约。
 
-## 1. Overall progress
+## 1. Overall progress on merge
 
 | Status | Work IDs | Ratio |
 |---|---:|---:|
-| Complete | 14 | 29.2% |
+| Complete | 15 | 31.3% |
 | In progress | 0 | 0.0% |
-| Not started / dependency blocked | 34 | 70.8% |
+| Not started / dependency blocked | 33 | 68.8% |
 | Total | 48 | 100% |
 
 Work-ID progress does not represent release readiness. G0 **does not** claim product release readiness. Public Beta still requires G1–G3 and final artifact verification.
@@ -32,7 +29,7 @@ Work-ID progress does not represent release readiness. G0 **does not** claim pro
 |---|---|---|
 | Plan Ready | PASS | 48 Work IDs、48 Issues、88 FR、17 CR、100 Test IDs |
 | G0 | PASS | PR #61 · `ee516c9b` · [`GATE-G0.md`](../testing/evidence/GATE-G0.md) |
-| G1 | NOT_EVALUATED | INS-003、QA-ART-001 未完成；Hermes v0.19.0 完整支持仍限 Python 3.11–3.12 |
+| G1 | NOT_EVALUATED | QA-ART-001 未完成；Hermes v0.19.0 完整支持仍限 Python 3.11–3.12 |
 | G2 | NOT_STARTED | 依赖 G1 |
 | G3 | NOT_STARTED | 依赖 M2、M3、M4 和 RC Evidence |
 | G4 | NOT_STARTED | 依赖 Beta 反馈闭环 |
@@ -52,7 +49,7 @@ Work-ID progress does not represent release readiness. G0 **does not** claim pro
 | `COMPAT-000` | #17 | PR #60 · `c7f6212a` | Complete — Hermes v0.19.0 fixed |
 | G0 | — | PR #61 · `ee516c9b` | PASS |
 
-## 4. M1 status
+## 4. M1 status on merge
 
 | Work ID | Issue | Delivery | Status |
 |---|---:|---|---|
@@ -61,46 +58,46 @@ Work-ID progress does not represent release readiness. G0 **does not** claim pro
 | `RUN-001` | #20 | PR #64 · `31366ceb` | Complete |
 | `RUN-002` | #21 | PR #65 · `f1c04697` | Complete |
 | `INS-001` | #22 | PR #68 · `2e5438a7` | Complete |
-| `INS-002` | #23 | PR #70 · `d1d3269d` · [`INS-002.md`](../testing/evidence/INS-002.md) | **Complete** |
-| `INS-003` | #24 | — | **Open — dependency eligible; not started** |
-| `QA-ART-001` | #25 | — | Blocked by INS-003 |
+| `INS-002` | #23 | PR #70 · `d1d3269d` | Complete |
+| `INS-003` | #24 | PR #72 · [`INS-003.md`](../testing/evidence/INS-003.md) | **Complete on protected merge** |
+| `QA-ART-001` | #25 | — | **Open — eligible only after PR #72 merges and #24 closes** |
 
-M1 progress: **6/8 Complete, 0/8 In progress, 1/8 Open eligible, 1/8 Blocked**.
+M1 progress on merge: **7/8 Complete, 0/8 In progress, 1/8 Open eligible**.
 
-## 5. INS-002 verified acceptance
+## 5. INS-003 verified acceptance
 
-Final PR-head Required CI：
+Code Required CI Run #149 / ID `30339801279`, Head `e2b82c727a3dedaa1c8cc71de38a54dec3c079b6`：
 
 ```text
-Run #139 / ID 30335805610 / head 92d6cf2bd97763089809efa4130c187dd55e5456
 Python 3.10: success — package/core CI
 Python 3.11: success
 Python 3.12: success
-215 tests / 0 failures / 0 errors / 9 strict XFAIL per version
+228 tests / 0 failures / 0 errors / 9 strict XFAIL per version
 ```
 
 Verified:
 
-- one immutable structured DoctorReport renders both human and single JSON object output;
-- fixed exits: generic 1, missing dependency 3, unmanaged port 4, unsupported matrix 5;
-- Python, Hermes 0.19.0, package/full support matrix and runtime dependencies;
-- packaged Plugin/Context adapter and managed config checks;
-- Server state, PID ownership, configured port, health/ready/version probes;
-- DB read-only, Provider presence and private permission checks;
-- empty HOME Doctor produces no persistent changes;
-- Doctor never starts/stops Server, invokes pip or performs repair/migration;
-- output excludes Secret values and managed absolute paths;
-- Python 3.10 + Hermes is explicitly rejected as full support;
-- Linux zombie liveness is classified as exited without weakening PID-reuse/foreign ownership safety;
-- tests use temporary HOME/data/DB/port and fake executables/secrets;
+- one canonical destructive lifecycle implementation backs upgrade, recovery, ordinary uninstall and confirmed purge;
+- upgrade dry-run reports Config/DB/JSONL/process/backup impact without writes;
+- same-version upgrade is idempotent, creates no backup growth and reuses one PID;
+- version-changing upgrade backs up adapters, config, SQLite DB and events before mutation;
+- ordinary failure restores prior deployment, data and process state;
+- interrupted transactions retain a private marker and backup for explicit recovery and retry;
+- ordinary uninstall removes managed deployment/runtime while preserving distribution and user data;
+- CLI prints but never executes `python -m pip uninstall oh-my-deepseek-harness`;
+- purge requires explicit confirmation before any process or file mutation;
+- purge is restricted to the lexical canonical product root and known owned children;
+- symlink parents/descendants, unknown paths, noncanonical roots and manifest traversal fail closed;
+- external DB and external DB symlink boundaries are preserved or rejected before process change;
+- tests use temporary HOME/data/DB/port and fake secrets;
 - 10 target Tool names / 9 current Runtime Tool names remain unchanged.
 
-This acceptance does not establish Upgrade, Uninstall, real Hermes compatibility, G1, Public Beta, master or publication readiness.
+This acceptance does not establish QA-ART-001, full Beta migration, real Hermes compatibility, G1, Public Beta, master or publication readiness.
 
 ## 6. Next authorized work
 
-1. `INS-002` is closed; do not reopen its scope without a new defect Issue.
-2. `INS-003` #24 is dependency eligible but remains not started.
-3. A new feature branch may start only `INS-003`, from current `develop`, through protected PR and Required CI.
-4. Do not start QA-ART-001 until INS-003 merges and Issue #24 closes.
+1. Squash Merge PR #72 through protected `develop` only after final Required Checks pass.
+2. Record the Squash Commit and final PR-head CI in Issue #24, then close #24.
+3. Verify the new `develop` Head and synchronize post-merge records.
+4. Only then is `QA-ART-001` #25 legally unlocked; do not start it inside INS-003.
 5. Do not merge to `master`, create Tag/Release or publish to PyPI.
