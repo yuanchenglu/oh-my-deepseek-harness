@@ -1,7 +1,8 @@
-"""PKG-001 artifact tests for the canonical src/ distribution."""
+"""Artifact tests for the canonical src/ distribution and final wheel lifecycle."""
 
 from __future__ import annotations
 
+import json
 import os
 import subprocess
 import sys
@@ -11,20 +12,24 @@ import venv
 import zipfile
 from pathlib import Path
 
+import pytest
+
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
 def _run(*args: str, cwd: Path, env: dict[str, str] | None = None) -> None:
-    subprocess.run(
+    completed = subprocess.run(
         list(args),
         cwd=cwd,
         env=env,
-        check=True,
+        check=False,
         text=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
+        timeout=360,
     )
+    assert completed.returncode == 0, completed.stdout
 
 
 def _build_wheel_from_git_archive(tmp_path: Path) -> Path:
@@ -103,6 +108,9 @@ def test_git_archive_wheel_contains_all_packages_and_resources(tmp_path: Path) -
     required = {
         "deepseek_harness/__init__.py",
         "deepseek_harness/cli.py",
+        "deepseek_harness/doctor.py",
+        "deepseek_harness/installer.py",
+        "deepseek_harness/lifecycle.py",
         "deepseek_harness/tools.py",
         "deepseek_harness/resources/plugin.yaml",
         "deepseek_harness/resources/strategies.yaml",
@@ -120,8 +128,7 @@ def test_git_archive_wheel_contains_all_packages_and_resources(tmp_path: Path) -
         "harness_server/config.yaml",
     }
     assert required <= names
-    assert not any(name.startswith("plugins/") for name in names)
-    assert not any(name.startswith("mcp/") for name in names)
+    assert not any(name.startswith(("plugins/", "mcp/", "tests/")) for name in names)
 
 
 def test_wheel_installs_and_imports_outside_repository(tmp_path: Path) -> None:
@@ -186,3 +193,79 @@ def test_wheel_installs_and_imports_outside_repository(tmp_path: Path) -> None:
         """
     )
     _run(str(python), "-c", script, cwd=probe)
+
+
+def test_artifact_runner_has_no_editable_or_source_import_escape_hatch() -> None:
+    runner = (ROOT / "scripts" / "test_artifact.sh").read_text(encoding="utf-8")
+    assert "git -C \"${ROOT}\" archive" in runner
+    assert "pip install -e" not in runner
+    assert "PYTHONPATH=" in runner
+    assert "repository not in location.parents" in runner
+    assert "archived_source not in location.parents" in runner
+    assert "python -m pip uninstall oh-my-deepseek-harness" in runner
+    assert "${VENV_PY} -m pip uninstall" in runner
+
+
+@pytest.mark.skipif(os.name == "nt", reason="QA-ART-001 release process matrix is POSIX")
+def test_final_wheel_full_lifecycle_outside_source_tree(tmp_path: Path) -> None:
+    configured = os.environ.get("QA_ARTIFACT_RESULTS_DIR")
+    results = (
+        (ROOT / configured).resolve()
+        if configured and not Path(configured).is_absolute()
+        else Path(configured).resolve()
+        if configured
+        else (tmp_path / "artifact-results").resolve()
+    )
+    env = {
+        **os.environ,
+        "QA_ARTIFACT_RESULTS_DIR": str(results),
+        "PYTHONPATH": "",
+    }
+    completed = subprocess.run(
+        ["bash", str(ROOT / "scripts" / "test_artifact.sh"), sys.executable],
+        cwd=ROOT,
+        env=env,
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        timeout=600,
+    )
+    assert completed.returncode == 0, completed.stdout
+
+    required = {
+        "build.log",
+        "wheel.sha256",
+        "wheel-inventory.json",
+        "import-probe.json",
+        "install-dry-run.json",
+        "install.json",
+        "doctor.json",
+        "server-smoke.json",
+        "upgrade-dry-run.json",
+        "upgrade.json",
+        "uninstall.json",
+        "explicit-pip-uninstall.log",
+        "junit.xml",
+    }
+    assert required <= {path.name for path in results.iterdir()}
+    assert len(list(results.glob("oh_my_deepseek_harness-3.0.0b1-*.whl"))) == 1
+
+    import_probe = json.loads((results / "import-probe.json").read_text(encoding="utf-8"))
+    assert import_probe["distribution_version"] == "3.0.0b1"
+    assert set(import_probe["modules"]) >= {
+        "deepseek_harness",
+        "deepseek_context",
+        "harness_server",
+        "deepseek_harness.lifecycle",
+    }
+
+    smoke = json.loads((results / "server-smoke.json").read_text(encoding="utf-8"))
+    assert smoke["health"]["status"] == "ok"
+    assert smoke["ready"]["status"] == "ready"
+    assert smoke["memory_tag"]["layer"] == "constraint"
+
+    uninstall = json.loads((results / "uninstall.json").read_text(encoding="utf-8"))
+    assert uninstall["pip_uninstall_command"] == (
+        "python -m pip uninstall oh-my-deepseek-harness"
+    )
