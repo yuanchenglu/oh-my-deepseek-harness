@@ -8,6 +8,8 @@
 >
 > QA-ART-001 实施基线：`develop@7adbb0cb00e781e31fee0ee5d360f52c4bdce5eb`
 >
+> M1 计划/交接收口基线：`develop@ec81b11236843bb3ca10d6e1e1af72fa91a780f0`
+>
 > 最新完成 Work ID：`QA-ART-001`（Issue #25 / PR #74）
 >
 > 最终 PR Head：`2a0263b3fe5dec75f6dae89203ecda6b6275ec9f`
@@ -62,7 +64,8 @@ Python 支持口径固定为：
 - installed-distribution dry-run、事务安装、幂等安装与 rollback；
 - read-only Doctor；
 - upgrade、recover、ordinary uninstall、confirmed purge 与破坏性路径防线；
-- clean source snapshot 构建最终 wheel，并在源码树外完成安装、Doctor、Server/API smoke、upgrade、uninstall 和显式临时 venv pip uninstall。
+- clean source snapshot 构建最终 wheel，并在源码树外完成安装、Doctor、Server/API smoke、upgrade、uninstall 和显式临时 venv pip uninstall；
+- QA-ART-001 post-merge Evidence、计划、状态与新会话交接收口。
 
 仍未完成：
 
@@ -240,8 +243,8 @@ G4 → STABLE-001 → SOAK-001 → G5 → REL-008
 
 ## 8. 当前唯一下一步
 
-1. 以 `develop@7adbb0cb00e781e31fee0ee5d360f52c4bdce5eb` 为 QA-ART 实施基线，完成本次 post-merge 文档收口；
-2. 从收口后的最新 `develop` 创建独立 `docs/gate-g1-evaluation` 分支和 Draft PR；
+1. M1、QA-ART-001 和 post-merge 计划/交接收口已完成，事实基线为 `develop@ec81b11236843bb3ca10d6e1e1af72fa91a780f0`；
+2. 从最新 `develop` 创建独立 `docs/gate-g1-evaluation` 分支和 Draft PR；
 3. 创建 `docs/testing/evidence/GATE-G1.md`，逐条评估 G1，结论只能为 PASS、FAIL 或 BLOCKED；
 4. 同步 Execution Status、主计划、Traceability 与下一会话 handoff；
 5. G1 未明确 PASS 前，不启动任何 M2 实现；
