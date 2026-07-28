@@ -7,86 +7,72 @@
 
 一、远程唯一事实源
 
-启动后读取：
+启动后读取最新 develop、master、开放 PR、开放 canonical Issues、最近 CI，以及：
 
-1. 最新 develop、master、开放 PR、开放 canonical Issues、最近 CI；
-2. docs/roadmap/OPEN_SOURCE_RELEASE_PLAN.md（v2.3.8 或更新）；
-3. docs/roadmap/EXECUTION_STATUS.md；
-4. docs/roadmap/SESSION_HANDOFF_PROMPT.md；
-5. docs/roadmap/archive/OPEN_SOURCE_RELEASE_PLAN_2.2.md；
-6. docs/testing/TEST_PLAN.md；
-7. docs/testing/evidence/GATE-G1.md；
-8. docs/testing/evidence/QA-ART-001.md；
-9. docs/traceability/RELEASE_TRACEABILITY.md；
-10. docs/compatibility/HERMES_MATRIX.md。
+- docs/roadmap/OPEN_SOURCE_RELEASE_PLAN.md（v2.3.9 或更新）；
+- docs/roadmap/EXECUTION_STATUS.md；
+- docs/roadmap/SESSION_HANDOFF_PROMPT.md；
+- docs/roadmap/archive/OPEN_SOURCE_RELEASE_PLAN_2.2.md；
+- docs/testing/TEST_PLAN.md；
+- docs/testing/evidence/GATE-G1.md；
+- docs/testing/evidence/QA-ART-001.md；
+- docs/testing/evidence/CTX-001.md；
+- docs/traceability/RELEASE_TRACEABILITY.md；
+- docs/compatibility/HERMES_MATRIX.md。
 
 交接快照与 GitHub 事实冲突时，以远程事实为准并同步修正文档。
 
 二、当前事实快照
 
-- develop：b0b9d2e0337a9f40f2abcdb0f91ce8b2865ea765
+- develop：4026fea226c16647c45d710993c9b4c1683e094e
 - master：398701c5cf6495180a7a7566f09921cf126a054a
 - 固定 Work ID：48
-- Complete：16/48（33.3%）
+- Complete：17/48（35.4%）
 - In progress：0/48
-- Not started / dependency blocked：32/48
+- Not started / dependency blocked：31/48
 - M0：Complete
 - G0：PASS
 - M1：8/8 Complete
 - G1：PASS
+- CTX-001：Complete
 - 产品成熟度：Experimental Preview
-- master 尚未进入当前发布周期
-- Tag / GitHub Release / PyPI 均未执行
+- master、Tag、GitHub Release、PyPI 尚未进入当前发布阶段
 - PyPI 按 REL-005 保持禁用
 
-三、G1 审计轨迹
+三、CTX-001 完成事实
 
-初始评估：
+- Issue #26：Closed / completed
+- PR #81：Merged
+- TDD red：Run #197 / ID 30384981106
+- Code acceptance：Run #201 / ID 30385826868
+- Final Head：bae32c861fc403896e0c1630b91457d1622e2737
+- Final CI：Run #202 / ID 30386119025
+- Squash：4026fea226c16647c45d710993c9b4c1683e094e
+- Python 3.10/3.11/3.12：每版本 234 tests、0 failures、0 errors、8 strict XFAIL
+- `TC-CTX-003`：普通 PASS
+- `CR-P0-002`、`XF-CTX-001`：Closed
+- 精确完整 Merge 双副本删除；普通重复消息与不完整疑似序列不被误删
 
-- PR #77
-- Squash：9a8c3a8f7b94111d626ec9319612e0574de04c84
-- 结论：FAIL — 8 PASS / 2 FAIL / 0 BLOCKED
-- 失败：缺 sdist；缺 python -m twine check dist/*
+四、当前唯一合法任务：CTX-002 #27
 
-QA-ART-001 remediation：
+完成 docs-only CTX-001 post-merge closure 后：
 
-- Issue #25：Closed / completed
-- PR #78：Merged
-- Final Head：531aa0e3fd327dc9a096668432ebd1d0b2bff43b
-- Final CI：Run #184 / ID 30382668758
-- Squash：5ebb3a0c9b44cd5f2a2be789f9224740d47894f8
-- Python 3.10/3.11/3.12：每版本 231 tests、0 failures、0 errors、9 strict XFAIL
-- wheel：39 files；sdist：75 files；twine wheel+sdist PASS
-
-G1 PASS 复评：
-
-- PR #79：Merged
-- Final Head：e6e39b54040c5deba12d474daf596f7da4272a7c
-- Final CI：Run #193 / ID 30384094675
-- Python 3.10/3.11/3.12：success
-- Squash：b0b9d2e0337a9f40f2abcdb0f91ce8b2865ea765
-- 结论：PASS — 10 PASS / 0 FAIL / 0 BLOCKED
-
-四、当前唯一合法任务：CTX-001 #26
-
-完成 docs-only G1 post-merge closure 后：
-
-1. 读取 Issue #26 全文与评论；
-2. 核对依赖、授权路径、CR-P0-002、TC-CTX-003；
-3. 从最新 develop 创建 fix/ctx-001-merge-uniqueness；
+1. 读取 Issue #27 全文与评论；
+2. 核对依赖、授权路径、CR-P0-003、TC-CTX-004–006、XF-CTX-002；
+3. 从最新 develop 创建 fix/ctx-002-summary-failure-preservation；
 4. 评论执行开始、基线、范围与 exclusions；
-5. 将 TC-CTX-003 从 strict XFAIL 转为普通失败回归；
+5. 将 summary-failure strict XFAIL 转为普通失败回归；
 6. 创建 Draft PR；
-7. 最小修复 Merge 分支重复尾消息装配；
-8. 不提前实施 CTX-002/003/004、SES-001、PRIV-001；
-9. 创建 docs/testing/evidence/CTX-001.md；
-10. 同一最终 Head Required CI 全绿后 expected-Head Squash Merge；
-11. 关闭 #26，更新计划、状态、Traceability、handoff；
-12. 自动进入 CTX-002。
+7. 最小修复摘要 API 失败时压缩区原消息被占位文本替换的问题；
+8. 保证 fallback 非破坏性、消息顺序和内容保持；
+9. 不提前实施 CTX-003/004、SES-001、PRIV-001；
+10. 创建 docs/testing/evidence/CTX-002.md；
+11. 同一最终 Head Required CI 全绿后 expected-Head Squash Merge；
+12. 关闭 #27 并自动进入 CTX-003。
 
 五、M2 固定串行顺序
 
-CTX-001 → CTX-002 → CTX-003 → CTX-004 → SES-001 → PRIV-001 → G2
+CTX-002 → CTX-003 → CTX-004 → SES-001 → PRIV-001 → G2
 
 SES-001 的硬依赖已满足，但禁止并行启动。
 
@@ -97,7 +83,7 @@ SES-001 的硬依赖已满足，但禁止并行启动。
 - real Hermes E2E 属于 COMPAT-001 / M4 / G3；
 - reproducibility、SBOM、provenance 属于 REL-006；
 - Runtime 当前 9 Tools，目标 10；不得添加 placeholder memory_store；
-- 9 strict XFAIL owners：CTX-001、CTX-002、CTX-003、SES-001、AUD-001、CON-001×3、MEM-002；
+- 当前 8 strict XFAIL owners：CTX-002、CTX-003、SES-001、AUD-001、CON-001×3、MEM-002；
 - 不合入 master，不创建 Tag/Release，不发布 PyPI；
 - 不访问真实 HOME、DB、Memory、Secret；
 - 不弱化 PID、symlink、traversal、rollback 或 destructive-operation 防线。
@@ -109,8 +95,8 @@ SES-001 的硬依赖已满足，但禁止并行启动。
 - 先失败测试，再最小正确实现；
 - 禁止 skip、弱化断言、删除测试、隐藏 XFAIL/XPASS；
 - 每个 Work ID 建立 docs/testing/evidence/<WORK-ID>.md；
-- 每个有意义批次立即 push，任何唯一成果不得只留在临时容器；
+- 每个有意义批次立即 push；
 - 合并后自动读取最新 develop 并继续下一个唯一任务。
 
-持续目标：CTX-001 → M2/G2 → M3 → M4/G3 → master RC → v3.0.0-beta.1 → Beta feedback/G4 → Stable prep/soak/G5 → v3.0.0。
+持续目标：CTX-002 → M2/G2 → M3 → M4/G3 → master RC → v3.0.0-beta.1 → Beta feedback/G4 → Stable prep/soak/G5 → v3.0.0。
 ```
