@@ -44,8 +44,8 @@ def _run(
     )
 
 
-def _build_installed_environment(tmp_path: Path) -> tuple[Path, Path]:
-    archive = tmp_path / "source.tar"
+def _build_installed_environment(base: Path) -> Path:
+    archive = base / "source.tar"
     with archive.open("wb") as handle:
         subprocess.run(
             ["git", "archive", "--format=tar", "HEAD"],
@@ -54,12 +54,12 @@ def _build_installed_environment(tmp_path: Path) -> tuple[Path, Path]:
             stdout=handle,
         )
 
-    source = tmp_path / "source"
+    source = base / "source"
     source.mkdir()
     with tarfile.open(archive) as handle:
         handle.extractall(source, filter="data")
 
-    wheelhouse = tmp_path / "wheelhouse"
+    wheelhouse = base / "wheelhouse"
     wheelhouse.mkdir()
     built = _run(
         sys.executable,
@@ -76,7 +76,7 @@ def _build_installed_environment(tmp_path: Path) -> tuple[Path, Path]:
     wheels = list(wheelhouse.glob("oh_my_deepseek_harness-3.0.0b1-*.whl"))
     assert len(wheels) == 1
 
-    environment = tmp_path / "venv"
+    environment = base / "venv"
     venv.EnvBuilder(with_pip=True, system_site_packages=True).create(environment)
     python = environment / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
     installed = _run(
@@ -86,14 +86,19 @@ def _build_installed_environment(tmp_path: Path) -> tuple[Path, Path]:
         "install",
         "--no-deps",
         str(wheels[0]),
-        cwd=tmp_path,
+        cwd=base,
     )
     assert installed.returncode == 0, installed.stdout + installed.stderr
     console = environment / (
         "Scripts/deepseek-harness.exe" if os.name == "nt" else "bin/deepseek-harness"
     )
     assert console.is_file()
-    return python, console
+    return console
+
+
+@pytest.fixture(scope="module")
+def installed_console(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    return _build_installed_environment(tmp_path_factory.mktemp("ins-001-wheel"))
 
 
 def _isolated_env(
@@ -133,8 +138,9 @@ def _snapshot(root: Path) -> tuple[tuple[str, str, str, int], ...]:
         elif path.is_dir():
             rows.append((relative, "directory", "", mode))
         else:
-            digest = hashlib.sha256(path.read_bytes()).hexdigest()
-            rows.append((relative, "file", digest, mode))
+            rows.append(
+                (relative, "file", hashlib.sha256(path.read_bytes()).hexdigest(), mode)
+            )
     return tuple(rows)
 
 
@@ -151,10 +157,9 @@ def _managed_file_snapshot(paths: list[Path]) -> dict[str, tuple[bytes, int, int
 
 @pytest.mark.skipif(os.name == "nt", reason="Windows install process matrix is later work")
 def test_install_dry_run_leaves_empty_home_and_persistent_state_unchanged(
-    tmp_path: Path,
+    installed_console: Path, tmp_path: Path
 ) -> None:
     """TC-INSTALL-001: dry-run reports the full plan without any persistent write."""
-    _, console = _build_installed_environment(tmp_path)
     home = tmp_path / "home"
     home.mkdir()
     data_root = home / ".hermes" / "oh-my-deepseek-harness"
@@ -168,7 +173,7 @@ def test_install_dry_run_leaves_empty_home_and_persistent_state_unchanged(
     before = _snapshot(home)
 
     completed = _run(
-        str(console),
+        str(installed_console),
         "install",
         "--dry-run",
         "--json",
@@ -177,7 +182,6 @@ def test_install_dry_run_leaves_empty_home_and_persistent_state_unchanged(
     )
     assert completed.returncode == 0, completed.stdout + completed.stderr
     payload = _payload(completed)
-
     assert payload["state"] == "planned"
     assert payload["dry_run"] is True
     assert payload["changed"] is False
@@ -193,25 +197,23 @@ def test_install_dry_run_leaves_empty_home_and_persistent_state_unchanged(
 
 @pytest.mark.skipif(os.name == "nt", reason="Windows install process matrix is later work")
 def test_clean_wheel_install_deploys_plugins_config_and_ready_server(
-    tmp_path: Path,
+    installed_console: Path, tmp_path: Path
 ) -> None:
     """TC-INSTALL-002: an installed wheel deploys Plugin/Context and a ready Server."""
-    _, console = _build_installed_environment(tmp_path)
     home = tmp_path / "home"
     home.mkdir()
     data_root = home / ".hermes" / "oh-my-deepseek-harness"
     db_path = data_root / "data" / "harness.db"
-    memories = home / ".hermes" / "memories"
     env = _isolated_env(
         home=home,
         data_root=data_root,
         db_path=db_path,
-        memories=memories,
+        memories=home / ".hermes" / "memories",
         port=_free_port(),
     )
 
     completed = _run(
-        str(console), "install", "--json", cwd=tmp_path, env=env, timeout=120
+        str(installed_console), "install", "--json", cwd=tmp_path, env=env, timeout=120
     )
     payload = _payload(completed)
     try:
@@ -270,7 +272,7 @@ def test_clean_wheel_install_deploys_plugins_config_and_ready_server(
             assert stat.S_IMODE(file_path.stat().st_mode) == 0o600
 
         status = _run(
-            str(console),
+            str(installed_console),
             "server",
             "status",
             "--data-root",
@@ -286,7 +288,7 @@ def test_clean_wheel_install_deploys_plugins_config_and_ready_server(
         assert status_payload["ready"] is True
     finally:
         _run(
-            str(console),
+            str(installed_console),
             "server",
             "stop",
             "--data-root",
@@ -299,10 +301,9 @@ def test_clean_wheel_install_deploys_plugins_config_and_ready_server(
 
 @pytest.mark.skipif(os.name == "nt", reason="Windows install process matrix is later work")
 def test_repeated_same_version_install_is_idempotent_and_reuses_one_server(
-    tmp_path: Path,
+    installed_console: Path, tmp_path: Path
 ) -> None:
     """TC-INSTALL-003: repeated install creates no duplicate files, backup or process."""
-    _, console = _build_installed_environment(tmp_path)
     home = tmp_path / "home"
     home.mkdir()
     data_root = home / ".hermes" / "oh-my-deepseek-harness"
@@ -315,7 +316,9 @@ def test_repeated_same_version_install_is_idempotent_and_reuses_one_server(
         port=_free_port(),
     )
 
-    first = _run(str(console), "install", "--json", cwd=tmp_path, env=env, timeout=120)
+    first = _run(
+        str(installed_console), "install", "--json", cwd=tmp_path, env=env, timeout=120
+    )
     first_payload = _payload(first)
     managed_files = [
         home / ".hermes" / "plugins" / "deepseek-harness" / "__init__.py",
@@ -331,7 +334,7 @@ def test_repeated_same_version_install_is_idempotent_and_reuses_one_server(
         before = _managed_file_snapshot(managed_files)
 
         second = _run(
-            str(console), "install", "--json", cwd=tmp_path, env=env, timeout=120
+            str(installed_console), "install", "--json", cwd=tmp_path, env=env, timeout=120
         )
         second_payload = _payload(second)
         assert second.returncode == 0, second.stdout + second.stderr
@@ -347,7 +350,7 @@ def test_repeated_same_version_install_is_idempotent_and_reuses_one_server(
         ]["memory_import_on_startup"] is False
     finally:
         stopped = _run(
-            str(console),
+            str(installed_console),
             "server",
             "stop",
             "--data-root",
@@ -359,8 +362,79 @@ def test_repeated_same_version_install_is_idempotent_and_reuses_one_server(
         assert stopped.returncode == 0, stopped.stdout + stopped.stderr
 
 
+@pytest.mark.skipif(os.name == "nt", reason="Windows install process matrix is later work")
+def test_existing_conflicting_plugin_file_is_preserved_without_partial_install(
+    installed_console: Path, tmp_path: Path
+) -> None:
+    """Existing user-managed content is never overwritten or backed up implicitly."""
+    home = tmp_path / "home"
+    plugin_dir = home / ".hermes" / "plugins" / "deepseek-harness"
+    plugin_dir.mkdir(parents=True)
+    existing = plugin_dir / "__init__.py"
+    existing.write_text("# user-managed plugin\n", encoding="utf-8")
+    data_root = home / ".hermes" / "oh-my-deepseek-harness"
+    env = _isolated_env(
+        home=home,
+        data_root=data_root,
+        db_path=data_root / "data" / "harness.db",
+        memories=home / ".hermes" / "memories",
+        port=_free_port(),
+    )
+
+    completed = _run(
+        str(installed_console), "install", "--json", cwd=tmp_path, env=env
+    )
+    payload = _payload(completed)
+    assert completed.returncode == 4
+    assert payload["state"] == "install_error"
+    assert existing.read_text(encoding="utf-8") == "# user-managed plugin\n"
+    assert not data_root.exists()
+    assert not list(home.rglob("*.bak.*"))
+
+
+def test_incomplete_rollback_retains_state_and_deployment_for_diagnosis(
+    tmp_path: Path,
+) -> None:
+    """A failed Server stop must never delete ownership state or managed files."""
+    from deepseek_harness import installer
+
+    home = tmp_path / "home"
+    home.mkdir()
+    data_root = home / ".hermes" / "oh-my-deepseek-harness"
+    env = _isolated_env(
+        home=home,
+        data_root=data_root,
+        db_path=data_root / "data" / "harness.db",
+        memories=home / ".hermes" / "memories",
+        port=_free_port(),
+    )
+    plan = installer.build_install_plan(environ=env)
+    plan.runtime_paths.runtime_dir.mkdir(parents=True)
+    plan.runtime_paths.state_file.write_text("owned-runtime-state\n", encoding="utf-8")
+    managed = home / ".hermes" / "plugins" / "deepseek-harness" / "__init__.py"
+    managed.parent.mkdir(parents=True)
+    managed.write_text("managed deployment\n", encoding="utf-8")
+
+    class FailingSupervisor:
+        def stop(self, *, timeout: float):
+            raise RuntimeError("injected stop failure")
+
+    with pytest.raises(installer.InstallRollbackError, match="retained"):
+        installer._rollback(
+            plan,
+            supervisor=FailingSupervisor(),  # type: ignore[arg-type]
+            runtime_state_existed=False,
+            created_files=[managed],
+            created_directories=[],
+            runtime_artifacts_before={},
+        )
+
+    assert plan.runtime_paths.state_file.read_text() == "owned-runtime-state\n"
+    assert managed.read_text() == "managed deployment\n"
+
+
 def test_install_implementation_never_manages_the_python_distribution() -> None:
-    """The canonical lifecycle path must not invoke pip or maintain a second shell implementation."""
+    """The canonical lifecycle path must not invoke pip or keep a second shell installer."""
     installer = (ROOT / "src" / "deepseek_harness" / "installer.py").read_text(
         encoding="utf-8"
     )
