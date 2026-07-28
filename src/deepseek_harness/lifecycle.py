@@ -18,7 +18,12 @@ from typing import Any, Callable
 
 import yaml
 
-from harness_server.runtime import RuntimeStateError, process_is_owned, read_state
+from harness_server.runtime import (
+    RuntimeStateError,
+    pid_is_alive,
+    process_is_owned,
+    read_state,
+)
 from harness_server.supervisor import ProcessOwnershipError, Supervisor
 
 from .installer import InstallPlan, build_install_plan, execute_install
@@ -138,6 +143,62 @@ def _chmod_private(path: Path, mode: int) -> None:
         path.chmod(mode)
 
 
+def _lexical_absolute(path: Path) -> Path:
+    return Path(os.path.abspath(os.path.expanduser(str(path))))
+
+
+def _is_relative_to(path: Path, parent: Path) -> bool:
+    try:
+        path.relative_to(parent)
+        return True
+    except ValueError:
+        return False
+
+
+def _assert_path_chain(path: Path, boundary: Path) -> None:
+    """Reject symlinks from an owned boundary through the target path."""
+    lexical_path = _lexical_absolute(path)
+    lexical_boundary = _lexical_absolute(boundary)
+    if not _is_relative_to(lexical_path, lexical_boundary):
+        raise LifecycleConflictError(f"path is outside its owned boundary: {path}")
+    current = lexical_boundary
+    if current.exists() and current.is_symlink():
+        raise LifecycleConflictError(f"refusing symlink lifecycle path: {current}")
+    for part in lexical_path.relative_to(lexical_boundary).parts:
+        current = current / part
+        if current.exists() and current.is_symlink():
+            raise LifecycleConflictError(f"refusing symlink lifecycle path: {current}")
+
+
+def _assert_tree_safe(path: Path) -> None:
+    if not path.exists():
+        return
+    if path.is_symlink():
+        raise LifecycleConflictError(f"refusing symlink lifecycle path: {path}")
+    if path.is_file():
+        return
+    for root, directories, files in os.walk(path, followlinks=False):
+        root_path = Path(root)
+        for name in [*directories, *files]:
+            child = root_path / name
+            if child.is_symlink():
+                raise LifecycleConflictError(f"refusing symlink lifecycle path: {child}")
+
+
+def _assert_owned_path(plan: InstallPlan, path: Path) -> None:
+    lexical = _lexical_absolute(path)
+    data_root = _lexical_absolute(plan.data_root)
+    hermes_home = _lexical_absolute(plan.hermes_home)
+    if _is_relative_to(lexical, data_root):
+        _assert_path_chain(lexical, data_root)
+        return
+    if _is_relative_to(lexical, hermes_home):
+        _assert_path_chain(lexical, hermes_home)
+        return
+    if path.exists() and path.is_symlink():
+        raise LifecycleConflictError(f"refusing symlink external lifecycle path: {path}")
+
+
 def _atomic_write_json(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     _chmod_private(path.parent, 0o700)
@@ -204,29 +265,6 @@ def _target_version(plan: InstallPlan) -> str:
     return str(payload["distribution_version"])
 
 
-def _is_relative_to(path: Path, parent: Path) -> bool:
-    try:
-        path.relative_to(parent)
-        return True
-    except ValueError:
-        return False
-
-
-def _assert_no_symlink_tree(path: Path) -> None:
-    if not path.exists():
-        return
-    if path.is_symlink():
-        raise LifecycleConflictError(f"refusing symlink lifecycle path: {path}")
-    if path.is_file():
-        return
-    for root, directories, files in os.walk(path, followlinks=False):
-        root_path = Path(root)
-        for name in [*directories, *files]:
-            child = root_path / name
-            if child.is_symlink():
-                raise LifecycleConflictError(f"refusing symlink lifecycle path: {child}")
-
-
 def _adapter_roots(plan: InstallPlan) -> tuple[Path, Path]:
     return (
         plan.hermes_home / "plugins" / "deepseek-harness",
@@ -234,14 +272,17 @@ def _adapter_roots(plan: InstallPlan) -> tuple[Path, Path]:
     )
 
 
+def _database_path(plan: InstallPlan) -> Path:
+    return _lexical_absolute(Path(plan.runtime_config.db_path))
+
+
 def _backup_items(plan: InstallPlan) -> tuple[BackupItem, ...]:
-    db_path = Path(plan.runtime_config.db_path).expanduser().resolve()
     harness_adapter, context_adapter = _adapter_roots(plan)
     return (
         BackupItem("harness_adapter", harness_adapter, "deployment/deepseek-harness", "tree"),
         BackupItem("context_adapter", context_adapter, "deployment/deepseek-context", "tree"),
         BackupItem("config", plan.config_path, "config/config.yaml", "file"),
-        BackupItem("database", db_path, "data/harness.db", "database"),
+        BackupItem("database", _database_path(plan), "data/harness.db", "database"),
         BackupItem("events", plan.data_root / "events", "events", "tree"),
     )
 
@@ -261,12 +302,15 @@ def _copy_database(source: Path, destination: Path) -> None:
     _chmod_private(destination, 0o600)
 
 
-def _copy_item_to_backup(item: BackupItem, backup_dir: Path) -> dict[str, Any]:
+def _copy_item_to_backup(
+    plan: InstallPlan, item: BackupItem, backup_dir: Path
+) -> dict[str, Any]:
     source = item.source
     destination = backup_dir / item.backup_relative
     existed = source.exists()
     if existed:
-        _assert_no_symlink_tree(source)
+        _assert_owned_path(plan, source)
+        _assert_tree_safe(source)
         destination.parent.mkdir(parents=True, exist_ok=True)
         _chmod_private(destination.parent, 0o700)
         if item.kind == "tree":
@@ -284,26 +328,67 @@ def _copy_item_to_backup(item: BackupItem, backup_dir: Path) -> dict[str, Any]:
             _chmod_private(destination, 0o600)
     return {
         "name": item.name,
-        "source": str(source),
         "backup_relative": item.backup_relative,
         "kind": item.kind,
         "existed": existed,
     }
 
 
+def _safe_remove_tree(root: Path) -> None:
+    if not root.exists():
+        return
+    _assert_tree_safe(root)
+    for current, directories, files in os.walk(root, topdown=False, followlinks=False):
+        current_path = Path(current)
+        for name in files:
+            path = current_path / name
+            if path.is_symlink():
+                raise LifecycleConflictError(f"refusing symlink during removal: {path}")
+            path.unlink()
+        for name in directories:
+            path = current_path / name
+            if path.is_symlink():
+                raise LifecycleConflictError(f"refusing symlink during removal: {path}")
+            path.rmdir()
+    root.rmdir()
+
+
+def _safe_remove_known_path(plan: InstallPlan, path: Path) -> None:
+    if not path.exists():
+        return
+    _assert_owned_path(plan, path)
+    if path.is_dir():
+        _safe_remove_tree(path)
+    else:
+        if path.is_symlink():
+            raise LifecycleConflictError(f"refusing symlink lifecycle path: {path}")
+        path.unlink()
+
+
 def _create_backup(plan: InstallPlan, transaction_id: str) -> Path:
     paths = LifecyclePaths.from_plan(plan)
+    _assert_path_chain(paths.backups_root, plan.data_root)
     paths.backups_root.mkdir(parents=True, exist_ok=True)
     _chmod_private(paths.backups_root, 0o700)
     backup_dir = paths.backups_root / f"upgrade-{transaction_id}"
     backup_dir.mkdir(mode=0o700)
-    manifest = {
-        "schema_version": 1,
-        "transaction_id": transaction_id,
-        "items": [_copy_item_to_backup(item, backup_dir) for item in _backup_items(plan)],
-    }
-    _atomic_write_json(backup_dir / "manifest.json", manifest)
-    return backup_dir
+    try:
+        manifest = {
+            "schema_version": 1,
+            "transaction_id": transaction_id,
+            "items": [
+                _copy_item_to_backup(plan, item, backup_dir)
+                for item in _backup_items(plan)
+            ],
+        }
+        _atomic_write_json(backup_dir / "manifest.json", manifest)
+        return backup_dir
+    except Exception:
+        try:
+            _safe_remove_tree(backup_dir)
+        except Exception:
+            pass
+        raise
 
 
 def _read_backup_manifest(backup_dir: Path) -> dict[str, Any]:
@@ -314,41 +399,60 @@ def _read_backup_manifest(backup_dir: Path) -> dict[str, Any]:
         payload = json.loads(manifest_path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
         raise LifecycleRollbackError("upgrade backup manifest is unreadable") from exc
-    if not isinstance(payload, dict) or not isinstance(payload.get("items"), list):
+    if (
+        not isinstance(payload, dict)
+        or payload.get("schema_version") != 1
+        or not isinstance(payload.get("items"), list)
+    ):
         raise LifecycleRollbackError("upgrade backup manifest is invalid")
     return payload
 
 
-def _remove_known_path(path: Path) -> None:
-    if not path.exists():
-        return
-    _assert_no_symlink_tree(path)
-    if path.is_dir():
-        shutil.rmtree(path)
-    else:
-        path.unlink()
+def _validated_backup_entries(
+    plan: InstallPlan, backup_dir: Path
+) -> list[tuple[BackupItem, bool, Path]]:
+    resolved_backup = backup_dir.resolve()
+    paths = LifecyclePaths.from_plan(plan)
+    backups_root = paths.backups_root.resolve()
+    if not _is_relative_to(resolved_backup, backups_root):
+        raise LifecycleRollbackError("upgrade backup is outside the canonical backups root")
+    if backup_dir.is_symlink():
+        raise LifecycleRollbackError("upgrade backup directory must not be a symlink")
+    _assert_tree_safe(resolved_backup)
+    manifest = _read_backup_manifest(resolved_backup)
+    expected = {item.name: item for item in _backup_items(plan)}
+    payloads = manifest["items"]
+    names = [str(payload.get("name", "")) for payload in payloads if isinstance(payload, dict)]
+    if len(payloads) != len(expected) or set(names) != set(expected) or len(names) != len(set(names)):
+        raise LifecycleRollbackError("upgrade backup manifest item set is invalid")
+    entries: list[tuple[BackupItem, bool, Path]] = []
+    for payload in payloads:
+        if not isinstance(payload, dict):
+            raise LifecycleRollbackError("upgrade backup manifest item is invalid")
+        item = expected[str(payload["name"])]
+        if payload.get("kind") != item.kind or payload.get("backup_relative") != item.backup_relative:
+            raise LifecycleRollbackError(f"upgrade backup manifest contract mismatch: {item.name}")
+        existed = payload.get("existed")
+        if not isinstance(existed, bool):
+            raise LifecycleRollbackError(f"upgrade backup existence flag is invalid: {item.name}")
+        source = (resolved_backup / item.backup_relative).resolve()
+        if not _is_relative_to(source, resolved_backup):
+            raise LifecycleRollbackError(f"backup item escapes its backup root: {item.name}")
+        if existed and not source.exists():
+            raise LifecycleRollbackError(f"backup item is missing: {item.name}")
+        entries.append((item, existed, source))
+    return entries
 
 
 def _restore_backup(plan: InstallPlan, backup_dir: Path) -> None:
-    paths = LifecyclePaths.from_plan(plan)
-    resolved_backup = backup_dir.resolve()
-    if not _is_relative_to(resolved_backup, paths.backups_root.resolve()):
-        raise LifecycleRollbackError("upgrade backup is outside the canonical backups root")
-    manifest = _read_backup_manifest(resolved_backup)
-    expected = {item.name: item for item in _backup_items(plan)}
+    entries = _validated_backup_entries(plan, backup_dir)
     failures: list[str] = []
-    for payload in manifest["items"]:
+    for item, existed, source in entries:
         try:
-            name = str(payload["name"])
-            item = expected[name]
-            existed = bool(payload["existed"])
-            source = resolved_backup / str(payload["backup_relative"])
             target = item.source
-            _remove_known_path(target)
+            _safe_remove_known_path(plan, target)
             if not existed:
                 continue
-            if not source.exists():
-                raise LifecycleRollbackError(f"backup item is missing: {name}")
             target.parent.mkdir(parents=True, exist_ok=True)
             _chmod_private(target.parent, 0o700)
             if item.kind == "tree":
@@ -358,8 +462,8 @@ def _restore_backup(plan: InstallPlan, backup_dir: Path) -> None:
             else:
                 shutil.copy2(source, target)
                 _chmod_private(target, 0o600)
-        except Exception as exc:  # failure injection/report aggregation
-            failures.append(f"{payload.get('name', 'unknown')}: {exc}")
+        except Exception as exc:
+            failures.append(f"{item.name}: {exc}")
     if failures:
         raise LifecycleRollbackError("; ".join(failures))
 
@@ -373,15 +477,18 @@ def _managed_process_running(plan: InstallPlan) -> bool:
         ) from exc
     if state is None:
         return False
-    if not process_is_owned(state):
-        raise ProcessOwnershipError(
-            "runtime PID ownership cannot be proven; refusing lifecycle process changes"
-        )
-    return True
+    if process_is_owned(state):
+        return True
+    if not pid_is_alive(state.pid):
+        return False
+    raise ProcessOwnershipError(
+        "runtime PID ownership cannot be proven; refusing lifecycle process changes"
+    )
 
 
 def _replace_managed_files(plan: InstallPlan) -> None:
     for path, content in plan.desired_files.items():
+        _assert_owned_path(plan, path)
         if path.exists() and (path.is_symlink() or not path.is_file()):
             raise LifecycleConflictError(f"managed path is unsafe: {path}")
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -413,14 +520,14 @@ def upgrade_plan(plan: InstallPlan, *, dry_run: bool) -> dict[str, Any]:
     current = _current_version(plan)
     target = _target_version(plan)
     marker = _read_marker(paths)
-    db_path = Path(plan.runtime_config.db_path).expanduser().resolve()
+    db_path = _database_path(plan)
     return {
         "state": "planned" if dry_run else "upgrade_ready",
         "dry_run": dry_run,
         "current_version": current or "not_installed",
         "target_version": target,
         "same_version": current == target,
-        "backup_required": current != target,
+        "backup_required": current is not None and current != target,
         "config": "replace_with_packaged_contract" if current != target else "validate",
         "database": "backup_and_validate" if db_path.exists() and current != target else "validate",
         "events_jsonl": "backup" if (plan.data_root / "events").exists() and current != target else "preserve",
@@ -447,6 +554,10 @@ def upgrade(
         )
     current = _current_version(plan)
     target = _target_version(plan)
+    if current is None:
+        raise LifecycleConflictError(
+            "managed installation is absent or unreadable; run deepseek-harness install first"
+        )
     if current == target:
         result = execute_install(plan, dry_run=False, timeout=timeout)
         return {
@@ -472,11 +583,10 @@ def upgrade(
         target_version=target,
     )
     _write_marker(paths, record)
-    if phase_hook:
-        phase_hook("backup_complete", plan, record)
-
     supervisor = Supervisor(plan.runtime_paths)
     try:
+        if phase_hook:
+            phase_hook("backup_complete", plan, record)
         if previous_running:
             supervisor.stop(timeout=10)
         record = TransactionRecord(**{**record.__dict__, "phase": "process_stopped"})
@@ -560,6 +670,10 @@ def recover(
 def _preflight_managed_adapters(plan: InstallPlan) -> list[Path]:
     managed: list[Path] = []
     adapter_roots = set(_adapter_roots(plan))
+    for root in adapter_roots:
+        _assert_path_chain(root, plan.hermes_home)
+        if root.exists():
+            _assert_tree_safe(root)
     for path, desired in plan.desired_files.items():
         if path.parent not in adapter_roots or not path.exists():
             continue
@@ -574,40 +688,27 @@ def _preflight_managed_adapters(plan: InstallPlan) -> list[Path]:
 
 
 def _assert_canonical_purge_root(plan: InstallPlan) -> None:
+    lexical_hermes = _lexical_absolute(plan.hermes_home)
+    lexical_canonical = lexical_hermes / "oh-my-deepseek-harness"
+    if plan.hermes_home.exists() and plan.hermes_home.is_symlink():
+        raise LifecycleConflictError("refusing purge through a symlink .hermes directory")
+    if lexical_canonical.exists() and lexical_canonical.is_symlink():
+        raise LifecycleConflictError("refusing symlink canonical product root")
     root = plan.data_root
-    canonical = (plan.hermes_home / "oh-my-deepseek-harness").resolve()
-    if root.is_symlink() or root.resolve() != canonical:
+    if root.resolve() != lexical_canonical.resolve():
         raise LifecycleConflictError(
             "purge data root must be the canonical ~/.hermes/oh-my-deepseek-harness path"
         )
     if root in {Path(root.anchor), plan.hermes_home, plan.hermes_home.parent}:
         raise LifecycleConflictError("refusing unsafe purge root")
+    _assert_path_chain(lexical_canonical, lexical_hermes)
     if root.exists():
-        _assert_no_symlink_tree(root)
+        _assert_tree_safe(root)
         unknown = {entry.name for entry in root.iterdir()} - KNOWN_PRODUCT_CHILDREN
         if unknown:
             raise LifecycleConflictError(
                 f"refusing purge with unknown top-level product paths: {sorted(unknown)}"
             )
-
-
-def _safe_remove_tree(root: Path) -> None:
-    if not root.exists():
-        return
-    _assert_no_symlink_tree(root)
-    for current, directories, files in os.walk(root, topdown=False, followlinks=False):
-        current_path = Path(current)
-        for name in files:
-            path = current_path / name
-            if path.is_symlink():
-                raise LifecycleConflictError(f"refusing symlink during purge: {path}")
-            path.unlink()
-        for name in directories:
-            path = current_path / name
-            if path.is_symlink():
-                raise LifecycleConflictError(f"refusing symlink during purge: {path}")
-            path.rmdir()
-    root.rmdir()
 
 
 def uninstall(
@@ -631,13 +732,14 @@ def uninstall(
         _assert_canonical_purge_root(plan)
 
     supervisor = Supervisor(plan.runtime_paths)
-    if plan.runtime_paths.state_file.exists():
+    had_state = plan.runtime_paths.state_file.exists()
+    if had_state:
         supervisor.stop(timeout=10)
 
     removed: list[str] = []
     for path in managed_files:
         path.unlink()
-        removed.append(path.name)
+        removed.append(f"{path.parent.name}/{path.name}")
     for root in _adapter_roots(plan):
         try:
             root.rmdir()
@@ -662,7 +764,7 @@ def uninstall(
         state = "uninstalled"
     return {
         "state": state,
-        "changed": bool(removed) or purge_data,
+        "changed": bool(removed) or had_state or purge_data,
         "purge_data": purge_data,
         "removed_managed_files": sorted(removed),
         "data_preserved": not purge_data,
