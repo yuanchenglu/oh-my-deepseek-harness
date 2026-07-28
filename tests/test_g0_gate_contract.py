@@ -8,7 +8,6 @@ from pathlib import Path
 
 import yaml
 
-
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -17,7 +16,6 @@ def _read(path: str) -> str:
 
 
 def _plain_markdown(text: str) -> str:
-    """Remove presentation-only emphasis before checking policy semantics."""
     return text.replace("**", "").replace("__", "")
 
 
@@ -58,9 +56,10 @@ def test_g0_required_repository_artifacts_exist() -> None:
         "docs/testing/evidence/GATE-G0.md",
         "tests/fixtures/hermes/v0.19.0-contract.yaml",
         "tests/compatibility/probes/test_hermes_target_contract.py",
+        "src/deepseek_harness/resources/plugin.yaml",
+        "src/deepseek_context/resources/plugin.yaml",
     ]
-    missing = [path for path in required if not (ROOT / path).is_file()]
-    assert missing == []
+    assert [path for path in required if not (ROOT / path).is_file()] == []
 
 
 def test_g0_version_identity_is_fixed() -> None:
@@ -71,20 +70,17 @@ def test_g0_version_identity_is_fixed() -> None:
     )
     assert version and version.group(1) == "3.0.0b1"
     assert requires_python and requires_python.group(1) == ">=3.10,<3.13"
-
     for path in [
-        "plugins/deepseek-harness/plugin.yaml",
-        "plugins/deepseek-context/plugin.yaml",
+        "src/deepseek_harness/resources/plugin.yaml",
+        "src/deepseek_context/resources/plugin.yaml",
     ]:
-        manifest = yaml.safe_load(_read(path))
-        assert str(manifest["version"]) == "3.0.0-beta.1"
+        assert str(yaml.safe_load(_read(path))["version"]) == "3.0.0-beta.1"
 
 
 def test_g0_tool_denominator_is_target_10_runtime_9() -> None:
-    module = ast.parse(_read("plugins/deepseek-harness/tools.py"))
+    module = ast.parse(_read("src/deepseek_harness/tools.py"))
     target = tuple(_assignment(module, "TARGET_PUBLIC_TOOL_NAMES"))
     pending = frozenset(_assignment(module, "PENDING_PUBLIC_TOOL_NAMES"))
-
     assert len(target) == 10
     assert len(set(target)) == 10
     assert pending == {"memory_store"}
@@ -96,18 +92,13 @@ def test_g0_traceability_has_48_unique_work_ids_and_issue_urls() -> None:
     section = trace.split("## 1. Work ID → Issue → Delivery", 1)[1].split(
         "## 2. Requirement-domain ownership", 1
     )[0]
-
     work_ids = re.findall(r"\| (?:M0|M1|M2|M3|M4|M5|M6) \| `([A-Z0-9-]+)` \|", section)
     issue_numbers = re.findall(
         r"https://github\.com/yuanchenglu/oh-my-deepseek-harness/issues/(\d+)",
         section,
     )
-
-    assert len(work_ids) == 48
-    assert len(set(work_ids)) == 48
-    assert len(issue_numbers) == 48
-    assert len(set(issue_numbers)) == 48
-
+    assert len(work_ids) == len(set(work_ids)) == 48
+    assert len(issue_numbers) == len(set(issue_numbers)) == 48
     assert "**48 Work IDs · 48 unique GitHub Issues · 88 FR IDs · 17 CR IDs · 100 Test IDs**" in trace
     assert "**Total** | **88**" in trace
     assert "**Total** | **100**" in trace
@@ -117,14 +108,12 @@ def test_g0_traceability_has_48_unique_work_ids_and_issue_urls() -> None:
 def test_g0_publishing_decision_is_safe_and_explicit() -> None:
     publishing = _plain_markdown(_read("docs/release/PUBLISHING.md"))
     evidence = _read("docs/testing/evidence/REL-005.md")
-
     assert "GitHub Release is mandatory" in publishing
     assert "PyPI is disabled" in publishing
     assert "not treated as proof that the name is available" in publishing
     assert "Absence of evidence is handled by disabling PyPI, not by guessing" in publishing
     assert "Trusted Publisher" in publishing
-    assert "GitHub Release" in evidence
-    assert "PyPI" in evidence
+    assert "GitHub Release" in evidence and "PyPI" in evidence
 
 
 def test_g0_hermes_candidate_and_context_engine_contract() -> None:
@@ -136,7 +125,7 @@ def test_g0_hermes_candidate_and_context_engine_contract() -> None:
     assert contract["support"]["full_hermes_python"] == ["3.11", "3.12"]
     assert contract["support"]["python_3_10_full_hermes"] == "unsupported"
 
-    module = ast.parse(_read("plugins/deepseek-context/__init__.py"))
+    module = ast.parse(_read("src/deepseek_context/__init__.py"))
     engine = next(
         node
         for node in module.body
@@ -151,10 +140,7 @@ def test_g0_hermes_candidate_and_context_engine_contract() -> None:
         node.name
         for node in engine.body
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
-        and any(
-            isinstance(decorator, ast.Name) and decorator.id == "property"
-            for decorator in node.decorator_list
-        )
+        and any(isinstance(decorator, ast.Name) and decorator.id == "property" for decorator in node.decorator_list)
     }
     assert set(contract["context_engine_required"]["methods"]) <= methods
     assert set(contract["context_engine_required"]["properties"]) <= properties
@@ -165,28 +151,20 @@ def test_g0_security_and_issue_forms_are_private_data_safe() -> None:
     config = yaml.safe_load(_read(".github/ISSUE_TEMPLATE/config.yml"))
     bug = yaml.safe_load(_read(".github/ISSUE_TEMPLATE/bug_report.yml"))
     work = yaml.safe_load(_read(".github/ISSUE_TEMPLATE/work_item.yml"))
-
     assert "security/advisories/new" in security
     assert config["blank_issues_enabled"] is False
     assert any("security/advisories/new" in link["url"] for link in config["contact_links"])
     for form in [bug, work]:
         assert all(key in form for key in ("name", "description", "title", "labels", "body"))
-        assert form["body"]
         text = str(form).lower()
-        assert "work id" in text
-        assert "test" in text
-        assert "rollback" in text
-        assert "security" in text
+        assert form["body"] and "work id" in text and "test" in text
+        assert "rollback" in text and "security" in text
 
 
 def test_g0_status_does_not_claim_product_release_readiness() -> None:
     status = _read("docs/roadmap/EXECUTION_STATUS.md")
     gate = _read("docs/testing/evidence/GATE-G0.md")
-
     assert "Experimental Preview" in status
-    assert "PKG-001" in status
-    assert "does not" in status.lower()
-    assert "Public Beta" in gate
-    assert "does not mean" in gate
-    assert "PKG-001" in gate
-    assert "COMPAT-001" in gate
+    assert "PKG-001" in status and "does not" in status.lower()
+    assert "Public Beta" in gate and "does not mean" in gate
+    assert "PKG-001" in gate and "COMPAT-001" in gate
