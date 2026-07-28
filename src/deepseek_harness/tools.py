@@ -13,7 +13,7 @@ from typing import Any, Dict
 import httpx
 
 from harness_server.config import RuntimeConfig
-from harness_server.supervisor import Supervisor, SupervisorError
+from harness_server.supervisor import Supervisor
 
 logger = logging.getLogger(__name__)
 
@@ -39,27 +39,26 @@ def _runtime_config() -> RuntimeConfig:
     return RuntimeConfig.from_env()
 
 
-def _ensure_server_running() -> None:
+def _ensure_server_running() -> RuntimeConfig:
     """Start or reuse the single Supervisor-managed local Server."""
-    try:
-        status = Supervisor().start(_runtime_config())
-        logger.info(
-            "[harness_server] supervisor state=%s pid=%s endpoint=%s",
-            status.state,
-            status.pid,
-            _runtime_config().server_url,
-        )
-    except SupervisorError as exc:  # failure is returned by the Tool call
-        logger.warning("[harness_server] supervisor start failed: %s", exc)
+    runtime = _runtime_config()
+    status = Supervisor().start(runtime)
+    logger.info(
+        "[harness_server] supervisor state=%s pid=%s endpoint=%s",
+        status.state,
+        status.pid,
+        runtime.server_url,
+    )
+    return runtime
 
 
 def _call_server(method: str, path: str, **kwargs) -> Dict[str, Any]:
-    _ensure_server_running()
     try:
+        runtime = _ensure_server_running()
         with httpx.Client(timeout=30, trust_env=False) as client:
             response = client.request(
                 method,
-                f"{_runtime_config().server_url}{path}",
+                f"{runtime.server_url}{path}",
                 **kwargs,
             )
             response.raise_for_status()
