@@ -1,74 +1,69 @@
 # Open-source Release Traceability
 
-- Normative plan: [`OPEN_SOURCE_RELEASE_PLAN.md`](../roadmap/OPEN_SOURCE_RELEASE_PLAN.md) v2.3.7
+- Normative plan: [`OPEN_SOURCE_RELEASE_PLAN.md`](../roadmap/OPEN_SOURCE_RELEASE_PLAN.md) v2.3.9
 - Complete task ledger: [`OPEN_SOURCE_RELEASE_PLAN_2.2.md`](../roadmap/archive/OPEN_SOURCE_RELEASE_PLAN_2.2.md)
 - Test ownership source: [`TEST_PLAN.md`](../testing/TEST_PLAN.md)
 - Last synchronized: 2026-07-29
 - Fixed scope: **48 Work IDs · 48 unique GitHub Issues · 88 FR IDs · 17 CR IDs · 100 Test IDs**
 - Current Gate: **G1 PASS**
-- Gate evidence: [`GATE-G1.md`](../testing/evidence/GATE-G1.md)
-- Initial Gate PR: #77
-- Remediation PR: #78
-- PASS re-evaluation PR: #79
+- Current serial task: **CTX-002 #27**
 
-> 一个 Work ID 只有一个 canonical Issue。G1 初评失败回收到原 owner `QA-ART-001` #25，并由 PR #78 完成 remediation；没有创建第 49 个 Work ID。G1 PASS 后按单任务纪律先执行 `CTX-001` #26。
+> 一个 Work ID 只有一个 canonical Issue。`CTX-001` 已由 PR #81 完整闭环；`CR-P0-002`、`TC-CTX-003`、`XF-CTX-001` 关闭。固定分母不变。
 
 ## 1. Work ID → Issue → Delivery
 
 | Milestone | Work ID | Hard dependency | Primary contract / verification | Issue | Delivery / Evidence | Status |
 |---|---|---|---|---:|---|---|
-| M0 | `REL-000` | None | Release/spec contract；88 FR + 100 Test IDs | #3 | PR #4 · `e18db7e` · `REL-000.md` | Complete |
-| M0 | `REL-001` | REL-000 | Version identity；`CR-P2-002` | #5 | PR #6 · `a97dfe4` · `REL-001.md` | Complete |
-| M0 | `REL-002` | REL-001 | Branch governance、Rulesets、active plan | #7 | PR #8/#9 · `e7e1414e`/`61642f69` | Complete |
+| M0 | `REL-000` | None | Release/spec contract；88 FR + 100 Test IDs | #3 | PR #4 · `e18db7e` | Complete |
+| M0 | `REL-001` | REL-000 | Version identity；`CR-P2-002` | #5 | PR #6 · `a97dfe4` | Complete |
+| M0 | `REL-002` | REL-001 | Branch governance、Rulesets | #7 | PR #8/#9 · `e7e1414e`/`61642f69` | Complete |
 | M0 | `REL-004` | REL-002 | current 9 / target 10 Tool denominator | #10 | PR #11 · `7d52de9f` | Complete |
-| M0 | `GOV-001` | REL-004 | Security、Issue/PR forms、release governance | #12 | PR #14 · `a0083ce1` | Complete |
-| M0 | `REL-003` | GOV-001 | 48 canonical Issues、完整 Traceability | #15 | PR #58 · `fd5c212f` | Complete |
+| M0 | `GOV-001` | REL-004 | Security/release governance | #12 | PR #14 · `a0083ce1` | Complete |
+| M0 | `REL-003` | GOV-001 | 48 canonical Issues、Traceability | #15 | PR #58 · `fd5c212f` | Complete |
 | M0 | `REL-005` | REL-000 | PyPI ownership / GitHub-only decision | #16 | PR #59 · `49ad479f` | Complete — PyPI disabled |
 | M0 | `COMPAT-000` | REL-000 | Hermes v0.19.0 target / static probes | #17 | PR #60 · `c7f6212a` | Complete |
-| M1 | `PKG-001` | G0 + COMPAT-000 | canonical `src/` package、wheel inventory/import | #18 | PR #62 · `2098dffc` · `PKG-001.md` | Complete |
-| M1 | `PKG-002` | PKG-001 | dependency extras、clean install matrix | #19 | PR #63 · `ae277d1d` · `PKG-002.md` | Complete |
-| M1 | `RUN-001` | PKG-002 | App Factory、`TC-SERVER-001–003` | #20 | PR #64 · `31366ceb` · `RUN-001.md` | Complete |
-| M1 | `RUN-002` | RUN-001 | Supervisor、PID/log、`TC-SERVER-004` | #21 | PR #65 · `f1c04697` · `RUN-002.md` | Complete |
-| M1 | `INS-001` | RUN-002 | install dry-run/transaction/idempotence | #22 | PR #68 · `2e5438a7` · `INS-001.md` | Complete |
-| M1 | `INS-002` | INS-001 | read-only Doctor、support matrix | #23 | PR #70 · `d1d3269d` · `INS-002.md` | Complete |
-| M1 | `INS-003` | INS-002 | upgrade/recover/uninstall/purge safety | #24 | PR #72 · `9e5295ac` · `INS-003.md` | Complete |
-| M1 | `QA-ART-001` | INS-003 | final wheel+sdist source isolation；G1 artifact owner | #25 | PR #74 · `7adbb0cb`; remediation PR #78 · `5ebb3a0c` · `QA-ART-001.md` | Complete |
-| M2 | `CTX-001` | G1 | `CR-P0-002`；`TC-CTX-003` | #26 | `CTX-001.md` when executed | **Next serial task** |
-| M2 | `CTX-002` | CTX-001 | `CR-P0-003`；`TC-CTX-004–006` | #27 | `CTX-002.md` when executed | Queued |
-| M2 | `CTX-003` | CTX-002 | `CR-P0-004`；`TC-CTX-007–009/014` | #28 | `CTX-003.md` when executed | Queued |
-| M2 | `CTX-004` | CTX-003 | compression/rollback invariants | #29 | `CTX-004.md` when executed | Queued |
-| M2 | `SES-001` | G1 + PKG-001 | `CR-P0-005`；`TC-POLICY-001–005` | #30 | `SES-001.md` when executed | Dependency satisfied; serially queued |
-| M2 | `PRIV-001` | CTX-003 + SES-001 | redaction/outbound/log privacy | #31 | `PRIV-001.md` when executed | Blocked |
-| M3 | `CON-001` | G2 + PKG-001 | 10 Tool generated contract；`TC-CONTRACT-001–010` | #32 | `CON-001.md` when executed | Blocked |
-| M3 | `MEM-001` | CON-001 | Memory store/query/dedup | #33 | `MEM-001.md` when executed | Blocked |
-| M3 | `MEM-002` | MEM-001 | Memory import/delete/idempotence | #34 | `MEM-002.md` when executed | Blocked |
-| M3 | `PLAN-001` | MEM-002 | DAG/cascade invariants | #35 | `PLAN-001.md` when executed | Blocked |
-| M3 | `PLAN-002` | PLAN-001 | state machine/atomic mutations | #36 | `PLAN-002.md` when executed | Blocked |
-| M3 | `PLAN-003` | PLAN-002 | query/archive/delete lifecycle | #37 | `PLAN-003.md` when executed | Blocked |
-| M3 | `CP-001` | PLAN-003 | Checkpoint ownership/numbering/review | #38 | `CP-001.md` when executed | Blocked |
-| M3 | `AUD-001` | SES-001 | JSONL audit source of truth | #39 | `AUD-001.md` when executed | Blocked |
-| M3 | `OPS-001` | AUD-001 | manual audit CLI / no scheduler side effects | #40 | `OPS-001.md` when executed | Blocked |
-| M3 | `INTENT-001` | CON-001 | intent low-confidence/negation/override | #41 | `INTENT-001.md` when executed | Blocked |
-| M4 | `DOC-001` | M2 + M3 | evidence-backed capability status | #42 | `DOC-001.md` when executed | Blocked |
-| M4 | `DOC-002` | DOC-001 | lifecycle/privacy/troubleshooting guides | #43 | `DOC-002.md` when executed | Blocked |
-| M4 | `QA-001` | M2 + M3 | fast/integration/release channels | #44 | `QA-001.md` when executed | Blocked |
-| M4 | `QA-002` | QA-001 | Ruff/type/ShellCheck/coverage/audits | #45 | `QA-002.md` when executed | Blocked |
-| M4 | `COMPAT-001` | COMPAT-000 + QA-002 | Linux/macOS × Python × real Hermes E2E | #46 | `COMPAT-001.md` when executed | Blocked；G3 owner, not G1 |
-| M4 | `SEC-001` | COMPAT-001 + PRIV-001 | license/SBOM/dependency/permission evidence | #47 | `SEC-001.md` when executed | Blocked |
-| M4 | `MIG-001` | INS-003 + MEM-002 + AUD-001 | `TC-MIG-001–006` migration/rollback | #48 | `MIG-001.md` when executed | Blocked |
-| M4 | `SEC-002` | SEC-001 + MIG-001 | local API/files/destructive boundaries | #49 | `SEC-002.md` when executed | Blocked |
-| M4 | `REL-006` | all M4 | reproducible RC、test-release、SBOM/provenance | #50 | `REL-006.md` when executed | Blocked |
-| M5 | `BETA-001` | G3 + exact-master verification | immutable `v3.0.0-beta.1` publication | #51 | `BETA-001.md` when executed | Blocked |
-| M5 | `BETA-002` | BETA-001 | external validation metrics | #52 | `BETA-002.md` when executed | Blocked |
-| M5 | `BETA-003` | BETA-001 | owned Beta failure ledger | #53 | `BETA-003.md` when executed | Blocked |
-| M5 | `REL-007` | BETA-001 | withdrawal/rollback/notification drill | #54 | `REL-007.md` when executed | Blocked |
-| M6 | `STABLE-001` | G4 | close P0/P1 and Beta waivers | #55 | `STABLE-001.md` when executed | Blocked |
-| M6 | `SOAK-001` | STABLE-001 | unchanged final-RC 14-day soak | #56 | `SOAK-001.md` when executed | Blocked |
-| M6 | `REL-008` | G5 | immutable `v3.0.0` publication | #57 | `REL-008.md` when executed | Blocked |
+| M1 | `PKG-001` | G0 + COMPAT-000 | canonical `src/` package | #18 | PR #62 · `2098dffc` | Complete |
+| M1 | `PKG-002` | PKG-001 | dependency extras | #19 | PR #63 · `ae277d1d` | Complete |
+| M1 | `RUN-001` | PKG-002 | App Factory、`TC-SERVER-001–003` | #20 | PR #64 · `31366ceb` | Complete |
+| M1 | `RUN-002` | RUN-001 | Supervisor、`TC-SERVER-004` | #21 | PR #65 · `f1c04697` | Complete |
+| M1 | `INS-001` | RUN-002 | install transaction/idempotence | #22 | PR #68 · `2e5438a7` | Complete |
+| M1 | `INS-002` | INS-001 | Doctor/support matrix | #23 | PR #70 · `d1d3269d` | Complete |
+| M1 | `INS-003` | INS-002 | upgrade/recover/uninstall/purge | #24 | PR #72 · `9e5295ac` | Complete |
+| M1 | `QA-ART-001` | INS-003 | wheel+sdist/twine/lifecycle | #25 | PR #74 · `7adbb0cb`; PR #78 · `5ebb3a0c` | Complete |
+| M2 | `CTX-001` | G1 | `CR-P0-002`；`TC-CTX-003` | #26 | PR #81 · `4026fea2` · `CTX-001.md` | Complete |
+| M2 | `CTX-002` | CTX-001 | `CR-P0-003`；`TC-CTX-004–006` | #27 | `CTX-002.md` when executed | **Next serial task** |
+| M2 | `CTX-003` | CTX-002 | `CR-P0-004`；`TC-CTX-007–009/014` | #28 | pending | Queued |
+| M2 | `CTX-004` | CTX-003 | compression/rollback invariants | #29 | pending | Queued |
+| M2 | `SES-001` | G1 + PKG-001 | `CR-P0-005`；`TC-POLICY-001–005` | #30 | pending | Dependency satisfied; queued |
+| M2 | `PRIV-001` | CTX-003 + SES-001 | privacy/redaction | #31 | pending | Blocked |
+| M3 | `CON-001` | G2 + PKG-001 | `TC-CONTRACT-001–010` | #32 | pending | Blocked |
+| M3 | `MEM-001` | CON-001 | Memory store/query/dedup | #33 | pending | Blocked |
+| M3 | `MEM-002` | MEM-001 | Memory import/delete/idempotence | #34 | pending | Blocked |
+| M3 | `PLAN-001` | MEM-002 | DAG/cascade | #35 | pending | Blocked |
+| M3 | `PLAN-002` | PLAN-001 | state machine | #36 | pending | Blocked |
+| M3 | `PLAN-003` | PLAN-002 | query/archive/delete | #37 | pending | Blocked |
+| M3 | `CP-001` | PLAN-003 | Checkpoint | #38 | pending | Blocked |
+| M3 | `AUD-001` | SES-001 | Audit source of truth | #39 | pending | Blocked |
+| M3 | `OPS-001` | AUD-001 | manual audit CLI | #40 | pending | Blocked |
+| M3 | `INTENT-001` | CON-001 | intent confidence | #41 | pending | Blocked |
+| M4 | `DOC-001` | M2 + M3 | capability docs | #42 | pending | Blocked |
+| M4 | `DOC-002` | DOC-001 | lifecycle/privacy guides | #43 | pending | Blocked |
+| M4 | `QA-001` | M2 + M3 | test channels | #44 | pending | Blocked |
+| M4 | `QA-002` | QA-001 | quality/audits | #45 | pending | Blocked |
+| M4 | `COMPAT-001` | COMPAT-000 + QA-002 | real Hermes E2E | #46 | pending | Blocked |
+| M4 | `SEC-001` | COMPAT-001 + PRIV-001 | license/SBOM/dependency | #47 | pending | Blocked |
+| M4 | `MIG-001` | INS-003 + MEM-002 + AUD-001 | `TC-MIG-001–006` | #48 | pending | Blocked |
+| M4 | `SEC-002` | SEC-001 + MIG-001 | security boundaries | #49 | pending | Blocked |
+| M4 | `REL-006` | all M4 | RC/reproducibility/provenance | #50 | pending | Blocked |
+| M5 | `BETA-001` | G3 + exact-master verification | `v3.0.0-beta.1` | #51 | pending | Blocked |
+| M5 | `BETA-002` | BETA-001 | external validation | #52 | pending | Blocked |
+| M5 | `BETA-003` | BETA-001 | Beta failure ledger | #53 | pending | Blocked |
+| M5 | `REL-007` | BETA-001 | withdrawal drill | #54 | pending | Blocked |
+| M6 | `STABLE-001` | G4 | close Beta blockers | #55 | pending | Blocked |
+| M6 | `SOAK-001` | STABLE-001 | 14-day soak | #56 | pending | Blocked |
+| M6 | `REL-008` | G5 | immutable `v3.0.0` | #57 | pending | Blocked |
 
 ### Canonical Issue URL registry
-
-The G0 contract verifies exactly 48 unique canonical Issue URLs in this section:
 
 - https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/3
 - https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/5
@@ -119,22 +114,9 @@ The G0 contract verifies exactly 48 unique canonical Issue URLs in this section:
 - https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/56
 - https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/57
 
-## 2. G1 trace and remediation ownership
+## 2. G1 trace
 
-| Gate clause | Current evidence | Result | Canonical owner |
-|---|---|---|---|
-| clean snapshot wheel + sdist | PR #78 builds both from one snapshot; SHA256 + inventories | PASS | `QA-ART-001` #25 closed |
-| `python -m twine check dist/*` | Run #183/#184 checks wheel+sdist in all Required jobs | PASS | `QA-ART-001` #25 closed |
-| wheel package data | 39-file wheel inventory / resources | PASS | closed by M1 |
-| external public imports | non-editable venv / outside cwd / empty PYTHONPATH | PASS | closed by M1 |
-| no source symlink/path dependency | module origin and sys.path assertions | PASS | closed by M1 |
-| Console Server lifecycle | CLI/Supervisor/install/uninstall E2E | PASS | closed by M1 |
-| health/ready/version | App Factory + process + artifact smoke | PASS | closed by M1 |
-| empty-HOME full lifecycle | pip→install→doctor→smoke→uninstall→pip uninstall | PASS | closed by M1 |
-| repeat/port/interruption/data preservation | INS-001–003 Required evidence | PASS | closed by M1 |
-| no real `~/.hermes` access | isolated HOME/data/DB/port/fake secret | PASS | closed by M1 |
-
-G1 conclusion: **PASS (10 PASS / 0 FAIL / 0 BLOCKED)**.
+G1：**PASS (10 PASS / 0 FAIL / 0 BLOCKED)**。PR #77 initial FAIL → PR #78 remediation → PR #79 PASS。Real Hermes E2E remains `COMPAT-001` / G3.
 
 ## 3. Requirement-domain ownership — 88 FR IDs
 
@@ -156,42 +138,42 @@ G1 conclusion: **PASS (10 PASS / 0 FAIL / 0 BLOCKED)**.
 
 ## 4. Code Review blocker ownership — 17 CR IDs
 
-| CR ID | Primary owner | Gate / state |
+| CR ID | Primary owner | State |
 |---|---|---|
-| `CR-P0-001` Server install/start invalid | PKG-001；关联 PKG-002、RUN-001/002、INS-001–003、QA-ART-001 | Complete / G1 closed |
-| `CR-P0-002` duplicate tail | CTX-001 | G2 open / next |
-| `CR-P0-003` Summary failure loses history | CTX-002 | G2 open |
-| `CR-P0-004` hard constraint not verbatim | CTX-003 | G2 open |
-| `CR-P0-005` cross-Session contamination | SES-001 | G2 open |
-| `CR-P1-001` Tool contract mismatch | CON-001 | G3 open |
-| `CR-P1-002` Audit format mismatch | AUD-001 | G3 open |
-| `CR-P1-003` Cron not installable | OPS-001 | G3 open |
-| `CR-P1-004` Memory import not idempotent | MEM-002；关联 MEM-001 | G3 open |
-| `CR-P1-005` DAG linear chain | PLAN-001；关联 PLAN-002 | G3 open |
-| `CR-P1-006` Intent low-confidence | INTENT-001 | G3 open |
-| `CR-P1-007` Summary privacy undefined | PRIV-001；关联 DOC-002 | G2/G3 open |
-| `CR-P2-001` Skill naming mismatch | DOC-001 | G3 open |
-| `CR-P2-002` version mismatch | REL-001 | Complete |
-| `CR-P2-003` CI only pytest | QA-001/QA-002 | G3 open |
-| `CR-P2-004` tests touch real HOME | QA-ART-001；关联 QA-001 | G1 protected; G3 continues |
-| `CR-P2-005` README over-promises | DOC-001/DOC-002 | G3 open |
+| `CR-P0-001` | PKG/RUN/INS/QA-ART chain | Complete |
+| `CR-P0-002` | CTX-001 | **Complete by PR #81** |
+| `CR-P0-003` | CTX-002 | Next |
+| `CR-P0-004` | CTX-003 | Open |
+| `CR-P0-005` | SES-001 | Open |
+| `CR-P1-001` | CON-001 | Open |
+| `CR-P1-002` | AUD-001 | Open |
+| `CR-P1-003` | OPS-001 | Open |
+| `CR-P1-004` | MEM-002 | Open |
+| `CR-P1-005` | PLAN-001 | Open |
+| `CR-P1-006` | INTENT-001 | Open |
+| `CR-P1-007` | PRIV-001 | Open |
+| `CR-P2-001` | DOC-001 | Open |
+| `CR-P2-002` | REL-001 | Complete |
+| `CR-P2-003` | QA-001/QA-002 | Open |
+| `CR-P2-004` | QA-ART-001/QA-001 | G1 protected; G3 continues |
+| `CR-P2-005` | DOC-001/DOC-002 | Open |
 
 ## 5. Canonical strict-XFAIL ownership
 
 | XF ID / test family | Exact owner | State |
 |---|---|---|
-| `XF-CTX-001` | CTX-001 #26 | Next to close |
-| `XF-CTX-002` | CTX-002 #27 | Open |
+| `XF-CTX-001` | CTX-001 #26 | **Fixed by PR #81** |
+| `XF-CTX-002` | CTX-002 #27 | Next |
 | `XF-CTX-003` | CTX-003 #28 | Open |
 | `XF-POLICY-001` | SES-001 #30 | Open |
 | `XF-AUDIT-001` | AUD-001 #39 | Open |
 | `XF-CONTRACT-001–003` | CON-001 #32 | Open |
 | `XF-MEM-001` | MEM-002 #34 | Open |
-| `XF-INSTALL-001` | INS-001 #22 | Fixed by PR #68 |
-| `XF-DEPS-001` | PKG-002 #19 | Fixed by PR #63 |
-| `XF-RELEASE-001` | REL-001 #5 | Fixed by PR #6 |
+| `XF-INSTALL-001` | INS-001 #22 | Fixed |
+| `XF-DEPS-001` | PKG-002 #19 | Fixed |
+| `XF-RELEASE-001` | REL-001 #5 | Fixed |
 
-Current suite has 9 strict XFAIL tests and no orphan owner.
+Current suite has **8 strict XFAIL tests** and no orphan owner.
 
 ## 6. Test ID unique primary ownership — exactly 100
 
@@ -228,14 +210,8 @@ Current suite has 9 strict XFAIL tests and no orphan owner.
 
 ```text
 M0 → G0 PASS
-M1 8/8 → G1 initial FAIL
-G1 initial FAIL → QA-ART-001 #25 remediation → G1 PASS
-G1 PASS → CTX-001 → CTX-002 → CTX-003 → CTX-004 → SES-001 → PRIV-001 → G2
-G2 PASS → M3
-M2 + M3 → M4 → G3
-G3 → exact-master verification → BETA-001
-BETA-001 → BETA-002 + BETA-003 + REL-007 → G4
-G4 → STABLE-001 → SOAK-001 → G5 → REL-008
+M1 → G1 PASS
+CTX-001 Complete → CTX-002 → CTX-003 → CTX-004 → SES-001 → PRIV-001 → G2
+G2 PASS → M3 → M4/G3 → exact-master verification
+BETA-001 → feedback/G4 → Stable/SOAK/G5 → REL-008
 ```
-
-Real Hermes E2E is owned by `COMPAT-001` in M4/G3, not G1. No Issue creation, documentation completion or green package CI bypasses a Gate.
