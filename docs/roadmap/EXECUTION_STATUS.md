@@ -70,4 +70,6 @@ Current queue:
 CTX-002 → CTX-003 → CTX-004 → SES-001 → PRIV-001 → G2
 ```
 
+Support boundary: Python 3.10 remains package/core/artifact-only after `PKG-001`; the complete Hermes v0.19.0 integration combination does not support Python 3.10. Full Hermes candidate support remains Python 3.11–3.12.
+
 G1 PASS and CTX-001 completion do not establish Public Beta、master、Tag、Release、PyPI、real Hermes E2E、reproducibility、SBOM、provenance or Stable readiness.
