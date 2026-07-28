@@ -38,6 +38,8 @@ dev = [
     "pydantic>=2.5.0,<3",
     "pytest>=7.0,<10",
     "pytest-cov>=4.0,<7",
+    "build>=1.2,<2",
+    "twine>=5,<7",
     "tomli>=2.0,<3; python_version < '3.11'",
 ]
 # Transitional compatibility alias; new documentation uses the `server` extra.
