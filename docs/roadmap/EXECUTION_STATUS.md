@@ -3,20 +3,21 @@
 - Status date: 2026-07-28
 - Normative contract: [`OPEN_SOURCE_RELEASE_PLAN.md`](OPEN_SOURCE_RELEASE_PLAN.md) v2.3.4
 - Complete task ledger: [`archive/OPEN_SOURCE_RELEASE_PLAN_2.2.md`](archive/OPEN_SOURCE_RELEASE_PLAN_2.2.md)
-- Current merged baseline: `develop@31366ceb1cb1ff375496bed2cdaf504ac11763ae`
-- Current remote WIP: `feat/run-002-supervisor@5e0e9eaf11da28a0b181981b8c4ebd30b26d199e`
-- Current decision: **G0 PASS; M1 IN PROGRESS; G1 NOT EVALUATED**
+- Incoming develop delivery: PR #65 (`RUN-002`); Squash Commit is recorded in Issue #21 after merge
+- Code acceptance head: `65d5d0039a3ffa0899d93ee7e5d99eef35f03abd`
+- Code acceptance CI: Run #104 / ID `30330399378`
+- Current decision on merge: **G0 PASS; M1 4/8 COMPLETE; G1 NOT EVALUATED**
 - Current product maturity: **Experimental Preview**
 - Session handoff: [`SESSION_HANDOFF_PROMPT.md`](SESSION_HANDOFF_PROMPT.md)
 
-> 本文件是当前执行状态账本，不替代主计划、v2.2 归档、PRD、Architecture、Test Plan 或 Traceability 中的规范契约。
+> 本文件内容在 PR #65 Squash Merge 到 `develop` 时生效。它是当前执行状态账本，不替代主计划、v2.2 归档、PRD、Architecture、Test Plan 或 Traceability 中的规范契约。
 
 ## 1. Overall progress
 
 | Status | Work IDs | Ratio |
 |---|---:|---:|
-| Complete | 11 | 22.9% |
-| In progress | 1 | 2.1% |
+| Complete | 12 | 25.0% |
+| In progress | 0 | 0.0% |
 | Not started / dependency blocked | 36 | 75.0% |
 | Total | 48 | 100% |
 
@@ -28,7 +29,7 @@ Work-ID progress does not represent release readiness. Public Beta still require
 |---|---|---|
 | Plan Ready | PASS | 48 Work IDs、48 Issues、88 FR、17 CR、100 Test IDs |
 | G0 | PASS | PR #61 · `ee516c9b` · [`GATE-G0.md`](../testing/evidence/GATE-G0.md) |
-| G1 | NOT_EVALUATED | RUN-002、INS-001/002/003、QA-ART-001 未完成 |
+| G1 | NOT_EVALUATED | INS-001/002/003、QA-ART-001 未完成；Hermes v0.19.0 完整支持仍限 Python 3.11–3.12 |
 | G2 | NOT_STARTED | 依赖 G1 |
 | G3 | NOT_STARTED | 依赖 M2、M3、M4 和 RC Evidence |
 | G4 | NOT_STARTED | 依赖 Beta 反馈闭环 |
@@ -55,58 +56,45 @@ Work-ID progress does not represent release readiness. Public Beta still require
 | `PKG-001` | #18 | PR #62 · `2098dffc` | Complete |
 | `PKG-002` | #19 | PR #63 · `ae277d1d` | Complete |
 | `RUN-001` | #20 | PR #64 · `31366ceb` | Complete |
-| `RUN-002` | #21 | branch `feat/run-002-supervisor` · WIP `5e0e9eaf` | **In progress — remote preservation point** |
-| `INS-001` | #22 | — | Blocked by RUN-002 |
+| `RUN-002` | #21 | PR #65 · [`RUN-002.md`](../testing/evidence/RUN-002.md) | **Complete on protected squash merge** |
+| `INS-001` | #22 | — | **Open — eligible only after PR #65 merges and #21 closes** |
 | `INS-002` | #23 | — | Blocked by INS-001 |
 | `INS-003` | #24 | — | Blocked by INS-002 |
 | `QA-ART-001` | #25 | — | Blocked by INS-003 |
 
-M1 progress: **3/8 Complete, 1/8 In progress, 4/8 Blocked**.
+M1 progress on merge: **4/8 Complete, 0/8 In progress, 1/8 Open eligible, 3/8 Blocked**.
 
-## 5. Latest verified baseline
+## 5. Latest verified acceptance
 
-RUN-001 final Required CI Run #88 / ID `30326830920`:
+RUN-002 code Required CI Run #104 / ID `30330399378`, Head `65d5d0039a3ffa0899d93ee7e5d99eef35f03abd`:
 
 ```text
-Python 3.10: success
+Python 3.10: success — package/core CI
 Python 3.11: success
 Python 3.12: success
-189 tests / 0 failures / 0 errors / 10 pre-existing strict XFAIL
+200 tests / 0 failures / 0 errors / 10 pre-existing strict XFAIL per version
 ```
 
-Verified on the merged baseline:
+Verified:
 
-- standard `src/` package layout and clean wheel imports;
-- base/context/server/all dependency isolation;
-- side-effect-free Server import;
-- loopback-only environment contract;
-- distinct `/health`, `/ready`, `/version` semantics;
-- real child-process readiness;
-- 10 target Tool names / 9 current Runtime Tool names.
+- one Supervisor shared by CLI and Tool auto-start;
+- concurrent independent CLI starts resolve to one PID;
+- PID reuse protection with OS process-start identity, exact child argv and random instance ID;
+- foreign PID no-signal and SIGKILL ownership revalidation;
+- atomic state and fail-closed stale/corrupt/failed-start handling;
+- port, `/health`, `/ready`, `/version` validation;
+- idempotent stop and restart with new instance identity;
+- private POSIX directory/file permissions and user-accessible stderr log;
+- clean-archive external wheel installation, imports and console-script contract;
+- temporary HOME/DB/data-root/port test isolation;
+- 10 target Tool names / 9 current Runtime Tool names; no placeholder `memory_store`.
 
-## 6. RUN-002 WIP scope
+This acceptance does not establish G1, Hermes real-environment compatibility, Public Beta readiness, master readiness or publication readiness.
 
-Remote WIP `5e0e9eaf` contains:
+## 6. Next authorized work
 
-- atomic runtime state and cross-process lock;
-- private data root/runtime/log permissions;
-- process ownership using PID + random instance ID;
-- start/status/stop/restart Supervisor;
-- port/probe/version validation;
-- user-accessible combined stdout/stderr log;
-- console script and CLI JSON output;
-- Tool auto-start routed through the same Supervisor;
-- concurrent start, restart, idempotent stop, foreign PID, port conflict and permission tests.
-
-This WIP has **not yet been accepted as RUN-002 complete**. It requires code review, CI, Evidence and protected merge.
-
-## 7. Next authorized work
-
-1. Continue only `RUN-002` #21 on `feat/run-002-supervisor`.
-2. Review WIP `5e0e9eaf` before changing it.
-3. Create/refresh a draft PR to `develop` and run Required CI.
-4. Fix failures without weakening process ownership or removing concurrency/failure tests.
-5. Complete RUN-002 Evidence and Traceability.
-6. Merge only after Python 3.10/3.11/3.12 Required Checks succeed.
-7. Start `INS-001` #22 only after RUN-002 is merged and Issue #21 is closed.
-8. Do not merge to `master`, create Tag/Release or publish to PyPI.
+1. Squash Merge PR #65 through the protected `develop` flow only after its final Required Checks pass.
+2. Record the Squash Commit and final PR-head CI in Issue #21, then close #21.
+3. Verify the new `develop` Head and post-merge CI.
+4. Only then is `INS-001` #22 legally unlocked; do not start it inside RUN-002.
+5. Do not merge to `master`, create Tag/Release or publish to PyPI.
