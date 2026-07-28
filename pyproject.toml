@@ -47,6 +47,9 @@ mcp = [
     "pydantic>=2.5.0,<3",
 ]
 
+[project.scripts]
+deepseek-harness = "deepseek_harness.cli:main"
+
 [project.entry-points."hermes_agent.plugins"]
 deepseek-harness = "deepseek_harness"
 deepseek-context = "deepseek_context.plugin"

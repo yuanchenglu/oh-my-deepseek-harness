@@ -102,6 +102,7 @@ def test_git_archive_wheel_contains_all_packages_and_resources(tmp_path: Path) -
 
     required = {
         "deepseek_harness/__init__.py",
+        "deepseek_harness/cli.py",
         "deepseek_harness/tools.py",
         "deepseek_harness/resources/plugin.yaml",
         "deepseek_harness/resources/strategies.yaml",
@@ -111,7 +112,9 @@ def test_git_archive_wheel_contains_all_packages_and_resources(tmp_path: Path) -
         "deepseek_context/resources/plugin.yaml",
         "deepseek_context/resources/config.yaml",
         "harness_server/__init__.py",
+        "harness_server/runtime.py",
         "harness_server/server.py",
+        "harness_server/supervisor.py",
         "harness_server/models.py",
         "harness_server/storage.py",
         "harness_server/config.yaml",
@@ -150,14 +153,19 @@ def test_wheel_installs_and_imports_outside_repository(tmp_path: Path) -> None:
         import deepseek_harness
         import deepseek_context
         import harness_server
+        import deepseek_harness.cli as cli
         import deepseek_harness.tools as tools
+        from harness_server.runtime import RuntimePaths
+        from harness_server.supervisor import Supervisor
 
         repository = Path({str(ROOT)!r}).resolve()
         for module in (deepseek_harness, deepseek_context, harness_server):
             location = Path(module.__file__).resolve()
             assert repository not in location.parents, (module.__name__, location)
 
-        assert tools._SERVER_MODULE == "harness_server.server"
+        assert callable(cli.main)
+        assert tools.Supervisor is Supervisor
+        assert RuntimePaths.from_root("runtime-probe").state_file.name == "harness-server.json"
         assert not hasattr(tools, "_SERVER_SCRIPT")
         assert resources.files("deepseek_harness.resources").joinpath("plugin.yaml").is_file()
         assert resources.files("deepseek_harness.resources").joinpath("strategies.yaml").is_file()
@@ -171,6 +179,10 @@ def test_wheel_installs_and_imports_outside_repository(tmp_path: Path) -> None:
         assert {{"deepseek-harness", "deepseek-context"}} <= set(mapping)
         assert mapping["deepseek-harness"].load().__name__ == "deepseek_harness"
         assert mapping["deepseek-context"].load().__name__ == "deepseek_context.plugin"
+
+        console = entry_points.select(group="console_scripts", name="deepseek-harness")
+        assert len(console) == 1
+        assert next(iter(console)).value == "deepseek_harness.cli:main"
         """
     )
     _run(str(python), "-c", script, cwd=probe)
