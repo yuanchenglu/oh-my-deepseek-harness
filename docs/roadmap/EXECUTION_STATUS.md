@@ -4,12 +4,14 @@
 - Normative contract: [`OPEN_SOURCE_RELEASE_PLAN.md`](OPEN_SOURCE_RELEASE_PLAN.md) v2.3.5
 - Complete task ledger: [`archive/OPEN_SOURCE_RELEASE_PLAN_2.2.md`](archive/OPEN_SOURCE_RELEASE_PLAN_2.2.md)
 - QA-ART-001 implementation baseline: `develop@7adbb0cb00e781e31fee0ee5d360f52c4bdce5eb`
+- M1 plan/handoff closure baseline: `develop@ec81b11236843bb3ca10d6e1e1af72fa91a780f0`
 - Latest completed Work ID: `QA-ART-001`
 - Delivery: PR #74 · Squash Commit `7adbb0cb00e781e31fee0ee5d360f52c4bdce5eb`
 - Code acceptance Head: `81195f844b681e85ccf2c0a15fc4935b2b396ed6`
 - Final PR Head: `2a0263b3fe5dec75f6dae89203ecda6b6275ec9f`
 - Code acceptance CI: Run #161 / ID `30342161995`
 - Final PR-head CI: Run #166 / ID `30343118259`
+- Plan/handoff closure: PR #75 · Run #168 / ID `30378398782` · Squash `ec81b11236843bb3ca10d6e1e1af72fa91a780f0`
 - Current decision: **G0 PASS; M1 8/8 COMPLETE; G1 READY FOR SEPARATE EVALUATION**
 - Current product maturity: **Experimental Preview**
 - Session handoff: [`SESSION_HANDOFF_PROMPT.md`](SESSION_HANDOFF_PROMPT.md)
@@ -107,9 +109,9 @@ The three independently built wheels have different SHA256 values. QA-ART-001 re
 
 ## 7. Next authorized work
 
-1. Complete this QA-ART-001 post-merge documentation closure through the preferred PR flow.
-2. From the resulting latest `develop`, create `docs/gate-g1-evaluation` and a Draft PR.
-3. Build `docs/testing/evidence/GATE-G1.md` from the original Gate criteria before writing a conclusion.
-4. The G1 conclusion must be exactly PASS, FAIL or BLOCKED, with criterion-level evidence and exclusions.
+1. From the latest remote `develop`, create `docs/gate-g1-evaluation` and a Draft PR.
+2. Build `docs/testing/evidence/GATE-G1.md` from the original Gate criteria before writing a conclusion.
+3. The G1 conclusion must be exactly PASS, FAIL or BLOCKED, with criterion-level evidence, residual risks and exclusions.
+4. Synchronize the plan, execution status, traceability and guarded handoff in the same Gate PR.
 5. Do not start CTX-001, SES-001 or another M2 Work ID before G1 PASS.
 6. Do not merge to `master`, create Tag/Release or publish to PyPI.
