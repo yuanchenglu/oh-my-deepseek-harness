@@ -32,7 +32,7 @@ def _free_port() -> int:
 
 def _plan(tmp_path: Path, *, db_path: Path | None = None):
     home = tmp_path / "home"
-    home.mkdir()
+    home.mkdir(parents=True)
     data_root = home / ".hermes" / "oh-my-deepseek-harness"
     env = {
         **os.environ,
@@ -144,7 +144,7 @@ def test_purge_rejects_symlink_hermes_parent_and_preserves_target(tmp_path: Path
         }
     )
 
-    with pytest.raises(LifecycleConflictError, match="symlink .hermes"):
+    with pytest.raises(LifecycleConflictError, match="symlink lifecycle path"):
         uninstall(plan, purge_data=True, confirm=True)
     assert sentinel.read_text(encoding="utf-8") == "preserve"
     assert (home / ".hermes").is_symlink()
