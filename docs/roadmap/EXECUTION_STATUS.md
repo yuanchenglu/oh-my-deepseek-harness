@@ -3,16 +3,19 @@
 - Status date: 2026-07-28
 - Normative contract: [`OPEN_SOURCE_RELEASE_PLAN.md`](OPEN_SOURCE_RELEASE_PLAN.md) v2.3.4
 - Complete task ledger: [`archive/OPEN_SOURCE_RELEASE_PLAN_2.2.md`](archive/OPEN_SOURCE_RELEASE_PLAN_2.2.md)
-- Current incoming delivery: PR #70 (`INS-002`)
-- INS-002 code acceptance Head: `ef4363cd8972c0e9bba64ae91a84a6efa8806e2e`
-- INS-002 Required CI: Run #134 / ID `30335296725`
-- Current decision on merge: **G0 PASS; M1 6/8 COMPLETE; G1 NOT EVALUATED**
+- INS-002 implementation baseline: `develop@d1d3269de389258cc988c04b682de465d2da77c7`
+- Latest completed Work ID: `INS-002`
+- Delivery: PR #70 · Squash Commit `d1d3269de389258cc988c04b682de465d2da77c7`
+- Code acceptance Head: `ef4363cd8972c0e9bba64ae91a84a6efa8806e2e`
+- Final PR Head: `92d6cf2bd97763089809efa4130c187dd55e5456`
+- Final Required CI: Run #139 / ID `30335805610`
+- Current decision: **G0 PASS; M1 6/8 COMPLETE; G1 NOT EVALUATED**
 - Current product maturity: **Experimental Preview**
 - Session handoff: [`SESSION_HANDOFF_PROMPT.md`](SESSION_HANDOFF_PROMPT.md)
 
-> 本文件中的 INS-002 完成状态在 PR #70 protected Squash Merge 到 `develop` 且 Issue #23 关闭时生效。本文件不替代主计划、v2.2 归档、PRD、Architecture、Test Plan 或 Traceability 中的规范契约。
+> 本文件是当前执行状态账本，不替代主计划、v2.2 归档、PRD、Architecture、Test Plan 或 Traceability 中的规范契约。
 
-## 1. Overall progress on merge
+## 1. Overall progress
 
 | Status | Work IDs | Ratio |
 |---|---:|---:|
@@ -49,7 +52,7 @@ Work-ID progress does not represent release readiness. G0 **does not** claim pro
 | `COMPAT-000` | #17 | PR #60 · `c7f6212a` | Complete — Hermes v0.19.0 fixed |
 | G0 | — | PR #61 · `ee516c9b` | PASS |
 
-## 4. M1 status on merge
+## 4. M1 status
 
 | Work ID | Issue | Delivery | Status |
 |---|---:|---|---|
@@ -58,17 +61,18 @@ Work-ID progress does not represent release readiness. G0 **does not** claim pro
 | `RUN-001` | #20 | PR #64 · `31366ceb` | Complete |
 | `RUN-002` | #21 | PR #65 · `f1c04697` | Complete |
 | `INS-001` | #22 | PR #68 · `2e5438a7` | Complete |
-| `INS-002` | #23 | PR #70 · [`INS-002.md`](../testing/evidence/INS-002.md) | **Complete on protected merge** |
-| `INS-003` | #24 | — | **Open — eligible only after PR #70 merges and #23 closes** |
+| `INS-002` | #23 | PR #70 · `d1d3269d` · [`INS-002.md`](../testing/evidence/INS-002.md) | **Complete** |
+| `INS-003` | #24 | — | **Open — dependency eligible; not started** |
 | `QA-ART-001` | #25 | — | Blocked by INS-003 |
 
-M1 progress on merge: **6/8 Complete, 0/8 In progress, 1/8 Open eligible, 1/8 Blocked**.
+M1 progress: **6/8 Complete, 0/8 In progress, 1/8 Open eligible, 1/8 Blocked**.
 
 ## 5. INS-002 verified acceptance
 
-Code Required CI Run #134 / ID `30335296725`, Head `ef4363cd8972c0e9bba64ae91a84a6efa8806e2e`：
+Final PR-head Required CI：
 
 ```text
+Run #139 / ID 30335805610 / head 92d6cf2bd97763089809efa4130c187dd55e5456
 Python 3.10: success — package/core CI
 Python 3.11: success
 Python 3.12: success
@@ -95,8 +99,8 @@ This acceptance does not establish Upgrade, Uninstall, real Hermes compatibility
 
 ## 6. Next authorized work
 
-1. Squash Merge PR #70 through protected `develop` only after final Required Checks pass.
-2. Record the Squash Commit and final PR-head CI in Issue #23, then close #23.
-3. Verify the new `develop` Head and synchronize post-merge records.
-4. Only then is `INS-003` #24 legally unlocked; do not start it inside INS-002.
+1. `INS-002` is closed; do not reopen its scope without a new defect Issue.
+2. `INS-003` #24 is dependency eligible but remains not started.
+3. A new feature branch may start only `INS-003`, from current `develop`, through protected PR and Required CI.
+4. Do not start QA-ART-001 until INS-003 merges and Issue #24 closes.
 5. Do not merge to `master`, create Tag/Release or publish to PyPI.
