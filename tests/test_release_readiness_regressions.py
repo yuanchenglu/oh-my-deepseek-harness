@@ -145,10 +145,10 @@ def test_project_versions_are_consistent() -> None:
     expected_manifest_version = _manifest_version_from_python(root_version)
 
     harness = yaml.safe_load(
-        (ROOT / "plugins" / "deepseek-harness" / "plugin.yaml").read_text(encoding="utf-8")
+        (ROOT / "src" / "deepseek_harness" / "resources" / "plugin.yaml").read_text(encoding="utf-8")
     )
     context = yaml.safe_load(
-        (ROOT / "plugins" / "deepseek-context" / "plugin.yaml").read_text(encoding="utf-8")
+        (ROOT / "src" / "deepseek_context" / "resources" / "plugin.yaml").read_text(encoding="utf-8")
     )
 
     assert root_version == "3.0.0b1"
@@ -183,11 +183,11 @@ def test_memory_import_storage_is_idempotent(tmp_path: Path) -> None:
 
 def test_harness_server_defaults_to_loopback() -> None:
     """安全基线：默认监听地址必须是本机回环地址。"""
-    server_text = (ROOT / "mcp" / "harness_server" / "server.py").read_text(encoding="utf-8")
+    server_text = (ROOT / "src" / "harness_server" / "server.py").read_text(encoding="utf-8")
     assert 'os.environ.get("HARNESS_HOST", "127.0.0.1")' in server_text
 
 
 def test_sqlite_updates_use_field_allowlist() -> None:
     """安全基线：动态 UPDATE 字段必须经过白名单过滤。"""
-    storage_text = (ROOT / "mcp" / "harness_server" / "storage.py").read_text(encoding="utf-8")
+    storage_text = (ROOT / "src" / "harness_server" / "storage.py").read_text(encoding="utf-8")
     assert 'allowed = {"text", "key", "status", "parent_id", "dependency_ids", "association_strength"}' in storage_text

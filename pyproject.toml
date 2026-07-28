@@ -28,5 +28,19 @@ mcp = [
     "PyYAML>=6.0",
 ]
 
+[project.entry-points."hermes_agent.plugins"]
+deepseek-harness = "deepseek_harness"
+deepseek-context = "deepseek_context.plugin"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+include-package-data = true
+
 [tool.setuptools.packages.find]
-include = ["plugins.*", "packages.*"]
+where = ["src"]
+include = ["deepseek_harness*", "deepseek_context*", "harness_server*"]
+
+[tool.setuptools.package-data]
+deepseek_harness = ["resources/*.yaml"]
+deepseek_context = ["resources/*.yaml"]
+harness_server = ["config.yaml"]

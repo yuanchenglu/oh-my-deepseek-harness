@@ -1,8 +1,4 @@
-"""COMPAT-000 static probes for the selected Hermes v0.19.0 target.
-
-These probes freeze source/document contracts only. Real installation and lifecycle E2E
-remain the responsibility of COMPAT-001.
-"""
+"""COMPAT-000 static probes for the selected Hermes v0.19.0 target."""
 
 from __future__ import annotations
 
@@ -14,9 +10,9 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[3]
 FIXTURE = ROOT / "tests" / "fixtures" / "hermes" / "v0.19.0-contract.yaml"
-PLUGIN_MANIFEST = ROOT / "plugins" / "deepseek-harness" / "plugin.yaml"
-TOOLS_SOURCE = ROOT / "plugins" / "deepseek-harness" / "tools.py"
-CONTEXT_SOURCE = ROOT / "plugins" / "deepseek-context" / "__init__.py"
+PLUGIN_MANIFEST = ROOT / "src" / "deepseek_harness" / "resources" / "plugin.yaml"
+TOOLS_SOURCE = ROOT / "src" / "deepseek_harness" / "tools.py"
+CONTEXT_SOURCE = ROOT / "src" / "deepseek_context" / "__init__.py"
 
 
 def _fixture() -> dict:
@@ -60,12 +56,10 @@ def test_selected_candidate_identity_and_python_layers() -> None:
 
 def test_project_hooks_are_supported_by_selected_hermes() -> None:
     data = _fixture()
-    official_hooks = set(data["official_hooks"])
     manifest = yaml.safe_load(PLUGIN_MANIFEST.read_text(encoding="utf-8"))
     project_hooks = set(manifest["hooks"])
-
     assert project_hooks
-    assert project_hooks <= official_hooks
+    assert project_hooks <= set(data["official_hooks"])
     assert {"pre_llm_call", "post_tool_call", "on_session_end"} <= project_hooks
     assert {"subagent_start", "subagent_stop"} <= project_hooks
 
@@ -74,7 +68,6 @@ def test_target_and_runtime_tool_name_contract_remains_10_and_9() -> None:
     module = ast.parse(TOOLS_SOURCE.read_text(encoding="utf-8"))
     target = tuple(_literal_assignment(module, "TARGET_PUBLIC_TOOL_NAMES"))
     pending = frozenset(_literal_assignment(module, "PENDING_PUBLIC_TOOL_NAMES"))
-
     assert len(target) == 10
     assert len(set(target)) == 10
     assert pending == {"memory_store"}
@@ -89,7 +82,6 @@ def test_context_engine_source_covers_selected_required_abc() -> None:
         for node in module.body
         if isinstance(node, ast.ClassDef) and node.name == "DeepSeekContextEngine"
     )
-
     methods = {
         node.name
         for node in engine.body
@@ -97,7 +89,6 @@ def test_context_engine_source_covers_selected_required_abc() -> None:
     }
     required_methods = set(fixture["context_engine_required"]["methods"])
     required_properties = set(fixture["context_engine_required"]["properties"])
-
     assert required_methods <= methods
     assert required_properties <= methods
 
@@ -135,12 +126,11 @@ def test_normative_documents_distinguish_package_and_full_integration_support() 
         ROOT / "README.md",
         ROOT / "README_EN.md",
     ]
-
     for path in documents:
         text = path.read_text(encoding="utf-8")
-        assert "3.10" in text, f"package/core Python 3.10 distinction missing: {path}"
-        assert "3.11" in text and "3.12" in text, f"full Hermes Python matrix missing: {path}"
-        assert "v0.19.0" in text or "v2026.7.20" in text, f"Hermes target missing: {path}"
+        assert "3.10" in text
+        assert "3.11" in text and "3.12" in text
+        assert "v0.19.0" in text or "v2026.7.20" in text
 
 
 def test_activation_contract_is_explicit() -> None:
