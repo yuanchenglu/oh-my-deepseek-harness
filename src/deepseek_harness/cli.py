@@ -23,6 +23,13 @@ from .doctor import (
     render_human,
 )
 from .installer import InstallError, install
+from .lifecycle import (
+    LifecycleError,
+    plan_from_environment,
+    recover,
+    uninstall,
+    upgrade,
+)
 
 
 def _add_common_runtime_options(parser: argparse.ArgumentParser) -> None:
@@ -69,6 +76,36 @@ def build_parser() -> argparse.ArgumentParser:
         "doctor", help="Run read-only environment and lifecycle diagnostics"
     )
     _add_common_runtime_options(doctor_command)
+
+    upgrade_command = commands.add_parser(
+        "upgrade", help="Back up and upgrade the managed deployment"
+    )
+    _add_common_runtime_options(upgrade_command)
+    upgrade_command.add_argument(
+        "--dry-run", action="store_true", help="Report backup and migration impact"
+    )
+    upgrade_command.add_argument("--timeout", type=float, default=20.0)
+
+    recover_command = commands.add_parser(
+        "recover", help="Restore an interrupted upgrade transaction"
+    )
+    _add_common_runtime_options(recover_command)
+    recover_command.add_argument("--timeout", type=float, default=20.0)
+
+    uninstall_command = commands.add_parser(
+        "uninstall", help="Remove managed deployment while preserving distribution"
+    )
+    _add_common_runtime_options(uninstall_command)
+    uninstall_command.add_argument(
+        "--purge-data",
+        action="store_true",
+        help="Also delete the canonical product data root",
+    )
+    uninstall_command.add_argument(
+        "--confirm",
+        action="store_true",
+        help="Confirm destructive purge of canonical product data",
+    )
 
     server = commands.add_parser("server", help="Manage the local Harness Server")
     actions = server.add_subparsers(dest="server_command", required=True)
@@ -125,8 +162,14 @@ def _emit(payload: dict, *, as_json: bool, stream=None) -> None:
         "host",
         "port",
         "version",
+        "current_version",
+        "target_version",
         "healthy",
         "ready",
+        "data_preserved",
+        "distribution_preserved",
+        "pip_uninstall_command",
+        "backup_dir",
         "log_path",
     )
     rendered: set[str] = set()
@@ -206,6 +249,40 @@ def _run_doctor(args: argparse.Namespace) -> int:
     return report.exit_code
 
 
+def _run_lifecycle(args: argparse.Namespace) -> int:
+    try:
+        plan = plan_from_environment(data_root=args.data_root)
+        if args.command == "upgrade":
+            payload = upgrade(plan, dry_run=args.dry_run, timeout=args.timeout)
+        elif args.command == "recover":
+            payload = recover(plan, timeout=args.timeout)
+        elif args.command == "uninstall":
+            payload = uninstall(
+                plan,
+                purge_data=args.purge_data,
+                confirm=args.confirm,
+            )
+        else:  # pragma: no cover - parser owns command set
+            raise AssertionError("unsupported lifecycle command")
+        _emit(payload, as_json=args.json)
+        return 0
+    except ValueError as exc:
+        _emit(
+            {"state": "config_error", "message": str(exc)},
+            as_json=args.json,
+            stream=sys.stderr,
+        )
+        return 3
+    except (LifecycleError, ProcessOwnershipError, RuntimeStateError) as exc:
+        exit_code = getattr(exc, "exit_code", 4)
+        _emit(
+            {"state": "lifecycle_error", "message": str(exc)},
+            as_json=args.json,
+            stream=sys.stderr,
+        )
+        return int(exit_code)
+
+
 def _run_server(args: argparse.Namespace) -> int:
     supervisor = _supervisor(args)
     try:
@@ -272,6 +349,8 @@ def main(argv: list[str] | None = None) -> int:
         return _run_install(args)
     if args.command == "doctor":
         return _run_doctor(args)
+    if args.command in {"upgrade", "recover", "uninstall"}:
+        return _run_lifecycle(args)
     if args.command == "server":
         return _run_server(args)
     parser.error("unsupported command")
