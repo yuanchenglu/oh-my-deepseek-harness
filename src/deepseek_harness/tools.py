@@ -16,6 +16,8 @@ from typing import Any, Dict
 
 import httpx
 
+from harness_server.config import RuntimeConfig
+
 logger = logging.getLogger(__name__)
 
 TARGET_PUBLIC_TOOL_NAMES: tuple[str, ...] = (
@@ -35,9 +37,12 @@ RUNTIME_PUBLIC_TOOL_NAMES: tuple[str, ...] = tuple(
     name for name in TARGET_PUBLIC_TOOL_NAMES if name not in PENDING_PUBLIC_TOOL_NAMES
 )
 
-_SERVER_URL = os.environ.get("HARNESS_SERVER_URL", "http://127.0.0.1:8200")
 _SERVER_MODULE = "harness_server.server"
 _server_process = None
+
+
+def _runtime_config() -> RuntimeConfig:
+    return RuntimeConfig.from_env()
 
 
 def _ensure_server_running() -> None:
@@ -47,15 +52,18 @@ def _ensure_server_running() -> None:
         return
 
     try:
-        env = dict(os.environ)
-        env.setdefault("HARNESS_PORT", "8200")
+        runtime = _runtime_config()
         _server_process = subprocess.Popen(
             [os.environ.get("PYTHON", sys.executable), "-m", _SERVER_MODULE],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
-            env=env,
+            env=dict(os.environ),
         )
-        logger.info("[harness_server] packaged module started, PID=%s", _server_process.pid)
+        logger.info(
+            "[harness_server] packaged module started, PID=%s, endpoint=%s",
+            _server_process.pid,
+            runtime.server_url,
+        )
         time.sleep(1)
     except Exception as exc:  # pragma: no cover - failure is surfaced by the Tool call
         logger.warning("[harness_server] start failed: %s", exc)
@@ -65,7 +73,11 @@ def _call_server(method: str, path: str, **kwargs) -> Dict[str, Any]:
     _ensure_server_running()
     try:
         with httpx.Client(timeout=30) as client:
-            response = client.request(method, f"{_SERVER_URL}{path}", **kwargs)
+            response = client.request(
+                method,
+                f"{_runtime_config().server_url}{path}",
+                **kwargs,
+            )
             response.raise_for_status()
             return response.json()
     except Exception as exc:

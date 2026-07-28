@@ -190,9 +190,17 @@ def test_memory_import_storage_is_idempotent(tmp_path: Path) -> None:
 
 
 def test_harness_server_defaults_to_loopback() -> None:
-    """安全基线：默认监听地址必须是本机回环地址。"""
-    server_text = (ROOT / "src" / "harness_server" / "server.py").read_text(encoding="utf-8")
-    assert 'os.environ.get("HARNESS_HOST", "127.0.0.1")' in server_text
+    """安全基线：默认回环，非回环监听必须被拒绝。"""
+    from harness_server.config import RuntimeConfig
+
+    assert RuntimeConfig.from_env({}).host == "127.0.0.1"
+    assert RuntimeConfig.from_env({"HARNESS_HOST": "localhost"}).host == "localhost"
+    assert RuntimeConfig.from_env({"HARNESS_HOST": "127.0.0.1"}).host == "127.0.0.1"
+    assert RuntimeConfig.from_env({"HARNESS_HOST": "::1"}).host == "::1"
+    with pytest.raises(ValueError, match="loopback"):
+        RuntimeConfig.from_env({"HARNESS_HOST": "0.0.0.0"})
+    with pytest.raises(ValueError, match="loopback"):
+        RuntimeConfig.from_env({"HARNESS_HOST": "192.168.1.10"})
 
 
 def test_sqlite_updates_use_field_allowlist() -> None:
