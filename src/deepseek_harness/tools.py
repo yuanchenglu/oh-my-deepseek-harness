@@ -8,15 +8,12 @@ from __future__ import annotations
 
 import json
 import logging
-import os
-import subprocess
-import sys
-import time
 from typing import Any, Dict
 
 import httpx
 
 from harness_server.config import RuntimeConfig
+from harness_server.supervisor import Supervisor, SupervisorError
 
 logger = logging.getLogger(__name__)
 
@@ -37,42 +34,29 @@ RUNTIME_PUBLIC_TOOL_NAMES: tuple[str, ...] = tuple(
     name for name in TARGET_PUBLIC_TOOL_NAMES if name not in PENDING_PUBLIC_TOOL_NAMES
 )
 
-_SERVER_MODULE = "harness_server.server"
-_server_process = None
-
 
 def _runtime_config() -> RuntimeConfig:
     return RuntimeConfig.from_env()
 
 
 def _ensure_server_running() -> None:
-    """Start the installed Harness Server module when no managed process exists."""
-    global _server_process
-    if _server_process is not None and _server_process.poll() is None:
-        return
-
+    """Start or reuse the single Supervisor-managed local Server."""
     try:
-        runtime = _runtime_config()
-        _server_process = subprocess.Popen(
-            [os.environ.get("PYTHON", sys.executable), "-m", _SERVER_MODULE],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            env=dict(os.environ),
-        )
+        status = Supervisor().start(_runtime_config())
         logger.info(
-            "[harness_server] packaged module started, PID=%s, endpoint=%s",
-            _server_process.pid,
-            runtime.server_url,
+            "[harness_server] supervisor state=%s pid=%s endpoint=%s",
+            status.state,
+            status.pid,
+            _runtime_config().server_url,
         )
-        time.sleep(1)
-    except Exception as exc:  # pragma: no cover - failure is surfaced by the Tool call
-        logger.warning("[harness_server] start failed: %s", exc)
+    except SupervisorError as exc:  # failure is returned by the Tool call
+        logger.warning("[harness_server] supervisor start failed: %s", exc)
 
 
 def _call_server(method: str, path: str, **kwargs) -> Dict[str, Any]:
     _ensure_server_running()
     try:
-        with httpx.Client(timeout=30) as client:
+        with httpx.Client(timeout=30, trust_env=False) as client:
             response = client.request(
                 method,
                 f"{_runtime_config().server_url}{path}",
