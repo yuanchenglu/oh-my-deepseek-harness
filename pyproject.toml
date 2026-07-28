@@ -12,20 +12,39 @@ license = {text = "MIT"}
 authors = [{name = "yuanchenglu"}]
 
 dependencies = [
-    "PyYAML>=6.0",
+    "PyYAML>=6.0,<7",
+    "httpx>=0.25.0,<1",
 ]
 
 [project.optional-dependencies]
-dev = [
-    "pytest>=7.0",
-    "pytest-cov>=4.0",
-    "httpx>=0.25.0",
+context = [
+    "openai>=1.0,<3",
 ]
+server = [
+    "fastapi>=0.104.0,<1",
+    "uvicorn>=0.24.0,<1",
+    "pydantic>=2.5.0,<3",
+]
+all = [
+    "openai>=1.0,<3",
+    "fastapi>=0.104.0,<1",
+    "uvicorn>=0.24.0,<1",
+    "pydantic>=2.5.0,<3",
+]
+dev = [
+    "openai>=1.0,<3",
+    "fastapi>=0.104.0,<1",
+    "uvicorn>=0.24.0,<1",
+    "pydantic>=2.5.0,<3",
+    "pytest>=7.0,<10",
+    "pytest-cov>=4.0,<7",
+    "tomli>=2.0,<3; python_version < '3.11'",
+]
+# Transitional compatibility alias; new documentation uses the `server` extra.
 mcp = [
-    "fastapi>=0.104.0",
-    "uvicorn>=0.24.0",
-    "pydantic>=2.5.0",
-    "PyYAML>=6.0",
+    "fastapi>=0.104.0,<1",
+    "uvicorn>=0.24.0,<1",
+    "pydantic>=2.5.0,<3",
 ]
 
 [project.entry-points."hermes_agent.plugins"]

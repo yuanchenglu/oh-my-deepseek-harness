@@ -13,6 +13,11 @@ from pathlib import Path
 import pytest
 import yaml
 
+try:
+    import tomllib
+except ModuleNotFoundError:  # Python 3.10
+    import tomli as tomllib
+
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -110,13 +115,16 @@ def test_install_script_installs_harness_server_runtime() -> None:
     assert "mcp/harness_server" in install_text or "harness_server" in install_text
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="已知缺陷：Context Engine 运行依赖 openai，但正式依赖未声明",
-)
 def test_runtime_dependencies_include_openai() -> None:
-    pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
-    assert re.search(r'["\']openai(?:[<>=!~].*)?["\']', pyproject)
+    """XF-DEPS-001 closed: Context-capable variants declare OpenAI explicitly."""
+    with (ROOT / "pyproject.toml").open("rb") as handle:
+        project = tomllib.load(handle)["project"]
+
+    base = "\n".join(project["dependencies"]).lower()
+    extras = project["optional-dependencies"]
+    assert "openai" not in base
+    for extra in ("context", "all", "dev"):
+        assert any(requirement.lower().startswith("openai") for requirement in extras[extra])
 
 
 def _manifest_version_from_python(python_version: str) -> str:
