@@ -148,3 +148,28 @@ class TestToolRegistration:
         result = tools._tool_plan_create(task_description="test task")
         assert isinstance(result, str)
         assert "isolated test runtime" in result
+
+    def test_supervisor_start_failure_is_returned_as_tool_error(
+        self, monkeypatch, tmp_path
+    ):
+        """Supervisor 状态错误不得逃逸 Tool handler 或访问真实用户数据。"""
+        from deepseek_harness import tools
+        from harness_server.config import RuntimeConfig
+        from harness_server.runtime import RuntimeStateError
+
+        class FailingSupervisor:
+            def start(self, runtime):
+                raise RuntimeStateError("isolated corrupt runtime state")
+
+        runtime = RuntimeConfig(
+            port=18202,
+            db_path=str(tmp_path / "runtime.db"),
+            memories_dir=str(tmp_path / "memories"),
+        )
+        monkeypatch.setattr(tools, "Supervisor", FailingSupervisor)
+        monkeypatch.setattr(tools, "_runtime_config", lambda: runtime)
+
+        result = tools._tool_plan_create(task_description="test task")
+        assert isinstance(result, str)
+        assert "isolated corrupt runtime state" in result
+        assert not (tmp_path / "runtime.db").exists()
