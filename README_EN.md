@@ -5,9 +5,11 @@ An Agent plugin system with deep optimizations for DeepSeek. 15 Agent engineerin
 English | [简体中文](README.md)
 
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-green)](https://python.org)
-[![Hermes Agent v0.18+](https://img.shields.io/badge/hermes-%3E%3D0.18.0-purple)](https://github.com/HermesAgent/hermes)
+[![Package CI Python 3.10-3.12](https://img.shields.io/badge/package%20CI-3.10--3.12-green)](https://python.org)
+[![Hermes v0.19.0](https://img.shields.io/badge/Hermes-v0.19.0-purple)](https://github.com/NousResearch/hermes-agent)
 [![Tests](https://img.shields.io/badge/tests-142%20cases-brightgreen)](tests/)
+
+> **Compatibility baseline:** full Hermes integration targets Hermes Agent **v0.19.0** (tag `v2026.7.20`) on Python **3.11–3.12**, Linux and macOS. Python **3.10** remains in package/core/contract CI only; upstream Hermes v0.19.0 requires Python >=3.11, so Python 3.10 is not a supported full-product host. Real E2E remains `COMPAT-001`; the product is still an Experimental Preview.
 
 ---
 
@@ -116,6 +118,15 @@ bash scripts/install.sh
 hermes plugins list | grep deepseek
 ```
 
+Full Hermes integration environment:
+
+- Hermes Agent v0.19.0 (tag `v2026.7.20`)
+- Python 3.11 or 3.12
+- Linux or macOS
+- rsync, sqlite3 CLI, pyyaml for selected current scripts
+
+Python 3.10 remains covered by package/core CI but is not a Hermes v0.19.0 full-integration host.
+
 The install script automatically handles: backup SOUL.md/MEMORY.md/USER.md, create plugin symlinks, register Hooks, and install dependencies.
 
 ## Directory Structure
@@ -193,15 +204,16 @@ All feasible patterns are implemented. I-14 removed due to technical limitations
 ## FAQ
 
 **Does it modify Hermes core code?**
-No. It uses only the official Hermes Plugin Hook interfaces (pre_llm_call / post_tool_call / on_session_end / subagent_start / subagent_stop), which have been verified in the source code. Daily Hermes updates will not cause merge conflicts.
+No. It uses the official Hermes Plugin Hook and Context Engine interfaces. Actual v0.19.0 compatibility still requires `COMPAT-001` real E2E.
 
 **Will it overwrite my existing memory?**
 No. SOUL.md, MEMORY.md, and USER.md are automatically backed up as `.bak.{timestamp}` before installation. Original content is not deleted. The install.sh script defaults to --dry-run preview mode, safe with no side effects.
 
 **What environment is required?**
-- Hermes Agent >= v0.18.0
-- Python >= 3.10
-- rsync, sqlite3 CLI, pyyaml (needed for some features, not mandatory)
+- Hermes Agent v0.19.0 / tag `v2026.7.20`
+- Python 3.11 or 3.12 for full Hermes integration
+- Linux or macOS
+- Python 3.10 is package/core CI only
 
 **Does it conflict with MemOS plugin?**
 No. They use different Plugin Hooks and file paths, operating independently.

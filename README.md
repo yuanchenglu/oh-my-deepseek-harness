@@ -5,10 +5,12 @@
 [English](README_EN.md) | 简体中文
 
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-green)](https://python.org)
-[![Hermes Agent v0.18+](https://img.shields.io/badge/hermes-%3E%3D0.18.0-purple)](https://github.com/HermesAgent/hermes)
+[![Package CI Python 3.10-3.12](https://img.shields.io/badge/package%20CI-3.10--3.12-green)](https://python.org)
+[![Hermes v0.19.0](https://img.shields.io/badge/Hermes-v0.19.0-purple)](https://github.com/NousResearch/hermes-agent)
 [![Tests](https://img.shields.io/badge/tests-142%20cases-brightgreen)](tests/)
 [![GitHub Stars](https://img.shields.io/github/stars/yuanchenglu/oh-my-deepseek-harness?style=social)](https://github.com/yuanchenglu/oh-my-deepseek-harness)
+
+> **兼容性基线**：完整 Hermes 集成目标固定为 Hermes Agent **v0.19.0**（tag `v2026.7.20`）+ Python **3.11–3.12**，支持 Linux/macOS。Python **3.10** 仅保留包级、纯模块和契约回归 CI；Hermes v0.19.0 上游要求 Python ≥3.11，因此 3.10 不是完整产品支持环境。真实 E2E 由 `COMPAT-001` 完成，当前仍是 Experimental Preview。
 
 <div align="center">
   <img src="docs/assets/hero-comparison.svg" alt="Before vs After" width="100%">
@@ -101,10 +103,13 @@ bash scripts/install.sh
 hermes plugins list | grep deepseek
 ```
 
-什么环境需要？
-- Hermes Agent ≥ v0.18.0
-- Python ≥ 3.10
+完整 Hermes 集成环境：
+- Hermes Agent v0.19.0（tag `v2026.7.20`）
+- Python 3.11 或 3.12
+- Linux 或 macOS
 - rsync、sqlite3 CLI、pyyaml（部分功能需要，非必需）
+
+Python 3.10 仍在包级/纯模块 CI 中验证，但不是 Hermes v0.19.0 的完整集成环境。
 
 安装会备份你已有的 SOUL.md、MEMORY.md、USER.md，**不覆盖不删除你的任何内容**。
 
@@ -227,7 +232,7 @@ hermes plugins list | grep deepseek
 ## FAQ
 
 **会修改 Hermes 核心代码吗？**
-不会。全部通过官方 Plugin Hook 接口注入，Hermes 更新也不会有 merge 冲突。
+不会。全部通过官方 Plugin Hook 接口注入；v0.19.0 的真实兼容性仍由 `COMPAT-001` E2E 验证。
 
 **会覆盖我已有的记忆吗？**
 不会。安装前自动备份 SOUL.md、MEMORY.md、USER.md，不删除原始内容。

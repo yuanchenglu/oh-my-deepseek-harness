@@ -1,0 +1,57 @@
+candidate:
+  repository: NousResearch/hermes-agent
+  version: 0.19.0
+  tag: v2026.7.20
+  license: MIT
+  requires_python: ">=3.11,<3.14"
+
+support:
+  package_core_python:
+    - "3.10"
+    - "3.11"
+    - "3.12"
+  full_hermes_python:
+    - "3.11"
+    - "3.12"
+  full_hermes_os:
+    - linux
+    - macos
+  python_3_10_full_hermes: unsupported
+
+plugin_context_methods:
+  - register_tool
+  - register_hook
+  - register_context_engine
+
+official_hooks:
+  - pre_tool_call
+  - post_tool_call
+  - pre_llm_call
+  - post_llm_call
+  - on_session_start
+  - on_session_end
+  - on_session_finalize
+  - on_session_reset
+  - subagent_start
+  - subagent_stop
+  - pre_gateway_dispatch
+
+context_engine_required:
+  properties:
+    - name
+  methods:
+    - update_from_response
+    - should_compress
+    - compress
+  attributes:
+    - last_prompt_tokens
+    - last_completion_tokens
+    - last_total_tokens
+    - threshold_tokens
+    - context_length
+    - compression_count
+
+activation:
+  general_plugin_requires_enablement: true
+  context_engine_requires_explicit_selection: true
+  pip_entry_point_group: hermes_agent.plugins
