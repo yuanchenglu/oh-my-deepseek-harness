@@ -1,14 +1,16 @@
 # 开源发布执行计划（Open-source Release Execution Plan）
 
-> 文档版本：2.3.7（G1 PASS / M2 Unlocked）
+> 文档版本：2.3.8（G1 Closed / CTX-001 Next）
 >
 > 状态日期：2026-07-29
 >
-> 当前事实基线：`develop@5ebb3a0c9b44cd5f2a2be789f9224740d47894f8`
+> 当前事实基线：`develop@b0b9d2e0337a9f40f2abcdb0f91ce8b2865ea765`
 >
-> G1 复评分支：`docs/gate-g1-pass-re-evaluation`
+> G1 复评 PR：#79（Merged）
 >
-> G1 复评 PR：#79
+> G1 PASS Squash：`b0b9d2e0337a9f40f2abcdb0f91ce8b2865ea765`
+>
+> G1 Final CI：Run #193 / ID `30384094675`
 >
 > 计划状态：`M1_COMPLETE / G1_PASS / M2_NEXT_CTX_001`
 >
@@ -51,7 +53,8 @@
 - wheel/sdist SHA256 与 inventory；
 - Required `python -m twine check dist/*`；
 - final-wheel source-external full lifecycle；
-- G1 初评 FAIL、canonical remediation 与独立 PASS 复评。
+- G1 初评 FAIL、canonical remediation 与独立 PASS 复评；
+- G1 PASS PR #79 已合入 `develop`。
 
 ## 2. 固定 Work ID 进度
 
@@ -62,7 +65,7 @@
 | Not started / dependency blocked | 32 | 66.7% |
 | Total | 48 | 100% |
 
-Gate 判定不改变固定 Work ID 分母。PR #79 合并后，`CTX-001` 转为 In progress，Complete 仍为 16。
+启动 `CTX-001` 后状态转为 Complete 16 / In progress 1 / Not started 31。
 
 ## 3. Gate 状态
 
@@ -70,7 +73,7 @@ Gate 判定不改变固定 Work ID 分母。PR #79 合并后，`CTX-001` 转为 
 |---|---|---|
 | Plan Ready | PASS | 48 Issues、88 FR、17 CR、100 Test IDs |
 | G0 | PASS | PR #61 · `ee516c9b` · `GATE-G0.md` |
-| G1 | **PASS** | 初评 PR #77 FAIL；remediation PR #78；复评 PR #79 · `GATE-G1.md` |
+| G1 | **PASS** | 初评 PR #77；remediation PR #78；复评 PR #79 · `b0b9d2e0` · Run #193 |
 | G2 | NOT_STARTED | M2 尚未完成 |
 | G3 | NOT_STARTED | 依赖 M2、M3、M4 与 RC Evidence |
 | G4 | NOT_STARTED | 依赖 Beta 反馈闭环 |
@@ -119,6 +122,15 @@ sdist inventory: 75 files
 Twine: wheel + sdist PASS in all Required jobs
 ```
 
+G1 PASS：
+
+```text
+Final PR Head: e6e39b54040c5deba12d474daf596f7da4272a7c
+Final CI: Run #193 / ID 30384094675
+Python 3.10/3.11/3.12: success
+Squash: b0b9d2e0337a9f40f2abcdb0f91ce8b2865ea765
+```
+
 ## 6. G1 关键解释
 
 ### 6.1 Clean source 与正式 Tag
@@ -131,7 +143,7 @@ G1 以冻结 Commit 的 `git archive HEAD` 作为 clean-source 证据。正式�
 
 ### 6.3 Real Hermes E2E
 
-兼容候选固定为 **Hermes Agent v0.19.0 / Git tag `v2026.7.20`**。真实 Hermes discovery、enablement、Hook、Context Engine、Tool E2E 属于 `COMPAT-001`（M4/G3），不属于 G1，否则形成循环依赖。
+兼容候选固定为 **Hermes Agent v0.19.0 / Git tag `v2026.7.20`**。真实 Hermes discovery、enablement、Hook、Context Engine、Tool E2E 属于 `COMPAT-001`（M4/G3），不属于 G1。
 
 ### 6.4 strict XFAIL
 
@@ -148,13 +160,11 @@ CTX-003 + SES-001 → PRIV-001
 CTX-004 + PRIV-001 → G2
 ```
 
-G1 PASS 后 `CTX-001` 与 `SES-001` 的阶段依赖均满足。为保持单一 Work ID 串行执行，按 canonical §6.4 表格与 Issue 顺序固定：
+G1 PASS 后 `CTX-001` 与 `SES-001` 的阶段依赖均满足。为保持单一 Work ID 串行执行，按 canonical 表格与 Issue 顺序固定：
 
 ```text
 CTX-001 → CTX-002 → CTX-003 → CTX-004 → SES-001 → PRIV-001 → G2
 ```
-
-该串行化不改变硬依赖，只消除并行执行歧义。
 
 ## 8. 后续完整路线
 
@@ -173,16 +183,15 @@ PyPI 按 `REL-005` 保持禁用，直到 Owner 完成名称、权限、2FA 与 T
 
 ## 9. 当前唯一合法下一步
 
-PR #79 通过最终 Required CI 并 Squash Merge 后：
-
-1. 读取 canonical Issue #26 全文与评论；
-2. 从最新 `develop` 创建 `fix/ctx-001-merge-uniqueness`；
-3. 创建 Draft PR；
-4. 将 `TC-CTX-003` 从 strict XFAIL 转为普通失败测试；
-5. 只修复 Merge 分支重复装配，不提前实施 CTX-002/003/004；
-6. 创建 `docs/testing/evidence/CTX-001.md`；
-7. 同一最终 Head Required CI 全绿后 expected-Head Squash Merge；
-8. 自动进入 `CTX-002`。
+1. 完成 docs-only G1 post-merge closure；
+2. 重新读取最新 `develop`；
+3. 读取 canonical Issue #26 与评论；
+4. 创建 `fix/ctx-001-merge-uniqueness`；
+5. 将 `TC-CTX-003` 从 strict XFAIL 转为普通失败测试；
+6. 只修复 Merge 分支重复装配；
+7. 创建 `docs/testing/evidence/CTX-001.md`；
+8. 同一最终 Head Required CI 全绿后 expected-Head Squash Merge；
+9. 自动进入 `CTX-002`。
 
 ## 10. 严格边界
 
