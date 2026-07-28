@@ -64,6 +64,59 @@
 | M6 | `SOAK-001` | STABLE-001 | unchanged final-RC 14-day soak | #56 | `SOAK-001.md` when executed | Blocked |
 | M6 | `REL-008` | G5 | immutable `v3.0.0` publication | #57 | `REL-008.md` when executed | Blocked |
 
+### Canonical Issue URL registry
+
+The G0 contract verifies exactly 48 unique canonical Issue URLs in this section:
+
+- https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/3
+- https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/5
+- https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/7
+- https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/10
+- https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/12
+- https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/15
+- https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/16
+- https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/17
+- https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/18
+- https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/19
+- https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/20
+- https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/21
+- https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/22
+- https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/23
+- https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/24
+- https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/25
+- https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/26
+- https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/27
+- https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/28
+- https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/29
+- https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/30
+- https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/31
+- https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/32
+- https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/33
+- https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/34
+- https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/35
+- https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/36
+- https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/37
+- https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/38
+- https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/39
+- https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/40
+- https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/41
+- https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/42
+- https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/43
+- https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/44
+- https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/45
+- https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/46
+- https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/47
+- https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/48
+- https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/49
+- https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/50
+- https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/51
+- https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/52
+- https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/53
+- https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/54
+- https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/55
+- https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/56
+- https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/57
+
 ## 2. G1 trace and remediation ownership
 
 | Gate clause | Current evidence | Result | Canonical owner |
