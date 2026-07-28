@@ -136,8 +136,15 @@ class TestToolRegistration:
         for t in ctx.tools:
             assert t["toolset"] == "deepseek-harness"
 
-    def test_plan_create_handler_returns_string(self):
-        """plan_create handler 返回值应为字符串（即使服务未启动也应是字符串错误信息）。"""
-        from deepseek_harness.tools import _tool_plan_create
-        result = _tool_plan_create(task_description="test task")
+    def test_plan_create_handler_returns_string_without_real_runtime(self, monkeypatch):
+        """Handler 单测不得启动 Server、写真实 HOME 或访问真实 DB。"""
+        from deepseek_harness import tools
+
+        monkeypatch.setattr(
+            tools,
+            "_call_server",
+            lambda *args, **kwargs: {"error": "isolated test runtime"},
+        )
+        result = tools._tool_plan_create(task_description="test task")
         assert isinstance(result, str)
+        assert "isolated test runtime" in result
