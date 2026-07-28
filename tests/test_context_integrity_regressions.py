@@ -13,6 +13,13 @@ from __future__ import annotations
 import pytest
 
 from deepseek_context import DeepSeekContextEngine
+from deepseek_context._merge_integrity import remove_exact_duplicate_merge_tail
+
+
+_MERGE_MARKER = (
+    "\n\n--- END OF CONTEXT SUMMARY — "
+    "respond to the message below, not the summary above ---\n\n"
+)
 
 
 def _engine() -> DeepSeekContextEngine:
@@ -75,6 +82,59 @@ def test_merge_path_does_not_duplicate_tail_messages(monkeypatch: pytest.MonkeyP
     assert len(tail_ids) == len(set(tail_ids))
     assert sum("tail-a" in str(content) for content in contents) == 1
     assert sum("tail-b" in str(content) for content in contents) == 1
+
+
+def test_exact_duplicate_merge_tail_guard_removes_only_second_sequence() -> None:
+    merged_tail_a = {
+        "id": "tail-a-id",
+        "role": "assistant",
+        "content": f"SUMMARY{_MERGE_MARKER}tail-a",
+    }
+    tail_b = {"id": "tail-b-id", "role": "user", "content": "tail-b"}
+    duplicate_tail_a = {"id": "tail-a-id", "role": "assistant", "content": "tail-a"}
+    messages = [
+        {"role": "system", "content": "system"},
+        merged_tail_a,
+        tail_b,
+        duplicate_tail_a,
+        tail_b.copy(),
+    ]
+
+    result = remove_exact_duplicate_merge_tail(messages)
+
+    assert result == messages[:3]
+
+
+def test_exact_duplicate_merge_tail_guard_preserves_ordinary_repetition() -> None:
+    repeated = {"id": "intentional-id", "role": "user", "content": "repeat this"}
+    messages = [
+        {"role": "system", "content": "system"},
+        repeated,
+        repeated.copy(),
+    ]
+
+    result = remove_exact_duplicate_merge_tail(messages)
+
+    assert result == messages
+    assert result is messages
+
+
+def test_exact_duplicate_merge_tail_guard_preserves_incomplete_sequence() -> None:
+    messages = [
+        {"role": "system", "content": "system"},
+        {
+            "id": "tail-a-id",
+            "role": "assistant",
+            "content": f"SUMMARY{_MERGE_MARKER}tail-a",
+        },
+        {"id": "tail-b-id", "role": "user", "content": "tail-b"},
+        {"id": "tail-a-id", "role": "assistant", "content": "tail-a"},
+    ]
+
+    result = remove_exact_duplicate_merge_tail(messages)
+
+    assert result == messages
+    assert result is messages
 
 
 @pytest.mark.xfail(
