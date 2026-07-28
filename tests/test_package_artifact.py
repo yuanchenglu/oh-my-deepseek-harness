@@ -1,4 +1,4 @@
-"""Artifact tests for the canonical src/ distribution and final wheel lifecycle."""
+"""Artifact tests for the canonical src/ distribution and final wheel/sdist lifecycle."""
 
 from __future__ import annotations
 
@@ -206,6 +206,16 @@ def test_artifact_runner_has_no_editable_or_source_import_escape_hatch() -> None
     assert '"${VENV_PY}" -m pip uninstall' in runner
 
 
+def test_artifact_runner_builds_wheel_and_sdist_and_runs_twine() -> None:
+    """G1 remediation contract: one clean snapshot yields both checked artifacts."""
+    runner = (ROOT / "scripts" / "test_artifact.sh").read_text(encoding="utf-8")
+    assert '"${PYTHON_BIN}" -m build --wheel --sdist' in runner
+    assert '"${PYTHON_BIN}" -m twine check "${DIST_DIR}"/*' in runner
+    assert "artifacts.sha256" in runner
+    assert "sdist-inventory.json" in runner
+    assert "twine-check.log" in runner
+
+
 @pytest.mark.skipif(os.name == "nt", reason="QA-ART-001 release process matrix is POSIX")
 def test_final_wheel_full_lifecycle_outside_source_tree(tmp_path: Path) -> None:
     configured = os.environ.get("QA_ARTIFACT_RESULTS_DIR")
@@ -235,8 +245,10 @@ def test_final_wheel_full_lifecycle_outside_source_tree(tmp_path: Path) -> None:
 
     required = {
         "build.log",
-        "wheel.sha256",
+        "artifacts.sha256",
         "wheel-inventory.json",
+        "sdist-inventory.json",
+        "twine-check.log",
         "import-probe.json",
         "install-dry-run.json",
         "install.json",
@@ -250,6 +262,12 @@ def test_final_wheel_full_lifecycle_outside_source_tree(tmp_path: Path) -> None:
     }
     assert required <= {path.name for path in results.iterdir()}
     assert len(list(results.glob("oh_my_deepseek_harness-3.0.0b1-*.whl"))) == 1
+    assert len(list(results.glob("oh_my_deepseek_harness-3.0.0b1.tar.gz"))) == 1
+
+    digest_lines = (results / "artifacts.sha256").read_text(encoding="utf-8").splitlines()
+    assert len(digest_lines) == 2
+    assert any(line.endswith(".whl") for line in digest_lines)
+    assert any(line.endswith(".tar.gz") for line in digest_lines)
 
     import_probe = json.loads((results / "import-probe.json").read_text(encoding="utf-8"))
     assert import_probe["distribution_version"] == "3.0.0b1"
