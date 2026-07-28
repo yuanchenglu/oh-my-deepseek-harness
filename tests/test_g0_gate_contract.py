@@ -125,7 +125,7 @@ def test_g0_hermes_candidate_and_context_engine_contract() -> None:
     assert contract["support"]["full_hermes_python"] == ["3.11", "3.12"]
     assert contract["support"]["python_3_10_full_hermes"] == "unsupported"
 
-    module = ast.parse(_read("src/deepseek_context/__init__.py"))
+    module = ast.parse(_read("src/deepseek_context/_engine.py"))
     engine = next(
         node
         for node in module.body
