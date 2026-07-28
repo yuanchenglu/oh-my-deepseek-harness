@@ -15,6 +15,7 @@ from harness_server.runtime import (
     RuntimePaths,
     RuntimeState,
     RuntimeStateError,
+    pid_is_alive,
     process_is_owned,
     read_state,
     write_state,
@@ -62,6 +63,20 @@ def test_pid_reuse_fails_ownership_even_when_command_matches(
     )
 
     assert process_is_owned(state) is False
+
+
+def test_linux_zombie_is_not_classified_as_alive(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A reaped-pending zombie is exited, not a foreign live process."""
+    monkeypatch.setattr(runtime_module, "_linux_process_state", lambda pid: "Z")
+    monkeypatch.setattr(
+        runtime_module.os,
+        "kill",
+        lambda pid, sent_signal: pytest.fail("zombie check must not signal the PID"),
+    )
+
+    assert pid_is_alive(424242) is False
 
 
 def test_substring_markers_do_not_establish_ownership(
