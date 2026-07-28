@@ -4,9 +4,11 @@
 >
 > 审查基线：`develop@37e4016`
 >
-> 当前已合并实施基线：`develop@f1c04697fcb43e1862cf9d5d4c6ddfa465b4c44b`
+> 当前已合并实施基线：`develop@873aeb14e59f9cebc0cb908d7b20fb6a6d9f7225`
 >
-> 最新完成 Work ID：`RUN-002`（PR #65 / Squash `f1c04697`）
+> 当前 incoming Work ID：`INS-001`（PR #68）
+>
+> 代码验收 Head：`48f547f9b3c3fae27fc5672c24f0ff5380c65583`
 >
 > 计划状态：`IN_IMPLEMENTATION`
 >
@@ -43,23 +45,23 @@
 | 2026-07-27 | 1.0–2.2 | 建立并严格化 48 Work ID、88 FR、17 CR、100 Test ID、Gate、Migration、Security 和 Release 基线 |
 | 2026-07-28 | 2.3 | 合并 Errata，归档 v2.2 全量账本，修正 RC/Tag、Tool 分母、XFAIL 和 BETA-003 |
 | 2026-07-28 | 2.3.1–2.3.3 | 完成治理/追踪并固定 Hermes v0.19.0、Python 支持分层和 COMPAT-001 矩阵 |
-| 2026-07-28 | 2.3.4 | 记录 G0 PASS、PKG-001/002、RUN-001/RUN-002 完成；同步整体进度、下一项和跨会话交接 |
+| 2026-07-28 | 2.3.4 | 记录 G0 PASS、PKG-001/002、RUN-001/002 完成及 INS-001 验收；同步进度、XFAIL、下一项和交接 |
 
 ## 1. 当前结论与整体进度
 
 ### 1.1 发布判断
 
-当前产品仍是 **Experimental Preview**，尚未达到 Public Beta 或 Stable。G0、包布局、依赖分层、App Factory 和本地单进程 Supervisor 完成，只证明 M1 的前四项已建立；Installer、Doctor、Context Integrity、Session Isolation、10 Tool Contract、Migration、安全强化、真实 Hermes E2E 和最终 Release Artifact 仍未完成。
+当前产品仍是 **Experimental Preview**，尚未达到 Public Beta 或 Stable。G0、包布局、依赖分层、App Factory、本地单进程 Supervisor，以及 installed-distribution dry-run/clean/idempotent install 已建立；Doctor、Upgrade/Uninstall、Context Integrity、Session Isolation、10 Tool Contract、Migration、安全强化、真实 Hermes E2E 和最终 Release Artifact 仍未完成。
 
 ### 1.2 任务账本进度
 
-固定分母为 48 个 Work ID：
+PR #68 protected Squash Merge 且 Issue #22 关闭后，固定分母 48 个 Work ID 的状态为：
 
 | 状态 | 数量 | 比例 |
 |---|---:|---:|
-| Complete | 12 | 25.0% |
+| Complete | 13 | 27.1% |
 | In progress | 0 | 0.0% |
-| Not started / dependency blocked | 36 | 75.0% |
+| Not started / dependency blocked | 35 | 72.9% |
 | Total | 48 | 100% |
 
 该比例只表示 Work ID 账本进度，**不等于发布就绪度**。Gate 必须独立以 Evidence 判定。
@@ -70,7 +72,7 @@
 |---|---|---|
 | Plan Ready | PASS | 48 Issue、88 FR、17 CR、100 Test ID 和执行协议已固定 |
 | G0 | PASS | 治理、版本、发布渠道、Hermes 候选和实施基线已完成；G0 does not claim product release readiness |
-| G1 | NOT_EVALUATED | M1 尚有 INS-001/002/003、QA-ART-001 未完成 |
+| G1 | NOT_EVALUATED | M1 尚有 INS-002、INS-003、QA-ART-001 未完成 |
 | G2–G5 | NOT_STARTED | 必须按硬依赖串行推进 |
 
 ## 2. 已完成的 M0 / G0
@@ -91,7 +93,7 @@ G0 不表示产品可发布，只授权 M1 实施。
 
 ## 3. 当前 M1 状态
 
-M1 固定包含 8 个 Work ID，执行顺序为：
+M1 固定执行顺序：
 
 ```text
 PKG-001 → PKG-002 → RUN-001 → RUN-002 → INS-001 → INS-002 → INS-003 → QA-ART-001 → G1
@@ -102,40 +104,41 @@ PKG-001 → PKG-002 → RUN-001 → RUN-002 → INS-001 → INS-002 → INS-003 
 | `PKG-001` | #18 | Complete | PR #62 · `2098dffc` | 唯一 `src/` 生产实现；wheel/外部导入通过 |
 | `PKG-002` | #19 | Complete | PR #63 · `ae277d1d` | base/context/server/all/dev Extras；关闭 `XF-DEPS-001` |
 | `RUN-001` | #20 | Complete | PR #64 · `31366ceb` | 无副作用 App Factory；health/ready/version；真实子进程 |
-| `RUN-002` | #21 | **Complete** | PR #65 · Squash `f1c04697` · [`RUN-002.md`](../testing/evidence/RUN-002.md) | 安全本地 Supervisor、CLI、状态、ownership、日志和进程 E2E |
-| `INS-001` | #22 | **Open — eligible** | — | 依赖已满足；尚未启动 |
-| `INS-002` | #23 | Blocked | — | 依赖 INS-001 |
-| `INS-003` | #24 | Blocked | — | 依赖 INS-002 |
+| `RUN-002` | #21 | Complete | PR #65 · `f1c04697` · [`RUN-002.md`](../testing/evidence/RUN-002.md) | 安全 Supervisor、CLI、ownership、日志和进程 E2E |
+| `INS-001` | #22 | **Complete on protected merge** | PR #68 · [`INS-001.md`](../testing/evidence/INS-001.md) | dry-run、wheel clean install、幂等 install、事务 rollback、关闭 `XF-INSTALL-001` |
+| `INS-002` | #23 | **Open — eligible only after #22 closes** | — | Doctor human/JSON、缺依赖、端口和支持矩阵诊断 |
+| `INS-003` | #24 | Blocked | — | 依赖 INS-002；Upgrade/Uninstall/Purge/中断恢复 |
 | `QA-ART-001` | #25 | Blocked | — | 依赖 INS-003；完成后生成 G1 Evidence |
 
-M1 当前为 **4/8 Complete、0/8 In progress、1/8 Open eligible、3/8 Blocked**。G1 不得提前判定。
+PR #68 合并后，M1 为 **5/8 Complete、0/8 In progress、1/8 Open eligible、2/8 Blocked**。G1 不得提前判定。
 
-## 4. RUN-002 完成证据
+## 4. INS-001 验收证据
 
-RUN-002 已通过 protected feature branch → PR → Required CI → Squash Merge 流程完成：
+INS-001 代码验收 Head `48f547f9b3c3fae27fc5672c24f0ff5380c65583`，Required CI Run #121 / ID `30333369939`：
 
-- Final PR head：`094c4c56f7d75d96ce6aed17132729b4196ed9d5`；
-- PR #65：Ready 后 Squash Merge；
-- Squash Commit：`f1c04697fcb43e1862cf9d5d4c6ddfa465b4c44b`；
-- Issue #21：Closed / completed；
-- Final Required CI：Run #108 / ID `30330735858`；
-- Duplicate same-head CI：Run #109 / ID `30330754105`；
-- Python 3.10/3.11/3.12：每版本 200 tests、0 failures、0 errors、10 个既有 strict XFAIL。
+```text
+Python 3.10: success — package/core CI
+Python 3.11: success
+Python 3.12: success
+206 tests / 0 failures / 0 errors / 9 strict XFAIL per version
+```
 
 核心验收：
 
-- CLI 与 Tool 自动启动共享唯一 Supervisor；
-- 两个独立 CLI 并发 start 只产生一个 PID；
-- ownership 使用 PID、随机 instance ID、OS process-start token 和精确 argv；
-- PID reuse、foreign PID、marker spoof、SIGTERM→SIGKILL 竞争均 fail-closed；
-- stale/corrupt/failed-start state 安全处理；
-- state 原子写入，POSIX 目录/文件权限为 0700/0600；
-- stdout/stderr 写入用户可访问日志；
-- 外部 wheel 安装、导入和 console script 契约通过；
-- 测试只使用临时 HOME、DB、data root、port，不使用真实 Secret；
-- Windows 未支持的 process matrix 明确 skip，未伪装通过。
+- `install --dry-run` 在空 HOME 下零持久变化；
+- 从 clean git archive wheel 在源码目录外安装并运行；
+- packaged Plugin/Context adapters、配置和私有数据路径部署；
+- canonical Supervisor Server 达到 health/ready/status；
+- 重复安装同版本不改 managed bytes/mode/mtime，复用一个 PID；
+- 不产生重复配置、state、backup、migration report 或 Memory import；
+- 用户冲突/symlink 内容原样保留并 fail-closed；
+- rollback 不完整时保留 ownership/deployment state 并返回退出码 6；
+- CLI 不调用 pip，shell 不维护第二套安装实现；
+- 历史 `XF-INSTALL-001` 已替换为更强的正式通过契约，strict XFAIL 由 10 降为 9；
+- 测试只使用临时 HOME/data/DB/port 和 fake secret；
+- Windows 未支持矩阵明确 skip。
 
-该完成证据仍不表示 G1、Public Beta、master 或 publication ready。
+该证据仍不表示 Doctor、G1、真实 Hermes E2E、Public Beta、master 或 publication ready。
 
 ## 5. 固定发布契约
 
@@ -174,7 +177,8 @@ Beta 目标为 10 个 Tool，当前 Runtime 为 9 个；`memory_store` 只能由
 
 - `XF-RELEASE-001`：已由 REL-001 修复；
 - `XF-DEPS-001`：已由 PKG-002 修复并删除 strict XFAIL；
-- RUN-002 最终完整套件为每版本 200 tests、0 failures、0 errors、10 个既有 strict XFAIL；
+- `XF-INSTALL-001`：已由 INS-001 关闭并替换为 Installer→Supervisor 正向回归；
+- INS-001 完整套件为每版本 206 tests、0 failures、0 errors、9 个既有 strict XFAIL；
 - 其余 XFAIL 必须由各自 canonical Work ID 修复，不得重命名、复制或弱化。
 
 ## 7. 分支、CI 与执行协议
@@ -205,9 +209,8 @@ M6 → G5 → v3.0.0
 
 ## 9. 当前下一步
 
-1. RUN-002 保持 Closed，不并行回开实现范围；
-2. 下一项唯一可启动 Work ID 为 `INS-001` #22；
-3. INS-001 必须从当前 `develop` 新建专用功能分支，先读取 Issue #22、Installer/Plugin/Security 契约和 `TC-INSTALL-001–003`；
-4. 实现 dry-run、clean install 和 idempotent install，只使用临时 HOME/data/port/fake secrets；
-5. 不越界实施 Doctor、Upgrade、Uninstall、pip self-management 或 package layout；
-6. 不合入 master，不创建 Tag/Release/PyPI，不提前声明 G1/Public Beta。
+1. PR #68 final Required Checks 通过后标记 Ready，protected Squash Merge 到 `develop`；
+2. 记录 INS-001 Squash Commit、关闭 Issue #22，并同步 post-merge 状态；
+3. 只有该收口完成后，下一项唯一可启动 Work ID 为 `INS-002` #23；
+4. INS-002 只实现 Doctor human/JSON 与 `TC-INSTALL-004/005/009`，不得越界实施 Upgrade/Uninstall；
+5. 不合入 master，不创建 Tag/Release/PyPI，不提前声明 G1/Public Beta。
