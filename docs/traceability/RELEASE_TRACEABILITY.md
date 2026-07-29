@@ -114,14 +114,7 @@
 - https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/56
 - https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/57
 
-## 2. Gate trace
-
-- G0: PASS.
-- G1: **PASS (10 PASS / 0 FAIL / 0 BLOCKED)**. PR #77 initial FAIL → PR #78 remediation → PR #79 PASS.
-- G2: not started; requires SES-001 and PRIV-001 completion plus independent evaluation.
-- Real Hermes E2E remains `COMPAT-001` / G3.
-
-## 3. Requirement-domain ownership — 88 FR IDs
+## 2. Requirement-domain ownership — 88 FR IDs
 
 | Domain | Count | Primary Work IDs |
 |---|---:|---|
@@ -139,7 +132,7 @@
 | `FR-QA-001–009` | 9 | QA-ART-001、QA-001、QA-002、COMPAT-001、REL-006 |
 | **Total** | **88** | **0 orphan domains** |
 
-## 4. Code Review blocker ownership — 17 CR IDs
+## 3. Code Review blocker ownership — 17 CR IDs
 
 | CR ID | Primary owner | State |
 |---|---|---|
@@ -161,7 +154,7 @@
 | `CR-P2-004` | QA-ART-001/QA-001 | G1 protected; G3 continues |
 | `CR-P2-005` | DOC-001/DOC-002 | Open |
 
-## 5. Canonical strict-XFAIL ownership
+## 4. Canonical strict-XFAIL ownership
 
 | XF ID / test family | Exact owner | State |
 |---|---|---|
@@ -178,7 +171,7 @@
 
 Current suite has **6 strict XFAIL tests** and no orphan owner.
 
-## 6. Test ID unique primary ownership — exactly 100
+## 5. Test ID unique primary ownership — exactly 100
 
 | Test IDs | Count | Primary Work ID |
 |---|---:|---|
@@ -209,7 +202,7 @@ Current suite has **6 strict XFAIL tests** and no orphan owner.
 | `TC-MIG-001–006` | 6 | MIG-001 |
 | **Total** | **100** | **100 unique primary assignments; 0 orphan IDs** |
 
-## 7. Gate dependency summary
+## 6. Gate dependency summary
 
 ```text
 M0 → G0 PASS
