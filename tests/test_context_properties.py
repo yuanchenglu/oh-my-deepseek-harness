@@ -100,7 +100,7 @@ def _pair_sets(messages: list[dict]) -> tuple[set[str], set[str]]:
 
 
 def test_random_message_sequences_preserve_integrity(monkeypatch: pytest.MonkeyPatch) -> None:
-    """TC-CTX-014: 64 seeded sequences satisfy all protected-message invariants."""
+    """TC-CTX-014: 64 seeded compressible sequences satisfy all invariants."""
     rng = random.Random(20260729)
     counterexamples: list[dict] = []
 
@@ -109,10 +109,10 @@ def test_random_message_sequences_preserve_integrity(monkeypatch: pytest.MonkeyP
         messages: list[dict] = [
             {"role": "system", "content": f"system-{case}"},
             {"role": "user", "content": f"head-{case}"},
-            {"role": "assistant", "content": f"middle-a-{case}"},
-            {"role": "user", "content": f"middle-u-{case}"},
-            {"role": "assistant", "content": f"middle-b-{case}"},
-            {"role": "user", "content": f"middle-v-{case}"},
+            {"role": "assistant", "content": (f"middle-a-{case}-" * 300)},
+            {"role": "user", "content": (f"middle-u-{case}-" * 300)},
+            {"role": "assistant", "content": (f"middle-b-{case}-" * 300)},
+            {"role": "user", "content": (f"middle-v-{case}-" * 300)},
             {"role": "assistant", "content": f"tail-a-{case}"},
             {"role": "user", "content": f"latest-{case}"},
         ]
@@ -162,6 +162,12 @@ def test_random_message_sequences_preserve_integrity(monkeypatch: pytest.MonkeyP
             and len(latest) == 1
             and calls == results
             and messages == original
+            and estimate_messages_tokens_rough(result)
+            < estimate_messages_tokens_rough(
+                engine.compress.__self__._message_identity.assign_stable_message_ids(original)
+                if hasattr(engine, "_message_identity")
+                else original
+            )
         )
         if not valid:
             counterexamples.append(
