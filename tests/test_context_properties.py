@@ -298,32 +298,36 @@ def test_compressor_history_is_isolated_across_session_switches(
 def test_summary_failure_cooldown_is_isolated_by_session(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """P1-A: a failed Session cannot place another Session in cooldown."""
+    """P1-A: a pre-existing Session cooldown cannot block another Session."""
     engine = _engine()
     _force_real_summary(monkeypatch, engine)
     calls: list[str] = []
-    responses = iter([None, "summary-b"])
 
-    def fake_llm(prompt: str, max_tokens: int, model: str | None = None) -> str | None:
+    def fake_llm(prompt: str, max_tokens: int, model: str | None = None) -> str:
         calls.append(prompt)
-        return next(responses)
+        return "summary-b"
 
     monkeypatch.setattr(engine._compressor, "_call_deepseek_llm", fake_llm)
 
     engine.on_session_start("session-a")
-    first_a = engine.compress(_transaction_messages(), current_tokens=8_000)
+    cooldown = time.monotonic() + 123.0
+    engine._compressor._summary_failure_cooldown_until = cooldown
+    first_a_messages = _transaction_messages()
+    first_a = engine.compress(first_a_messages, current_tokens=8_000)
 
     engine.on_session_start("session-b")
     messages_b = _transaction_messages()
     result_b = engine.compress(messages_b, current_tokens=8_000)
 
     engine.on_session_start("session-a")
-    second_a = engine.compress(_transaction_messages(), current_tokens=8_000)
+    second_a_messages = _transaction_messages()
+    second_a = engine.compress(second_a_messages, current_tokens=8_000)
 
-    assert first_a is not None
+    assert first_a is first_a_messages
     assert result_b is not messages_b
-    assert len(calls) == 2
-    assert second_a is not None
+    assert second_a is second_a_messages
+    assert len(calls) == 1
+    assert engine._compressor._summary_failure_cooldown_until == cooldown
 
 
 def test_non_reducing_candidate_restores_compressor_transaction_state(
