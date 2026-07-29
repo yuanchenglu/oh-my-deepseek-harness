@@ -62,6 +62,6 @@ SES-001 → PRIV-001 → G2
 
 SES-001 must own the single Session Policy path. CTX-004 compressor state remains Context-internal and must not become a second Session runtime.
 
-Hermes remains v0.19.0 / tag `v2026.7.20`. Python 3.10 remains package/core/artifact-only; full Hermes candidate support remains Python 3.11–3.12. Runtime remains 9 real Tools with target 10; no placeholder `memory_store`. PyPI remains disabled.
+Hermes remains v0.19.0 / tag `v2026.7.20`. Python 3.10 remains package/core/artifact-only after `PKG-001`; full Hermes candidate support remains Python 3.11–3.12. **PKG-001 does not establish Public Beta or product release readiness.** Runtime remains 9 real Tools with target 10; no placeholder `memory_store`. PyPI remains disabled.
 
 This state does not establish Public Beta, release-branch readiness, Tag, GitHub Release, real Hermes E2E, reproducibility, SBOM, provenance or Stable readiness.
