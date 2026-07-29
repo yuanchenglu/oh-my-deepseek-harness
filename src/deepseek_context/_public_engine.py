@@ -151,11 +151,9 @@ class DeepSeekContextEngine(_BaseDeepSeekContextEngine):
         if threshold_tokens < self.threshold_tokens:
             return messages
 
+        # Internal stable IDs protect reconciliation but are not caller token cost.
+        deterministic_before_tokens = estimate_messages_tokens_rough(messages)
         identified_messages = assign_stable_message_ids(messages)
-        # Acceptance always compares one deterministic estimator on both sides.
-        deterministic_before_tokens = estimate_messages_tokens_rough(
-            identified_messages
-        )
         protected_ids = classify_protected_message_ids(
             identified_messages,
             self._contains_hard_constraint,
