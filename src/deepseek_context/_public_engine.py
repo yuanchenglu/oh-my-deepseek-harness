@@ -54,7 +54,11 @@ class DeepSeekContextEngine(_BaseDeepSeekContextEngine):
         }
 
     def _summary_state(self, session_id: str | None = None) -> dict[str, int]:
-        resolved = session_id or self._active_summary_session.get()
+        resolved = (
+            self._active_summary_session.get()
+            if session_id is None
+            else str(session_id)
+        )
         with self._summary_state_lock:
             return self._session_summary_states.setdefault(
                 resolved,
@@ -137,6 +141,7 @@ class DeepSeekContextEngine(_BaseDeepSeekContextEngine):
         messages: List[Dict[str, Any]],
         current_tokens: int | None = None,
     ) -> List[Dict[str, Any]]:
+        # Provider/current tokens decide whether compression is attempted only.
         threshold_tokens = (
             current_tokens
             if current_tokens is not None
@@ -147,6 +152,7 @@ class DeepSeekContextEngine(_BaseDeepSeekContextEngine):
             return messages
 
         identified_messages = assign_stable_message_ids(messages)
+        # Acceptance always compares one deterministic estimator on both sides.
         deterministic_before_tokens = estimate_messages_tokens_rough(
             identified_messages
         )
@@ -189,8 +195,11 @@ class DeepSeekContextEngine(_BaseDeepSeekContextEngine):
                     current_tokens=current_tokens,
                 )
             except Exception:
-                summary_failed = True
-                compressed = identified_messages
+                # Unexpected engine defects must stay observable after state rollback.
+                self._restore_compressor_state(transaction_state)
+                self._commit_compressor_session(session_id)
+                self.compression_count = prior_count
+                raise
             finally:
                 if had_instance_override:
                     self._compressor.generate_summary = instance_override
@@ -219,15 +228,11 @@ class DeepSeekContextEngine(_BaseDeepSeekContextEngine):
                     candidate
                 )
             except Exception:
+                # Integrity implementation defects are not valid lossless fallbacks.
                 self._restore_compressor_state(transaction_state)
                 self._commit_compressor_session(session_id)
                 self.compression_count = prior_count
-                self._record_rollback(
-                    state,
-                    deterministic_before_tokens,
-                    deterministic_before_tokens,
-                )
-                return messages
+                raise
 
             if deterministic_after_tokens >= deterministic_before_tokens:
                 self._restore_compressor_state(transaction_state)
