@@ -143,7 +143,10 @@ tests/test_assessor_v2.py
 tests/test_session_policy.py
 tests/test_release_readiness_regressions.py
 docs/testing/evidence/SES-001.md
-owned trace/status/handoff rows
+docs/roadmap/OPEN_SOURCE_RELEASE_PLAN.md
+docs/roadmap/EXECUTION_STATUS.md
+docs/roadmap/SESSION_HANDOFF_PROMPT.md
+docs/traceability/RELEASE_TRACEABILITY.md
 ```
 
 CTX-004 per-Session compressor state remains Context-internal metrics state. SES-001 must not create a second Context runtime, second production Session loop or competing compressor store.
