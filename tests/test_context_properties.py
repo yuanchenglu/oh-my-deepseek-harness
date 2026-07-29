@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import copy
 import random
+import time
 
 import pytest
 
 from deepseek_context import DeepSeekContextEngine
+from deepseek_context._message_integrity import assign_stable_message_ids
 from deepseek_context.compressor import estimate_messages_tokens_rough
 
 
@@ -49,6 +51,29 @@ def _force_compression(
     )
 
 
+def _force_real_summary(
+    monkeypatch: pytest.MonkeyPatch,
+    engine: DeepSeekContextEngine,
+    compress_end: int = 6,
+) -> None:
+    """Force deterministic boundaries while exercising compressor state."""
+    monkeypatch.setattr(
+        engine._compressor,
+        "prune_old_tool_results",
+        lambda messages, **kwargs: (messages, 0),
+    )
+    monkeypatch.setattr(
+        engine._compressor,
+        "align_boundary_forward",
+        lambda messages, start: 2,
+    )
+    monkeypatch.setattr(
+        engine._compressor,
+        "find_tail_cut_by_tokens",
+        lambda messages, start, token_budget: compress_end,
+    )
+
+
 def _transaction_messages() -> list[dict]:
     return [
         {"role": "system", "content": "system"},
@@ -76,7 +101,7 @@ def _pair_sets(messages: list[dict]) -> tuple[set[str], set[str]]:
 
 
 def test_random_message_sequences_preserve_integrity(monkeypatch: pytest.MonkeyPatch) -> None:
-    """TC-CTX-014: 64 seeded sequences satisfy all protected-message invariants."""
+    """TC-CTX-014: 64 seeded compressible sequences satisfy all invariants."""
     rng = random.Random(20260729)
     counterexamples: list[dict] = []
 
@@ -85,10 +110,10 @@ def test_random_message_sequences_preserve_integrity(monkeypatch: pytest.MonkeyP
         messages: list[dict] = [
             {"role": "system", "content": f"system-{case}"},
             {"role": "user", "content": f"head-{case}"},
-            {"role": "assistant", "content": f"middle-a-{case}"},
-            {"role": "user", "content": f"middle-u-{case}"},
-            {"role": "assistant", "content": f"middle-b-{case}"},
-            {"role": "user", "content": f"middle-v-{case}"},
+            {"role": "assistant", "content": (f"middle-a-{case}-" * 300)},
+            {"role": "user", "content": (f"middle-u-{case}-" * 300)},
+            {"role": "assistant", "content": (f"middle-b-{case}-" * 300)},
+            {"role": "user", "content": (f"middle-v-{case}-" * 300)},
             {"role": "assistant", "content": f"tail-a-{case}"},
             {"role": "user", "content": f"latest-{case}"},
         ]
@@ -120,6 +145,9 @@ def test_random_message_sequences_preserve_integrity(monkeypatch: pytest.MonkeyP
 
         _force_compression(monkeypatch, engine, compress_end=6)
         original = copy.deepcopy(messages)
+        deterministic_before = estimate_messages_tokens_rough(
+            assign_stable_message_ids(original)
+        )
         result = engine.compress(messages, current_tokens=8_000)
 
         ids = [message.get("id") for message in result]
@@ -138,6 +166,7 @@ def test_random_message_sequences_preserve_integrity(monkeypatch: pytest.MonkeyP
             and len(latest) == 1
             and calls == results
             and messages == original
+            and estimate_messages_tokens_rough(result) < deterministic_before
         )
         if not valid:
             counterexamples.append(
@@ -239,3 +268,145 @@ def test_summary_state_is_isolated_by_session(
     assert state_a_after == state_a
     assert state_a["last_after_tokens"] < state_a["last_before_tokens"]
     assert state_b_after["last_after_tokens"] < state_b_after["last_before_tokens"]
+
+
+def test_compressor_history_is_isolated_across_session_switches(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """P1-A: A -> B -> A restores only each Session's committed history."""
+    engine = _engine()
+    _force_real_summary(monkeypatch, engine)
+    prompts: list[str] = []
+    responses = iter(["summary-a", "summary-b", "summary-a-2"])
+
+    def fake_llm(prompt: str, max_tokens: int, model: str | None = None) -> str:
+        prompts.append(prompt)
+        return next(responses)
+
+    monkeypatch.setattr(engine._compressor, "_call_deepseek_llm", fake_llm)
+
+    engine.on_session_start("session-a")
+    engine.compress(_transaction_messages(), current_tokens=8_000)
+    engine.on_session_end("session-a")
+
+    engine.on_session_start("session-b")
+    engine.compress(_transaction_messages(), current_tokens=8_000)
+
+    engine.on_session_start("session-a")
+    engine.compress(_transaction_messages(), current_tokens=8_000)
+
+    assert "summary-a" not in prompts[1]
+    assert "summary-b" not in prompts[2]
+    assert "summary-a" in prompts[2]
+
+
+def test_summary_failure_cooldown_is_isolated_by_session(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """P1-A: a pre-existing Session cooldown cannot block another Session."""
+    engine = _engine()
+    _force_real_summary(monkeypatch, engine)
+    calls: list[str] = []
+
+    def fake_llm(prompt: str, max_tokens: int, model: str | None = None) -> str:
+        calls.append(prompt)
+        return "summary-b"
+
+    monkeypatch.setattr(engine._compressor, "_call_deepseek_llm", fake_llm)
+
+    engine.on_session_start("session-a")
+    cooldown = time.monotonic() + 123.0
+    engine._compressor._summary_failure_cooldown_until = cooldown
+    first_a_messages = _transaction_messages()
+    first_a = engine.compress(first_a_messages, current_tokens=8_000)
+
+    engine.on_session_start("session-b")
+    messages_b = _transaction_messages()
+    result_b = engine.compress(messages_b, current_tokens=8_000)
+
+    engine.on_session_start("session-a")
+    second_a_messages = _transaction_messages()
+    second_a = engine.compress(second_a_messages, current_tokens=8_000)
+
+    assert first_a is first_a_messages
+    assert result_b is not messages_b
+    assert second_a is second_a_messages
+    assert len(calls) == 1
+    assert engine._compressor._summary_failure_cooldown_until == cooldown
+
+
+def test_non_reducing_candidate_restores_compressor_transaction_state(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """P1-C: a rejected summary never becomes committed compressor history."""
+    engine = _engine()
+    _force_real_summary(monkeypatch, engine)
+    engine._compressor._previous_summary = "committed-old"
+    engine._compressor._ineffective_compression_count = 7
+    engine._compressor._summary_failure_cooldown_until = 0.0
+    prompts: list[str] = []
+
+    def fake_llm(prompt: str, max_tokens: int, model: str | None = None) -> str:
+        prompts.append(prompt)
+        return "rejected-new" * 20_000
+
+    monkeypatch.setattr(engine._compressor, "_call_deepseek_llm", fake_llm)
+    messages = _transaction_messages()
+
+    result = engine.compress(messages, current_tokens=8_000)
+
+    assert result is messages
+    assert engine._compressor._previous_summary == "committed-old"
+    assert engine._compressor._ineffective_compression_count == 7
+    assert engine._compressor._summary_failure_cooldown_until == 0.0
+    assert "committed-old" in prompts[0]
+
+
+def test_summary_exception_restores_all_compressor_transaction_state(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """P1-C: summary exceptions restore every mutable compressor field."""
+    engine = _engine()
+    _force_real_summary(monkeypatch, engine)
+    cooldown = time.monotonic() + 123.0
+    engine._compressor._previous_summary = "committed-old"
+    engine._compressor._ineffective_compression_count = 3
+    engine._compressor._summary_failure_cooldown_until = cooldown
+
+    def mutate_then_raise(turns: list[dict]) -> str:
+        engine._compressor._previous_summary = "rejected-new"
+        engine._compressor._ineffective_compression_count = 99
+        engine._compressor._summary_failure_cooldown_until = cooldown + 999.0
+        raise RuntimeError("synthetic summary failure")
+
+    monkeypatch.setattr(engine._compressor, "generate_summary", mutate_then_raise)
+    messages = _transaction_messages()
+
+    result = engine.compress(messages, current_tokens=8_000)
+
+    assert result is messages
+    assert engine._compressor._previous_summary == "committed-old"
+    assert engine._compressor._ineffective_compression_count == 3
+    assert engine._compressor._summary_failure_cooldown_until == cooldown
+    assert engine.compression_count == 0
+
+
+def test_provider_count_is_not_used_for_candidate_acceptance() -> None:
+    """P1-B: provider count gates threshold only; one estimator accepts/rejects."""
+    engine = _engine()
+    messages = [
+        {"role": "system", "content": "system"},
+        {"role": "user", "content": "one"},
+        {"role": "assistant", "content": "two"},
+        {"role": "user", "content": "three"},
+        {"role": "assistant", "content": "four"},
+    ]
+    snapshot = copy.deepcopy(messages)
+
+    result = engine.compress(messages, current_tokens=8_000)
+    state = engine.get_session_summary_state(engine._DEFAULT_SESSION_ID)
+
+    assert result is messages
+    assert messages == snapshot
+    assert engine.compression_count == 0
+    assert state["last_after_tokens"] >= state["last_before_tokens"]

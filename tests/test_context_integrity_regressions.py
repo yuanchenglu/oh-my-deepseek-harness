@@ -8,7 +8,6 @@ from __future__ import annotations
 import copy
 
 import pytest
-
 from deepseek_context import DeepSeekContextEngine
 from deepseek_context._merge_integrity import remove_exact_duplicate_merge_tail
 
@@ -30,11 +29,12 @@ def _engine() -> DeepSeekContextEngine:
 
 
 def _messages() -> list[dict]:
+    """Return a context large enough for deterministic compression to reduce."""
     return [
         {"role": "system", "content": "system"},
         {"role": "user", "content": "head-user"},
-        {"role": "assistant", "content": "middle-assistant"},
-        {"role": "user", "content": "middle-user"},
+        {"role": "assistant", "content": "middle-assistant-" * 300},
+        {"role": "user", "content": "middle-user-" * 300},
         {"id": "tail-a-id", "role": "assistant", "content": "tail-a"},
         {"id": "tail-b-id", "role": "user", "content": "tail-b"},
     ]
