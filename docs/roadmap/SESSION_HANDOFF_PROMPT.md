@@ -28,7 +28,8 @@
 
 二、当前事实快照
 
-- CTX-004 implementation baseline：develop@5ad013b3e121aa53eddce65a300e8ae737e14d21
+- 当前 develop 实现基线（CTX-004 合并后）：develop@5ad013b3e121aa53eddce65a300e8ae737e14d21
+- CTX-004 整改起始基线：develop@dec84237c305fd8fa3e4dcf1b52002da5a8e7f7d
 - master：398701c5cf6495180a7a7566f09921cf126a054a
 - develop 与 master 仍 diverged；不得强推或提前处理发布合并
 - 固定 Work ID：48
@@ -91,7 +92,10 @@ tests/test_assessor_v2.py
 tests/test_session_policy.py
 tests/test_release_readiness_regressions.py
 docs/testing/evidence/SES-001.md
-owned trace/status/handoff rows
+docs/roadmap/OPEN_SOURCE_RELEASE_PLAN.md
+docs/roadmap/EXECUTION_STATUS.md
+docs/roadmap/SESSION_HANDOFF_PROMPT.md
+docs/traceability/RELEASE_TRACEABILITY.md
 
 架构边界：
 
