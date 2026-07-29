@@ -1,4 +1,4 @@
-"""Public Context Engine with integrity and lossless-failure enforcement."""
+"""Public Context Engine with transactional message-integrity enforcement."""
 
 from __future__ import annotations
 
@@ -8,10 +8,15 @@ from typing import Any, Dict, List
 
 from ._engine import DeepSeekContextEngine as _BaseDeepSeekContextEngine
 from ._merge_integrity import remove_exact_duplicate_merge_tail
+from ._message_integrity import (
+    assign_stable_message_ids,
+    classify_protected_message_ids,
+    reconcile_protected_messages,
+)
 
 
 class DeepSeekContextEngine(_BaseDeepSeekContextEngine):
-    """Canonical exported engine with transactional compression safeguards."""
+    """Canonical exported engine with lossless and protected-message safeguards."""
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
@@ -22,6 +27,12 @@ class DeepSeekContextEngine(_BaseDeepSeekContextEngine):
         messages: List[Dict[str, Any]],
         current_tokens: int | None = None,
     ) -> List[Dict[str, Any]]:
+        identified_messages = assign_stable_message_ids(messages)
+        protected_ids = classify_protected_message_ids(
+            identified_messages,
+            self._contains_hard_constraint,
+        )
+
         original_generate_summary = self._compressor.generate_summary
         summary_failed = False
 
@@ -43,12 +54,20 @@ class DeepSeekContextEngine(_BaseDeepSeekContextEngine):
             self._compressor.generate_summary = guarded_generate_summary
             try:
                 compressed = super().compress(
-                    copy.deepcopy(messages),
+                    copy.deepcopy(identified_messages),
                     current_tokens=current_tokens,
                 )
             finally:
                 self._compressor.generate_summary = original_generate_summary
 
         if summary_failed:
+            # CTX-002 requires exact object identity and no added stable-ID fields
+            # when the summary transaction fails.
             return messages
-        return remove_exact_duplicate_merge_tail(compressed)
+
+        compressed = remove_exact_duplicate_merge_tail(compressed)
+        return reconcile_protected_messages(
+            identified_messages,
+            compressed,
+            protected_ids,
+        )
