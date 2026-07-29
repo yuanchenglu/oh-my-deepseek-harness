@@ -21,6 +21,11 @@ class DeepSeekContextEngine(_BaseDeepSeekContextEngine):
     """Canonical exported engine with lossless transactional safeguards."""
 
     _DEFAULT_SESSION_ID = "__default__"
+    _COMPRESSOR_TRANSACTION_FIELDS = (
+        "_previous_summary",
+        "_ineffective_compression_count",
+        "_summary_failure_cooldown_until",
+    )
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
@@ -33,6 +38,11 @@ class DeepSeekContextEngine(_BaseDeepSeekContextEngine):
         self._session_summary_states: dict[str, dict[str, int]] = {
             self._DEFAULT_SESSION_ID: self._new_summary_state()
         }
+        self._initial_compressor_state = self._snapshot_compressor_state()
+        self._session_compressor_states: dict[str, dict[str, Any]] = {
+            self._DEFAULT_SESSION_ID: copy.deepcopy(self._initial_compressor_state)
+        }
+        self._loaded_compressor_session = self._DEFAULT_SESSION_ID
 
     @staticmethod
     def _new_summary_state() -> dict[str, int]:
@@ -51,6 +61,49 @@ class DeepSeekContextEngine(_BaseDeepSeekContextEngine):
                 self._new_summary_state(),
             )
 
+    def _snapshot_compressor_state(self) -> dict[str, Any]:
+        """Snapshot every mutable summary-transaction field in the compressor."""
+        return {
+            field: copy.deepcopy(getattr(self._compressor, field))
+            for field in self._COMPRESSOR_TRANSACTION_FIELDS
+        }
+
+    def _restore_compressor_state(self, snapshot: dict[str, Any]) -> None:
+        """Restore an exact compressor transaction snapshot."""
+        for field in self._COMPRESSOR_TRANSACTION_FIELDS:
+            setattr(self._compressor, field, copy.deepcopy(snapshot[field]))
+
+    def _activate_compressor_session(self, session_id: str) -> None:
+        """Persist the loaded Session and restore the target Session atomically."""
+        resolved = str(session_id)
+        if resolved == self._loaded_compressor_session:
+            return
+        self._session_compressor_states[
+            self._loaded_compressor_session
+        ] = self._snapshot_compressor_state()
+        target = self._session_compressor_states.setdefault(
+            resolved,
+            copy.deepcopy(self._initial_compressor_state),
+        )
+        self._restore_compressor_state(target)
+        self._loaded_compressor_session = resolved
+
+    def _commit_compressor_session(self, session_id: str) -> None:
+        resolved = str(session_id)
+        self._session_compressor_states[resolved] = self._snapshot_compressor_state()
+        self._loaded_compressor_session = resolved
+
+    def _record_rollback(
+        self,
+        state: dict[str, int],
+        before_tokens: int,
+        after_tokens: int,
+    ) -> None:
+        with self._summary_state_lock:
+            state["rollback_count"] += 1
+            state["last_before_tokens"] = before_tokens
+            state["last_after_tokens"] = after_tokens
+
     def get_session_summary_state(self, session_id: str) -> dict[str, int]:
         """Return a copy of non-content compression metrics for one Session."""
         with self._summary_state_lock:
@@ -58,25 +111,26 @@ class DeepSeekContextEngine(_BaseDeepSeekContextEngine):
             return dict(state or self._new_summary_state())
 
     def on_session_start(self, session_id: str, **kwargs: Any) -> None:
-        """Activate an isolated summary-metrics scope for the current context."""
-        self._active_summary_session.set(str(session_id))
-        state = self._summary_state(str(session_id))
-        self.compression_count = state["compression_count"]
+        """Activate isolated metrics and compressor state for this context."""
+        resolved = str(session_id)
+        self._active_summary_session.set(resolved)
+        with self._summary_failure_lock:
+            self._activate_compressor_session(resolved)
+            state = self._summary_state(resolved)
+            self.compression_count = state["compression_count"]
         try:
             super().on_session_start(session_id, **kwargs)
         except AttributeError:
             pass
 
     def on_session_end(self, session_id: str, **kwargs: Any) -> None:
-        """Detach the current context without exposing another Session's state."""
+        """Detach the ContextVar without overwriting another Session's state."""
         try:
             super().on_session_end(session_id, **kwargs)
         except AttributeError:
             pass
         if self._active_summary_session.get() == str(session_id):
             self._active_summary_session.set(self._DEFAULT_SESSION_ID)
-            default_state = self._summary_state(self._DEFAULT_SESSION_ID)
-            self.compression_count = default_state["compression_count"]
 
     def compress(
         self,
@@ -93,68 +147,103 @@ class DeepSeekContextEngine(_BaseDeepSeekContextEngine):
             return messages
 
         identified_messages = assign_stable_message_ids(messages)
-        before_tokens = (
-            current_tokens
-            if current_tokens is not None
-            else estimate_messages_tokens_rough(identified_messages)
+        deterministic_before_tokens = estimate_messages_tokens_rough(
+            identified_messages
         )
         protected_ids = classify_protected_message_ids(
             identified_messages,
             self._contains_hard_constraint,
         )
-
-        original_generate_summary = self._compressor.generate_summary
-        summary_failed = False
         session_id = self._active_summary_session.get()
-        state = self._summary_state(session_id)
-
-        def guarded_generate_summary(turns: List[Dict[str, Any]]) -> str | None:
-            nonlocal summary_failed
-            try:
-                summary = original_generate_summary(turns)
-            except Exception:
-                summary_failed = True
-                return None
-            if not isinstance(summary, str) or not summary.strip():
-                summary_failed = True
-                return None
-            return summary
 
         with self._summary_failure_lock:
+            self._activate_compressor_session(session_id)
+            state = self._summary_state(session_id)
             prior_count = state["compression_count"]
             self.compression_count = prior_count
+            transaction_state = self._snapshot_compressor_state()
+
+            original_generate_summary = self._compressor.generate_summary
+            had_instance_override = "generate_summary" in vars(self._compressor)
+            instance_override = vars(self._compressor).get("generate_summary")
+            summary_failed = False
+
+            def guarded_generate_summary(
+                turns: List[Dict[str, Any]],
+            ) -> str | None:
+                nonlocal summary_failed
+                try:
+                    summary = original_generate_summary(turns)
+                except Exception:
+                    summary_failed = True
+                    return None
+                if not isinstance(summary, str) or not summary.strip():
+                    summary_failed = True
+                    return None
+                return summary
+
             self._compressor.generate_summary = guarded_generate_summary
             try:
                 compressed = super().compress(
                     copy.deepcopy(identified_messages),
                     current_tokens=current_tokens,
                 )
+            except Exception:
+                summary_failed = True
+                compressed = identified_messages
             finally:
-                self._compressor.generate_summary = original_generate_summary
+                if had_instance_override:
+                    self._compressor.generate_summary = instance_override
+                else:
+                    delattr(self._compressor, "generate_summary")
 
             if summary_failed:
+                self._restore_compressor_state(transaction_state)
+                self._commit_compressor_session(session_id)
                 self.compression_count = prior_count
+                self._record_rollback(
+                    state,
+                    deterministic_before_tokens,
+                    deterministic_before_tokens,
+                )
                 return messages
 
-            compressed = remove_exact_duplicate_merge_tail(compressed)
-            candidate = reconcile_protected_messages(
-                identified_messages,
-                compressed,
-                protected_ids,
-            )
-            after_tokens = estimate_messages_tokens_rough(candidate)
-
-            if after_tokens >= before_tokens:
-                with self._summary_state_lock:
-                    state["rollback_count"] += 1
-                    state["last_before_tokens"] = before_tokens
-                    state["last_after_tokens"] = after_tokens
+            try:
+                compressed = remove_exact_duplicate_merge_tail(compressed)
+                candidate = reconcile_protected_messages(
+                    identified_messages,
+                    compressed,
+                    protected_ids,
+                )
+                deterministic_after_tokens = estimate_messages_tokens_rough(
+                    candidate
+                )
+            except Exception:
+                self._restore_compressor_state(transaction_state)
+                self._commit_compressor_session(session_id)
                 self.compression_count = prior_count
+                self._record_rollback(
+                    state,
+                    deterministic_before_tokens,
+                    deterministic_before_tokens,
+                )
                 return messages
 
+            if deterministic_after_tokens >= deterministic_before_tokens:
+                self._restore_compressor_state(transaction_state)
+                self._commit_compressor_session(session_id)
+                self.compression_count = prior_count
+                self._record_rollback(
+                    state,
+                    deterministic_before_tokens,
+                    deterministic_after_tokens,
+                )
+                return messages
+
+            self._commit_compressor_session(session_id)
             with self._summary_state_lock:
                 state["compression_count"] = prior_count + 1
-                state["last_before_tokens"] = before_tokens
-                state["last_after_tokens"] = after_tokens
+                state["last_before_tokens"] = deterministic_before_tokens
+                state["last_after_tokens"] = deterministic_after_tokens
             self.compression_count = state["compression_count"]
             return candidate
