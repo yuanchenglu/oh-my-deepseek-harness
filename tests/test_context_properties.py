@@ -9,6 +9,7 @@ import time
 import pytest
 
 from deepseek_context import DeepSeekContextEngine
+from deepseek_context._message_integrity import assign_stable_message_ids
 from deepseek_context.compressor import estimate_messages_tokens_rough
 
 
@@ -144,6 +145,9 @@ def test_random_message_sequences_preserve_integrity(monkeypatch: pytest.MonkeyP
 
         _force_compression(monkeypatch, engine, compress_end=6)
         original = copy.deepcopy(messages)
+        deterministic_before = estimate_messages_tokens_rough(
+            assign_stable_message_ids(original)
+        )
         result = engine.compress(messages, current_tokens=8_000)
 
         ids = [message.get("id") for message in result]
@@ -162,12 +166,7 @@ def test_random_message_sequences_preserve_integrity(monkeypatch: pytest.MonkeyP
             and len(latest) == 1
             and calls == results
             and messages == original
-            and estimate_messages_tokens_rough(result)
-            < estimate_messages_tokens_rough(
-                engine.compress.__self__._message_identity.assign_stable_message_ids(original)
-                if hasattr(engine, "_message_identity")
-                else original
-            )
+            and estimate_messages_tokens_rough(result) < deterministic_before
         )
         if not valid:
             counterexamples.append(
