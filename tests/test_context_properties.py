@@ -74,14 +74,6 @@ def test_random_message_sequences_preserve_integrity(monkeypatch: pytest.MonkeyP
             {"role": "user", "content": f"latest-{case}"},
         ]
 
-        constraint_index = rng.choice([2, 3, 4, 5])
-        constraint_content = f"必须保留约束-{case}"
-        messages[constraint_index] = {
-            "role": "user",
-            "content": constraint_content,
-        }
-        messages[-1] = {"role": "user", "content": f"latest-{case}"}
-
         include_tool_pair = rng.choice([True, False])
         if include_tool_pair:
             messages[4] = {
@@ -100,6 +92,12 @@ def test_random_message_sequences_preserve_integrity(monkeypatch: pytest.MonkeyP
                 "tool_call_id": f"call-{case}",
                 "content": f"result-{case}",
             }
+
+        constraint_candidates = [2, 3] if include_tool_pair else [2, 3, 4, 5]
+        constraint_index = rng.choice(constraint_candidates)
+        constraint_content = f"必须保留约束-{case}"
+        messages[constraint_index] = {"role": "user", "content": constraint_content}
+        messages[-1] = {"role": "user", "content": f"latest-{case}"}
 
         _force_compression(monkeypatch, engine, compress_end=6)
         original = copy.deepcopy(messages)
