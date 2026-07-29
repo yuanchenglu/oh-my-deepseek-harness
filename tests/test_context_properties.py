@@ -1,4 +1,4 @@
-"""Deterministic property-style tests for CTX-003 message integrity."""
+"""Deterministic property and transaction tests for Context integrity."""
 
 from __future__ import annotations
 
@@ -8,6 +8,7 @@ import random
 import pytest
 
 from deepseek_context import DeepSeekContextEngine
+from deepseek_context.compressor import estimate_messages_tokens_rough
 
 
 def _engine() -> DeepSeekContextEngine:
@@ -24,6 +25,7 @@ def _force_compression(
     monkeypatch: pytest.MonkeyPatch,
     engine: DeepSeekContextEngine,
     compress_end: int,
+    summary: str = "SUMMARY",
 ) -> None:
     monkeypatch.setattr(
         engine._compressor,
@@ -40,7 +42,24 @@ def _force_compression(
         "find_tail_cut_by_tokens",
         lambda messages, start, token_budget: compress_end,
     )
-    monkeypatch.setattr(engine._compressor, "generate_summary", lambda turns: "SUMMARY")
+    monkeypatch.setattr(
+        engine._compressor,
+        "generate_summary",
+        lambda turns: summary,
+    )
+
+
+def _transaction_messages() -> list[dict]:
+    return [
+        {"role": "system", "content": "system"},
+        {"role": "user", "content": "head"},
+        {"role": "assistant", "content": "A" * 1200},
+        {"role": "user", "content": "B" * 1200},
+        {"role": "assistant", "content": "C" * 1200},
+        {"role": "user", "content": "D" * 1200},
+        {"role": "assistant", "content": "tail"},
+        {"role": "user", "content": "latest request"},
+    ]
 
 
 def _pair_sets(messages: list[dict]) -> tuple[set[str], set[str]]:
@@ -133,3 +152,90 @@ def test_random_message_sequences_preserve_integrity(monkeypatch: pytest.MonkeyP
             )
 
     assert counterexamples == []
+
+
+def test_below_threshold_is_exact_noop() -> None:
+    """TC-CTX-001: below-threshold compression returns the original list."""
+    engine = _engine()
+    messages = _transaction_messages()
+    snapshot = copy.deepcopy(messages)
+
+    result = engine.compress(messages, current_tokens=engine.threshold_tokens - 1)
+
+    assert result is messages
+    assert messages == snapshot
+    assert engine.compression_count == 0
+
+
+def test_successful_compression_reduces_deterministic_tokens(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """TC-CTX-002: accepted compression strictly reduces estimated tokens."""
+    engine = _engine()
+    _force_compression(monkeypatch, engine, compress_end=6, summary="short summary")
+    messages = _transaction_messages()
+    snapshot = copy.deepcopy(messages)
+    before = estimate_messages_tokens_rough(messages)
+
+    result = engine.compress(messages, current_tokens=8_000)
+    after = estimate_messages_tokens_rough(result)
+
+    assert result is not messages
+    assert after < before
+    assert messages == snapshot
+    assert engine.compression_count == 1
+
+
+def test_non_reducing_candidate_rolls_back_exactly(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """TC-CTX-011: a candidate that does not reduce tokens is rejected."""
+    engine = _engine()
+    _force_compression(monkeypatch, engine, compress_end=6, summary="Z" * 100_000)
+    messages = _transaction_messages()
+    snapshot = copy.deepcopy(messages)
+
+    result = engine.compress(messages, current_tokens=8_000)
+
+    assert result is messages
+    assert messages == snapshot
+    assert engine.compression_count == 0
+
+
+def test_successful_compression_never_mutates_input(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """TC-CTX-012: successful candidate construction is input-immutable."""
+    engine = _engine()
+    _force_compression(monkeypatch, engine, compress_end=6, summary="summary")
+    messages = _transaction_messages()
+    snapshot = copy.deepcopy(messages)
+
+    engine.compress(messages, current_tokens=8_000)
+
+    assert messages == snapshot
+
+
+def test_summary_state_is_isolated_by_session(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """TC-CTX-013: synthetic sessions have independent compression state."""
+    engine = _engine()
+    _force_compression(monkeypatch, engine, compress_end=6, summary="summary")
+
+    engine.on_session_start("session-a")
+    engine.compress(_transaction_messages(), current_tokens=8_000)
+    state_a = engine.get_session_summary_state("session-a")
+
+    engine.on_session_start("session-b")
+    state_b_before = engine.get_session_summary_state("session-b")
+    engine.compress(_transaction_messages(), current_tokens=8_000)
+    state_b_after = engine.get_session_summary_state("session-b")
+    state_a_after = engine.get_session_summary_state("session-a")
+
+    assert state_a["compression_count"] == 1
+    assert state_b_before["compression_count"] == 0
+    assert state_b_after["compression_count"] == 1
+    assert state_a_after == state_a
+    assert state_a["last_after_tokens"] < state_a["last_before_tokens"]
+    assert state_b_after["last_after_tokens"] < state_b_after["last_before_tokens"]
