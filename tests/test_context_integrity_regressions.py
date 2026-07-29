@@ -10,6 +10,8 @@
 
 from __future__ import annotations
 
+import copy
+
 import pytest
 
 from deepseek_context import DeepSeekContextEngine
@@ -49,8 +51,6 @@ def _fix_boundaries(monkeypatch: pytest.MonkeyPatch, engine: DeepSeekContextEngi
         "prune_old_tool_results",
         lambda messages, **kwargs: (messages, 0),
     )
-    # Force compress_start=2 and compress_end=4. With the message roles above,
-    # the summary must merge into the first tail message, exercising _merge=True.
     monkeypatch.setattr(
         engine._compressor,
         "align_boundary_forward",
@@ -66,6 +66,24 @@ def _fix_boundaries(monkeypatch: pytest.MonkeyPatch, engine: DeepSeekContextEngi
         "sanitize_tool_pairs",
         lambda messages: messages,
     )
+
+
+def _assert_lossless_failure(
+    monkeypatch: pytest.MonkeyPatch,
+    engine: DeepSeekContextEngine,
+    summary_behavior,
+) -> None:
+    _fix_boundaries(monkeypatch, engine)
+    monkeypatch.setattr(engine._compressor, "generate_summary", summary_behavior)
+
+    messages = _messages()
+    snapshot = copy.deepcopy(messages)
+    result = engine.compress(messages, current_tokens=8_000)
+
+    assert result is messages
+    assert result == snapshot
+    assert messages == snapshot
+    assert all("[Earlier context summary unavailable]" not in str(item) for item in result)
 
 
 def test_merge_path_does_not_duplicate_tail_messages(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -137,19 +155,49 @@ def test_exact_duplicate_merge_tail_guard_preserves_incomplete_sequence() -> Non
     assert result is messages
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="已知缺陷：摘要 API 失败时压缩区原始消息被静态占位文本替代",
-)
-def test_summary_failure_preserves_original_messages(monkeypatch: pytest.MonkeyPatch) -> None:
-    engine = _engine()
-    _fix_boundaries(monkeypatch, engine)
-    monkeypatch.setattr(engine._compressor, "generate_summary", lambda turns: None)
+def test_summary_timeout_preserves_original_messages(monkeypatch: pytest.MonkeyPatch) -> None:
+    """TC-CTX-004: provider timeout is a lossless no-op."""
 
-    messages = _messages()
-    result = engine.compress(messages, current_tokens=8_000)
+    def timeout(_turns):
+        raise TimeoutError("provider timeout")
 
-    assert result == messages
+    _assert_lossless_failure(monkeypatch, _engine(), timeout)
+
+
+def test_summary_exception_preserves_original_messages_without_secret_leak(
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """TC-CTX-005: provider exceptions do not alter context or expose payloads."""
+    secret = "sk-test-summary-secret"
+    prompt_fragment = "private prompt fragment"
+
+    def provider_error(_turns):
+        raise RuntimeError(f"provider echoed {secret}: {prompt_fragment}")
+
+    _assert_lossless_failure(monkeypatch, _engine(), provider_error)
+    assert secret not in caplog.text
+    assert prompt_fragment not in caplog.text
+
+
+@pytest.mark.parametrize("empty_summary", [None, "", "   "])
+def test_empty_summary_preserves_original_messages(
+    monkeypatch: pytest.MonkeyPatch,
+    empty_summary: str | None,
+) -> None:
+    """TC-CTX-006: None, empty and whitespace-only summaries are failures."""
+    _assert_lossless_failure(monkeypatch, _engine(), lambda _turns: empty_summary)
+
+
+def test_missing_key_summary_failure_preserves_original_messages(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """TC-CTX-006: malformed provider responses remain lossless."""
+
+    def missing_key(_turns):
+        raise KeyError("choices")
+
+    _assert_lossless_failure(monkeypatch, _engine(), missing_key)
 
 
 @pytest.mark.xfail(
