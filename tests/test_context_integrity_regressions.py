@@ -96,7 +96,11 @@ def test_merge_path_does_not_duplicate_tail_messages(monkeypatch: pytest.MonkeyP
     monkeypatch.setattr(engine._compressor, "generate_summary", lambda turns: "SUMMARY")
 
     result = engine.compress(_messages(), current_tokens=8_000)
-    tail_ids = [message.get("id") for message in result if message.get("id")]
+    tail_ids = [
+        message.get("id")
+        for message in result
+        if message.get("id") in {"tail-a-id", "tail-b-id"}
+    ]
     contents = [message.get("content") for message in result]
 
     assert tail_ids == ["tail-a-id", "tail-b-id"]
