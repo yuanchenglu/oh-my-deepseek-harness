@@ -171,15 +171,17 @@ class DeepSeekContextEngine(_BaseDeepSeekContextEngine):
             had_instance_override = "generate_summary" in vars(self._compressor)
             instance_override = vars(self._compressor).get("generate_summary")
             summary_failed = False
+            summary_raised = False
 
             def guarded_generate_summary(
                 turns: List[Dict[str, Any]],
             ) -> str | None:
-                nonlocal summary_failed
+                nonlocal summary_failed, summary_raised
                 try:
                     summary = original_generate_summary(turns)
                 except Exception:
                     summary_failed = True
+                    summary_raised = True
                     return None
                 if not isinstance(summary, str) or not summary.strip():
                     summary_failed = True
@@ -205,7 +207,16 @@ class DeepSeekContextEngine(_BaseDeepSeekContextEngine):
                     delattr(self._compressor, "generate_summary")
 
             if summary_failed:
+                failed_state = self._snapshot_compressor_state()
                 self._restore_compressor_state(transaction_state)
+                if (
+                    not summary_raised
+                    and failed_state["_summary_failure_cooldown_until"]
+                    > transaction_state["_summary_failure_cooldown_until"]
+                ):
+                    self._compressor._summary_failure_cooldown_until = (
+                        failed_state["_summary_failure_cooldown_until"]
+                    )
                 self._commit_compressor_session(session_id)
                 self.compression_count = prior_count
                 self._record_rollback(
