@@ -1,20 +1,20 @@
 # Open-source Release Execution Status
 
 - Status date: 2026-07-29
-- Normative contract: [`OPEN_SOURCE_RELEASE_PLAN.md`](OPEN_SOURCE_RELEASE_PLAN.md) v2.3.10
+- Normative contract: [`OPEN_SOURCE_RELEASE_PLAN.md`](OPEN_SOURCE_RELEASE_PLAN.md) v2.3.11
 - Complete task ledger: [`archive/OPEN_SOURCE_RELEASE_PLAN_2.2.md`](archive/OPEN_SOURCE_RELEASE_PLAN_2.2.md)
-- Remote fact baseline: `develop@bf4ab49e1b3c5bbe752931d19460ad2de4243a6f`
-- Current decision: **G0 PASS; M1 8/8 COMPLETE; G1 PASS; CTX-001/002 COMPLETE**
+- Remote fact baseline: `develop@0eb68d7077a0b8b8898b61f20bb209175619ec42`
+- Current decision: **G0 PASS; M1 8/8 COMPLETE; G1 PASS; CTX-001/002/003 COMPLETE**
 - Current product maturity: **Experimental Preview**
-- Next serial Work ID: **CTX-003 / Issue #28**
+- Next serial Work ID: **CTX-004 / Issue #29**
 
 ## Progress
 
 | Status | Work IDs | Ratio |
 |---|---:|---:|
-| Complete | 18 | 37.5% |
+| Complete | 19 | 39.6% |
 | In progress | 0 | 0.0% |
-| Not started / dependency blocked | 30 | 62.5% |
+| Not started / dependency blocked | 29 | 60.4% |
 | Total | 48 | 100% |
 
 ## Gate status
@@ -48,26 +48,27 @@
 |---|---:|---|---|
 | `CTX-001` | #26 | PR #81 · `4026fea2` | Complete |
 | `CTX-002` | #27 | PR #83 · `bf4ab49e` | Complete |
-| `CTX-003` | #28 | pending | Next serial task |
-| `CTX-004` | #29 | pending | Queued |
+| `CTX-003` | #28 | PR #85 · `0eb68d70` | Complete |
+| `CTX-004` | #29 | pending | Next serial task |
 | `SES-001` | #30 | pending | Dependency satisfied; queued |
 | `PRIV-001` | #31 | pending | Blocked |
 
-CTX-002 final evidence:
+CTX-003 final evidence:
 
 ```text
-TDD red: Run #207 / ID 30414160582
-Code acceptance: Run #208 / ID 30414258095
-Final Head: 5b16121b1366180e640f8ca37f858f0464030453
-Final CI: Run #209 / ID 30414491094
-Squash: bf4ab49e1b3c5bbe752931d19460ad2de4243a6f
-Python 3.10/3.11/3.12: each 239 tests / 0 failures / 0 errors / 7 strict XFAIL
+TDD red: Run #214 / ID 30415339296
+Code acceptance: Run #217 / ID 30415608111
+Final Head: 34fd2811596aab58c74a55212a5abb2d70f7e22b
+Final CI: Run #218 / ID 30415808432
+Squash: 0eb68d7077a0b8b8898b61f20bb209175619ec42
+Python 3.10/3.11/3.12: each 243 tests / 0 failures / 0 errors / 6 strict XFAIL
+Property sequences: 64 / 0 counterexamples
 ```
 
 Current queue:
 
 ```text
-CTX-003 → CTX-004 → SES-001 → PRIV-001 → G2
+CTX-004 → SES-001 → PRIV-001 → G2
 ```
 
 Support boundary: Python 3.10 remains package/core/artifact-only after `PKG-001`; the complete Hermes v0.19.0 integration combination does not support Python 3.10. Full Hermes candidate support remains Python 3.11–3.12.
