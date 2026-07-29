@@ -65,7 +65,6 @@ class DeepSeekContextEngine(_BaseDeepSeekContextEngine):
         try:
             super().on_session_start(session_id, **kwargs)
         except AttributeError:
-            # The import-only Hermes test fallback does not define lifecycle hooks.
             pass
 
     def on_session_end(self, session_id: str, **kwargs: Any) -> None:
@@ -94,7 +93,11 @@ class DeepSeekContextEngine(_BaseDeepSeekContextEngine):
             return messages
 
         identified_messages = assign_stable_message_ids(messages)
-        before_tokens = estimate_messages_tokens_rough(identified_messages)
+        before_tokens = (
+            current_tokens
+            if current_tokens is not None
+            else estimate_messages_tokens_rough(identified_messages)
+        )
         protected_ids = classify_protected_message_ids(
             identified_messages,
             self._contains_hard_constraint,
@@ -117,9 +120,6 @@ class DeepSeekContextEngine(_BaseDeepSeekContextEngine):
                 return None
             return summary
 
-        # Base compression mutates only engine metrics and its candidate copy.
-        # Serialize the transaction so the temporary summary wrapper and the
-        # session-local counter cannot leak across concurrent callers.
         with self._summary_failure_lock:
             prior_count = state["compression_count"]
             self.compression_count = prior_count
