@@ -191,7 +191,7 @@ def test_non_reducing_candidate_rolls_back_exactly(
 ) -> None:
     """TC-CTX-011: a candidate that does not reduce tokens is rejected."""
     engine = _engine()
-    _force_compression(monkeypatch, engine, compress_end=6, summary="Z" * 20_000)
+    _force_compression(monkeypatch, engine, compress_end=6, summary="Z" * 100_000)
     messages = _transaction_messages()
     snapshot = copy.deepcopy(messages)
 
