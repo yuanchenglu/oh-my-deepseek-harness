@@ -1,14 +1,14 @@
 # Open-source Release Traceability
 
-- Normative plan: [`OPEN_SOURCE_RELEASE_PLAN.md`](../roadmap/OPEN_SOURCE_RELEASE_PLAN.md) v2.3.9
+- Normative plan: [`OPEN_SOURCE_RELEASE_PLAN.md`](../roadmap/OPEN_SOURCE_RELEASE_PLAN.md) v2.3.10
 - Complete task ledger: [`OPEN_SOURCE_RELEASE_PLAN_2.2.md`](../roadmap/archive/OPEN_SOURCE_RELEASE_PLAN_2.2.md)
 - Test ownership source: [`TEST_PLAN.md`](../testing/TEST_PLAN.md)
 - Last synchronized: 2026-07-29
 - Fixed scope: **48 Work IDs · 48 unique GitHub Issues · 88 FR IDs · 17 CR IDs · 100 Test IDs**
 - Current Gate: **G1 PASS**
-- Current serial task: **CTX-002 #27**
+- Current serial task: **CTX-003 #28**
 
-> 一个 Work ID 只有一个 canonical Issue。`CTX-001` 已由 PR #81 完整闭环；`CR-P0-002`、`TC-CTX-003`、`XF-CTX-001` 关闭。固定分母不变。
+> 一个 Work ID 只有一个 canonical Issue。`CTX-001`、`CTX-002` 已闭环；`CR-P0-002/003`、`XF-CTX-001/002` 已关闭。固定分母不变。
 
 ## 1. Work ID → Issue → Delivery
 
@@ -31,8 +31,8 @@
 | M1 | `INS-003` | INS-002 | upgrade/recover/uninstall/purge | #24 | PR #72 · `9e5295ac` | Complete |
 | M1 | `QA-ART-001` | INS-003 | wheel+sdist/twine/lifecycle | #25 | PR #74 · `7adbb0cb`; PR #78 · `5ebb3a0c` | Complete |
 | M2 | `CTX-001` | G1 | `CR-P0-002`；`TC-CTX-003` | #26 | PR #81 · `4026fea2` · `CTX-001.md` | Complete |
-| M2 | `CTX-002` | CTX-001 | `CR-P0-003`；`TC-CTX-004–006` | #27 | `CTX-002.md` when executed | **Next serial task** |
-| M2 | `CTX-003` | CTX-002 | `CR-P0-004`；`TC-CTX-007–009/014` | #28 | pending | Queued |
+| M2 | `CTX-002` | CTX-001 | `CR-P0-003`；`TC-CTX-004–006` | #27 | PR #83 · `bf4ab49e` · `CTX-002.md` | Complete |
+| M2 | `CTX-003` | CTX-002 | `CR-P0-004`；`TC-CTX-007–009/014` | #28 | `CTX-003.md` when executed | **Next serial task** |
 | M2 | `CTX-004` | CTX-003 | compression/rollback invariants | #29 | pending | Queued |
 | M2 | `SES-001` | G1 + PKG-001 | `CR-P0-005`；`TC-POLICY-001–005` | #30 | pending | Dependency satisfied; queued |
 | M2 | `PRIV-001` | CTX-003 + SES-001 | privacy/redaction | #31 | pending | Blocked |
@@ -141,9 +141,9 @@ G1：**PASS (10 PASS / 0 FAIL / 0 BLOCKED)**。PR #77 initial FAIL → PR #78 re
 | CR ID | Primary owner | State |
 |---|---|---|
 | `CR-P0-001` | PKG/RUN/INS/QA-ART chain | Complete |
-| `CR-P0-002` | CTX-001 | **Complete by PR #81** |
-| `CR-P0-003` | CTX-002 | Next |
-| `CR-P0-004` | CTX-003 | Open |
+| `CR-P0-002` | CTX-001 | Complete by PR #81 |
+| `CR-P0-003` | CTX-002 | **Complete by PR #83** |
+| `CR-P0-004` | CTX-003 | Next |
 | `CR-P0-005` | SES-001 | Open |
 | `CR-P1-001` | CON-001 | Open |
 | `CR-P1-002` | AUD-001 | Open |
@@ -162,9 +162,9 @@ G1：**PASS (10 PASS / 0 FAIL / 0 BLOCKED)**。PR #77 initial FAIL → PR #78 re
 
 | XF ID / test family | Exact owner | State |
 |---|---|---|
-| `XF-CTX-001` | CTX-001 #26 | **Fixed by PR #81** |
-| `XF-CTX-002` | CTX-002 #27 | Next |
-| `XF-CTX-003` | CTX-003 #28 | Open |
+| `XF-CTX-001` | CTX-001 #26 | Fixed by PR #81 |
+| `XF-CTX-002` | CTX-002 #27 | **Fixed by PR #83** |
+| `XF-CTX-003` | CTX-003 #28 | Next |
 | `XF-POLICY-001` | SES-001 #30 | Open |
 | `XF-AUDIT-001` | AUD-001 #39 | Open |
 | `XF-CONTRACT-001–003` | CON-001 #32 | Open |
@@ -173,7 +173,7 @@ G1：**PASS (10 PASS / 0 FAIL / 0 BLOCKED)**。PR #77 initial FAIL → PR #78 re
 | `XF-DEPS-001` | PKG-002 #19 | Fixed |
 | `XF-RELEASE-001` | REL-001 #5 | Fixed |
 
-Current suite has **8 strict XFAIL tests** and no orphan owner.
+Current suite has **7 strict XFAIL tests** and no orphan owner.
 
 ## 6. Test ID unique primary ownership — exactly 100
 
@@ -211,7 +211,7 @@ Current suite has **8 strict XFAIL tests** and no orphan owner.
 ```text
 M0 → G0 PASS
 M1 → G1 PASS
-CTX-001 Complete → CTX-002 → CTX-003 → CTX-004 → SES-001 → PRIV-001 → G2
+CTX-001 + CTX-002 Complete → CTX-003 → CTX-004 → SES-001 → PRIV-001 → G2
 G2 PASS → M3 → M4/G3 → exact-master verification
 BETA-001 → feedback/G4 → Stable/SOAK/G5 → REL-008
 ```
