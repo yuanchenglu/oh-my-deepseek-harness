@@ -1,12 +1,12 @@
 # 开源发布执行计划（Open-source Release Execution Plan）
 
-> 文档版本：2.3.10（CTX-002 Complete / CTX-003 Next）
+> 文档版本：2.3.11（CTX-003 Complete / CTX-004 Next）
 >
 > 状态日期：2026-07-29
 >
-> 当前事实基线：`develop@bf4ab49e1b3c5bbe752931d19460ad2de4243a6f`
+> 当前事实基线：`develop@0eb68d7077a0b8b8898b61f20bb209175619ec42`
 >
-> 计划状态：`M1_COMPLETE / G1_PASS / CTX_001_COMPLETE / CTX_002_COMPLETE / M2_NEXT_CTX_003`
+> 计划状态：`M1_COMPLETE / G1_PASS / CTX_001_002_003_COMPLETE / M2_NEXT_CTX_004`
 >
 > 当前产品成熟度：`Experimental Preview`
 >
@@ -35,18 +35,19 @@
 - M1 8/8 Work ID；
 - G1 初评、QA-ART remediation 与 PASS 复评；
 - `CTX-001`：Merge 尾部消息唯一性；
-- `CTX-002`：摘要 timeout、exception、空响应与 malformed response 的无损回退。
+- `CTX-002`：摘要失败无损回退；
+- `CTX-003`：稳定 ID、硬约束/最新请求逐字保留、Tool Pair 完整性与 64 组属性测试。
 
 ## 2. 固定 Work ID 进度
 
 | 状态 | 数量 | 比例 |
 |---|---:|---:|
-| Complete | 18 | 37.5% |
+| Complete | 19 | 39.6% |
 | In progress | 0 | 0.0% |
-| Not started / dependency blocked | 30 | 62.5% |
+| Not started / dependency blocked | 29 | 60.4% |
 | Total | 48 | 100% |
 
-启动 `CTX-003` 后：Complete 18 / In progress 1 / Not started 29。
+启动 `CTX-004` 后：Complete 19 / In progress 1 / Not started 28。
 
 ## 3. Gate 状态
 
@@ -95,25 +96,24 @@ G1 PASS：PR #79；Run #193 / ID `30384094675`；Squash `b0b9d2e0337a9f40f2abcdb
 |---|---:|---|---|---|
 | `CTX-001` | #26 | G1 | PR #81 · `4026fea226c16647c45d710993c9b4c1683e094e` | Complete |
 | `CTX-002` | #27 | CTX-001 | PR #83 · `bf4ab49e1b3c5bbe752931d19460ad2de4243a6f` | Complete |
-| `CTX-003` | #28 | CTX-002 | pending | **Next serial task** |
-| `CTX-004` | #29 | CTX-003 | pending | Queued |
+| `CTX-003` | #28 | CTX-002 | PR #85 · `0eb68d7077a0b8b8898b61f20bb209175619ec42` | Complete |
+| `CTX-004` | #29 | CTX-003 | pending | **Next serial task** |
 | `SES-001` | #30 | G1 + PKG-001 | pending | Dependency satisfied; serially queued |
 | `PRIV-001` | #31 | CTX-003 + SES-001 | pending | Blocked |
 
-### CTX-002 acceptance
+### CTX-003 acceptance
 
 ```text
-TDD red: Run #207 / ID 30414160582
-Code acceptance: Run #208 / ID 30414258095
-Final PR Head: 5b16121b1366180e640f8ca37f858f0464030453
-Final CI: Run #209 / ID 30414491094
-Squash: bf4ab49e1b3c5bbe752931d19460ad2de4243a6f
-Python 3.10/3.11/3.12: each 239 tests / 0 failures / 0 errors / 7 strict XFAIL
-Wheel inventory: 41 files
-sdist inventory: 77 files
+TDD red: Run #214 / ID 30415339296
+Code acceptance: Run #217 / ID 30415608111
+Final PR Head: 34fd2811596aab58c74a55212a5abb2d70f7e22b
+Final CI: Run #218 / ID 30415808432
+Squash: 0eb68d7077a0b8b8898b61f20bb209175619ec42
+Python 3.10/3.11/3.12: each 243 tests / 0 failures / 0 errors / 6 strict XFAIL
+Wheel inventory: 42 files
+sdist inventory: 79 files
+Property sequences: 64 / 0 counterexamples
 ```
-
-`TC-CTX-004–006` 已转为普通 PASS；失败摘要返回原输入列表，不插入占位文本，不泄露模拟 Secret 或 prompt fragment。
 
 ## 7. 固定支持边界
 
@@ -123,35 +123,34 @@ sdist inventory: 77 files
 - real Hermes E2E 属于 `COMPAT-001` / M4 / G3；
 - byte-for-byte reproducibility、SBOM、provenance 属于 `REL-006`；
 - Runtime 当前 9 Tools，目标 10；不得添加 placeholder `memory_store`；
-- 当前 7 strict XFAIL owners：`CTX-003`、`SES-001`、`AUD-001`、`CON-001`×3、`MEM-002`。
+- 当前 6 strict XFAIL owners：`SES-001`、`AUD-001`、`CON-001`×3、`MEM-002`。
 
 ## 8. M2 固定串行顺序
 
 ```text
-CTX-003 → CTX-004 → SES-001 → PRIV-001 → G2
+CTX-004 → SES-001 → PRIV-001 → G2
 ```
 
 `SES-001` 的硬依赖已满足，但禁止并行启动。
 
 ## 9. 当前唯一合法下一步
 
-完成 docs-only CTX-002 post-merge closure 后：
+完成 docs-only CTX-003 post-merge closure 后：
 
-1. 读取 Issue #28 与评论；
-2. 从最新 `develop` 创建 `fix/ctx-003-protected-message-integrity`；
-3. 将 `XF-CTX-003` 转为普通失败回归；
-4. 实现 stable message IDs、protected-message classification 与 Tool Call/Result pair validation；
-5. 验证 hard constraints 和 latest requests 逐字保留且 ID 恰好一次；
-6. 增加 `TC-CTX-007–009`、`TC-CTX-014` 与 property tests；
-7. 不提前实施 CTX-004、Session、Privacy；
-8. 创建 `docs/testing/evidence/CTX-003.md`；
-9. Final Head Required CI 全绿后 Squash Merge；
-10. 自动进入 `CTX-004`。
+1. 读取 Issue #29 与评论；
+2. 从最新 `develop` 创建 `fix/ctx-004-compression-rollback-invariants`；
+3. 建立 `TC-CTX-001–002`、`TC-CTX-011–013` 的普通失败/永久回归；
+4. 验证 threshold below no-op、正常压缩 Token 下降、无下降 rollback、输入不原地修改、Session Summary 状态隔离；
+5. 只使用 fake provider、synthetic sessions 和 deterministic token accounting；
+6. 不提前实施 SessionPolicyStore 或 Privacy；
+7. 创建 `docs/testing/evidence/CTX-004.md`；
+8. Final Head Required CI 全绿后 expected-Head Squash Merge；
+9. 自动进入 `SES-001`。
 
 ## 10. 后续路线
 
 ```text
-CTX-003 → CTX-004 → SES-001 → PRIV-001 → G2
+CTX-004 → SES-001 → PRIV-001 → G2
 G2 PASS → M3 → M4/G3 → exact-master RC
 v3.0.0-beta.1 → Beta feedback/G4 → Stable prep/soak/G5 → v3.0.0
 ```
