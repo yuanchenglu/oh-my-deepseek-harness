@@ -1,0 +1,171 @@
+name: Planned Work Item / 计划执行任务
+description: Create one release-plan Work ID with complete scope, evidence, risk, and rollback.
+title: "[WORK-ID] "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form only for work authorized by the normative release plan. One Issue, branch, PR, and squash commit implement one Work ID. Security-sensitive details must stay in a private advisory.
+
+  - type: input
+    id: work_id
+    attributes:
+      label: Work ID / 工作编号
+      description: Enter exactly one identifier from the release-plan ledger.
+      placeholder: "e.g. GOV-001"
+    validations:
+      required: true
+
+  - type: input
+    id: requirements
+    attributes:
+      label: Requirement and blocker IDs / 需求与阻断编号
+      description: List all primary FR, CR, XF, ADR, or Gate identifiers owned by this Work ID.
+      placeholder: "FR-SEC-005, CR-012, XF-DEPS-001"
+    validations:
+      required: true
+
+  - type: input
+    id: tests
+    attributes:
+      label: Test IDs and executable entry points / 测试编号与执行入口
+      description: List owned Test IDs, pytest nodes, commands, probes, or external verification steps.
+      placeholder: "TC-SEC-001; pytest tests/test_security.py -q"
+    validations:
+      required: true
+
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Hard dependencies and exclusion check / 硬依赖与互斥检查
+      description: Link completed dependencies and confirm no active Work ID owns overlapping paths.
+      placeholder: |
+        Dependencies:
+        Completion evidence:
+        Overlapping active work: None
+    validations:
+      required: true
+
+  - type: textarea
+    id: current_behavior
+    attributes:
+      label: Current behavior and evidence / 当前行为与证据
+      description: Describe the verified baseline, including source/test/document references.
+      placeholder: State the current behavior and evidence locations.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected_behavior
+    attributes:
+      label: Expected contract and postconditions / 期望契约与后置条件
+      description: State exact, observable completion conditions.
+      placeholder: Define the invariant that must hold after merge.
+    validations:
+      required: true
+
+  - type: textarea
+    id: hypothesis
+    attributes:
+      label: Falsifiable hypothesis / 可证伪假设
+      description: State the suspected cause/design gap and evidence that would disprove it.
+      placeholder: "We believe ...; this is false if ..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: allowed_paths
+    attributes:
+      label: Authorized paths and external resources / 授权路径与外部资源
+      description: Copy the exact file boundary from the plan. Mark external settings separately.
+      render: text
+    validations:
+      required: true
+
+  - type: dropdown
+    id: risk
+    attributes:
+      label: Highest risk / 最高风险
+      options:
+        - P0 / Critical
+        - P1 / High
+        - P2 / Medium
+        - P3 / Low
+    validations:
+      required: true
+
+  - type: textarea
+    id: verification
+    attributes:
+      label: Verification plan / 验证计划
+      description: Include normal, boundary and failure tests plus file/integration/pipeline evidence.
+      placeholder: |
+        File layer:
+        Integration layer:
+        Pipeline layer:
+        Exact commands:
+        Expected counts/results:
+    validations:
+      required: true
+
+  - type: textarea
+    id: data_privacy_security
+    attributes:
+      label: Data, privacy, and security impact / 数据、隐私与安全影响
+      description: Describe data flows, secrets, file permissions, outbound transfer, destructive operations, or write None.
+      placeholder: "Impact: ...; Controls/tests: ..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: compatibility_migration
+    attributes:
+      label: Compatibility and migration / 兼容与迁移
+      description: Cover Python/OS/Hermes, Config/DB/JSONL/runtime state, upgrade and downgrade.
+      placeholder: "Compatibility: ...; Migration: ...; Downgrade: ..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: rollback
+    attributes:
+      label: Rollback and recovery / 回滚与恢复
+      description: Define the exact revert or restoration procedure and any data recovery.
+      placeholder: "Rollback trigger: ...; Procedure: ...; Data recovery: ..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: documentation
+    attributes:
+      label: Documentation, evidence, and traceability / 文档、证据与追踪
+      description: List documents, evidence path, and Requirement → Test → Issue → PR updates.
+      placeholder: "Docs: ...; Evidence: docs/testing/evidence/WORK-ID.md; Traceability: ..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: out_of_scope
+    attributes:
+      label: Explicit out of scope / 明确不做
+      description: List adjacent fixes/features that must not be included.
+      placeholder: "This Work ID does not ..."
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: readiness
+    attributes:
+      label: Readiness / 就绪确认
+      options:
+        - label: The hard dependency chain is complete.
+          required: true
+        - label: The file boundary matches the release plan.
+          required: true
+        - label: The task has an executable pass/fail condition, not only a documentation claim.
+          required: true
+        - label: No private advisory contents, credentials, or real user data are included.
+          required: true
+        - label: G0/G1/G2/G3/G4/G5 is not claimed complete without a Gate evidence document.
+          required: true

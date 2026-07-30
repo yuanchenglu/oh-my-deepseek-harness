@@ -1,0 +1,63 @@
+# Harness Server 配置文件
+# 合并自 memory-tagger/config.yaml，更新了数据库路径
+#
+# 本配置主要服务于 Memory Tagger 功能模块：
+# - lambda_mappings: λ 值到记忆层级的映射规则
+# - task_type_mappings: 任务类型到建议 λ 值的映射
+# - storage: 存储相关配置（数据库路径 + Hermes Memory 导入）
+
+# ── λ 阈值与记忆层级映射 ──────────────────────────────────
+# 参考：I-12 Memory 粒度控制 §3.1–3.2
+lambda_mappings:
+  # λ 区间 → 注入的记忆层级
+  # 低 λ = 仅保留约束层（发散任务/创意场景，不注入偏好避免限制创意）
+  # 高 λ = 全量记忆（收敛任务/工程场景，需要全部历史约束和经验）
+  levels:
+    - min: 0.0
+      max: 0.3
+      label: "weak"
+      layers: ["constraint"]
+      description: "弱 Memory：仅约束层，适合发散性任务"
+    - min: 0.4
+      max: 0.7
+      label: "mixed"
+      layers: ["constraint", "preference", "decision"]
+      description: "中等 Memory：约束+偏好+决策，适合混合任务"
+    - min: 0.8
+      max: 1.0
+      label: "strong"
+      layers: ["constraint", "preference", "style", "decision", "pattern"]
+      description: "强 Memory：全量注入，适合收敛性任务"
+
+# ── 任务类型 → 建议 λ 值映射 ──────────────────────────────
+task_type_mappings:
+  # 收敛任务（工程/部署/排查）— 需要全部历史约束和经验
+  convergent:
+    label: "convergent"
+    suggested_lambda: 1.0
+    description: "收敛任务（工程/部署/排查）— 需要全部历史约束"
+    keywords: ["修复", "部署", "排查", "调试", "构建", "发布", "合并", "删除"]
+  # 发散任务（创意/写作/构思）— 不注入偏好和风格，避免限制创意
+  divergent:
+    label: "divergent"
+    suggested_lambda: 0.0
+    description: "发散任务（创意/写作/构思）— 不注入偏好和风格"
+    keywords: ["构思", "设计", "写作", "批判", "探索", "头脑风暴", "创意", "灵感"]
+  # 混合任务（方案/策略/分析）— 平衡约束与自由度
+  mixed:
+    label: "mixed"
+    suggested_lambda: 0.5
+    description: "混合任务（方案/策略/分析）— 平衡约束与自由度"
+    keywords: ["方案", "策略", "分析", "评估", "对比", "评审", "规划"]
+
+# 默认 λ 值（无法识别任务类型时使用）
+default_lambda: 0.5
+default_lambda_label: "mixed"
+
+# ── 存储配置 ──────────────────────────────────────────────
+storage:
+  # 统一数据库路径（3 组表都在这一个文件里）
+  db_path: "~/.hermes/mcp/harness.db"
+  # Hermes Memory 导入配置（启动时自动从 .md 文件导入记忆）
+  hermes_memories_dir: "~/.hermes/memories/"
+  import_on_startup: true

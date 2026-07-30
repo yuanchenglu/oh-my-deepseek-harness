@@ -1,221 +1,255 @@
 # 贡献指南 | Contributing
 
-感谢你考虑为 oh-my-deepseek-harness 贡献代码。这份文档描述了开发环境的配置、编码规范、提交约定、测试要求和分支策略。
+感谢你考虑为 `oh-my-deepseek-harness` 贡献代码。本仓库处于 Open-source Beta 稳定化周期，当前唯一目标是完成可安装性、数据完整性、安全边界、测试和发布闭环。
 
-## 开发环境设置 | Development Setup
+> 当前状态：Plan Ready 已通过；M0 正在执行；G0 尚未通过。贡献必须遵循 `docs/roadmap/OPEN_SOURCE_RELEASE_PLAN.md` v2.3。
 
-### 前置要求
+## 1. 开始前必读 | Required Reading
 
-- Python ≥ 3.10
-- Hermes Agent ≥ v0.18.0（运行插件需要）
-- git、rsync、sqlite3 CLI（部分功能需要）
+按顺序阅读：
 
-### 克隆与安装
+1. `docs/roadmap/OPEN_SOURCE_RELEASE_PLAN.md`
+2. 目标 Work ID 在 `docs/roadmap/archive/OPEN_SOURCE_RELEASE_PLAN_2.2.md` 中的完整任务条目
+3. 目标 GitHub Issue 中的依赖、允许文件和验收条件
+4. `docs/architecture/TECHNICAL_ARCHITECTURE.md`
+5. `docs/product/PRD.md`
+6. `docs/testing/TEST_PLAN.md`
+
+一次只实施一个 Work ID。没有 Work ID、Issue 或明确验收测试的改动，不进入当前发布周期。
+
+## 2. 开发环境 | Development Environment
+
+### 支持范围
+
+- Python 3.10、3.11、3.12；
+- Linux、macOS；
+- Hermes 正式兼容版本由 `COMPAT-000` 固定；在此之前不得自行扩大兼容承诺；
+- Git。
+
+Python package metadata 固定为 `>=3.10,<3.13`。Windows/WSL 可用于实验，但不是当前 Beta 支持承诺。
+
+### 当前基线安装
+
+当前仓库仍处于 package/runtime 重构前阶段。普通贡献者可使用现有开发依赖运行基线测试：
 
 ```bash
-git clone https://github.com/yuanchenglu/oh-my-deepseek-harness.git
-cd oh-my-deepseek-harness
-
 python3 -m venv .venv
 source .venv/bin/activate
-
-# 安装平台核心模块（开发模式）
-pip install -e packages/platform_core/
-
-# 验证测试全部通过
-pytest -v
+python -m pip install -e ".[dev,mcp]"
+pytest -ra
 ```
 
-平台核心包 `platform-core` 已配置 `pyproject.toml`，支持 `pip install -e .` 开发模式安装。插件目录下的 `.py` 文件由 `conftest.py` 自动添加到 `sys.path`，无需额外安装。
-
-### 了解测试环境
-
-测试文件位于 `tests/` 目录（14 个文件，共 144 个测试用例）。`conftest.py` 自动完成两件事：
-
-1. 对 `agent` 和 `agent.context_engine` 做 mock，让 CI 环境无需安装 Hermes 即可运行单元测试
-2. 创建 `plugins/deepseek_harness` → `deepseek-harness` 的符号链接（Python import 不支持连字符）
-
-新增测试文件时，无需额外配置，放在 `tests/` 下即可被 pytest 发现。
-
-## 编码规范 | Code Style
-
-### 类型注解
-
-所有函数必须有完整的类型注解。这是硬性要求——每个参数类型和返回值类型都必须显式声明。
-
-```python
-# 正确 ✅
-def classify_intent(task_description: str) -> Dict[str, Any]:
-    ...
-
-# 错误 ❌
-def classify_intent(task_description):
-    ...
-```
-
-### 文档字符串
-
-使用 Google 风格的 docstring。中文优先，英文术语（如 kwargs、callback）可以保留。
-
-```python
-def on_pre_llm_call(**kwargs) -> Optional[Dict[str, Any]]:
-    """注入认知提醒、双向原语和范围控制到 user message。
-
-    首轮注入完整 MAP.md + L1/L2 + I-02 完整 + I-08 完整。
-    后续轮仅注入 L1/L2 + 简短 I-02 + 简短 I-08。
-
-    Args:
-        **kwargs: 包含 is_first_turn, session_id 等上下文。
-            session_id: str — 当前会话 ID
-            is_first_turn: bool — 是否为首轮调用
-            model: str — 当前使用的模型名称
-
-    Returns:
-        包含 'context' key 的 dict，注入文本在其中。
-        至少返回纯 L1/L2 的 dict，不会返回 None。
-
-    Raises:
-        不显式抛异常。所有 IO 操作在 try/except 内静默降级。
-    """
-```
-
-### 中文注释优先
-
-非显而易见的逻辑必须使用中文注释。项目面向中文社区，中文可读性优于英文。
-
-```python
-# ── I-01: 从用户消息中提取硬约束，更新横切状态通道 ──
-matches = _HARD_CONSTRAINT_PATTERN.findall(user_message)
-if matches:
-    _current_hard_constraints.clear()
-    _current_hard_constraints.update(c.strip() for c in matches if c.strip())
-```
-
-### 风格要点
-
-- 遵循现有文件的风格（参考 `gate.py`、`assessor.py`、`intent_router.py` 等）
-- 模块级别用 `"""docstring"""` 说明模块功能和工作模式
-- 私有函数加 `_` 前缀（如 `_core_reminders()`）
-- 常量用大写 + 下划线（如 `_HARD_CONSTRAINT_PATTERN`）
-- 日志使用标准 `logging.getLogger(__name__)`，不要用 `print()`
-- 文件级别分隔用 `# ──` 注释块
-- 所有 `except` 必须说明静默降级的原因
-
-### 关于 SLOP
-
-AI 辅助生成的代码中，以下模式需要避免：
-
-- 无意义的相等性对比（`a == True` → `a`）
-- 过度复杂的单行表达式（拆成多行）
-- 超过 250 行的模块（应当拆分子模块或子包）
-- 重复的 if/elif 链（考虑用 dict 映射替代）
-
-## 项目结构 | Project Structure
-
-贡献前先了解项目的四层架构：
-
-```
-oh-my-deepseek-harness/
-├── plugins/deepseek-harness/    # Layer 1: Hermes Plugin (8 hooks)
-├── plugins/deepseek-context/    # Layer 2: 独立上下文引擎
-├── mcp/                         # Layer 3: MCP 微服务
-│   ├── plan-engine/             #   PlanStep DAG 引擎 (8200)
-│   ├── memory-tagger/           #   Memory λ 过滤 (8100)
-│   └── checkpoint-review/       #   快照审查状态机 (8300)
-├── packages/platform_core/      # Layer 4: 平台无关核心
-├── scripts/                     # 安装与运维脚本
-├── crons/                       # 定时任务
-├── tests/                       # 测试 (144 用例, 14 文件)
-└── docs/                        # 文档
-```
-
-修改 Layer 1 插件时注意 8 个 Hook 的注册顺序。修改 Layer 4 时确保不引入 Hermes 依赖。
-
-## 测试要求 | Testing Requirements
-
-- 每个新功能必须有对应的测试覆盖
-- 测试文件命名为 `test_<模块名>.py`，放在 `tests/` 目录下
-- 如果新增的模块需要 mock Hermes 依赖，在 `conftest.py` 中添加 mock
-- 提交前运行全部测试并确保通过：
+最终发布安装契约是：
 
 ```bash
-pytest -v          # 运行全部 144 个测试
-pytest -v tests/test_gate.py  # 运行单个测试文件
-pytest -v -k "keyword"        # 按关键词筛选测试
+python -m pip install "oh-my-deepseek-harness[all]==3.0.0b1"
+deepseek-harness install
+deepseek-harness doctor
 ```
 
-CI 环境不安装 Hermes，因此所有测试必须能在 mock Hermes 依赖后独立运行。
+该最终契约将在 M1 实现。当前 editable install 只能作为开发基线，不构成 Release Evidence。
 
-## 提交约定 | Commit Convention
+## 3. 测试隔离 | Test Isolation
 
-### 格式
+所有测试必须使用临时 HOME、数据根、数据库和动态端口：
 
-双向标题——英文在前，中文在后，中间用 `|` 分隔：
+```bash
+test_home=$(mktemp -d)
+mkdir -p "$test_home/home" "$test_home/data"
+test_port=$(python -c 'import socket; s=socket.socket(); s.bind(("127.0.0.1", 0)); print(s.getsockname()[1]); s.close()')
 
-```
-<类型>(<范围>): <英文描述> | <简体中文描述>
-```
-
-类型使用 Conventional Commits：
-
-| 类型 | 用途 |
-|------|------|
-| feat | 新功能 |
-| fix | 修复 bug |
-| docs | 文档变更 |
-| chore | 构建、CI、工具链 |
-| ci | CI 配置变更 |
-| refactor | 重构（不改变外部行为） |
-| test | 测试相关 |
-| style | 代码格式（不影响逻辑） |
-
-### 示例
-
-```
-feat(gate): add environment variable injection in pre_llm_call | gate: pre_llm_call 增加环境变量注入
-fix(assessor): handle empty constraint set gracefully | assessor: 处理空约束集合时的边界情况
-docs: add CONTRIBUTING.md | 新增贡献指南
-refactor(intent_router): replace if-chain with keyword-strategy map | intent_router: 用策略映射表替换 if 链
+env \
+  HOME="$test_home/home" \
+  HARNESS_CONFIG_PATH="$test_home/data/config/config.yaml" \
+  HARNESS_DATA_ROOT="$test_home/data" \
+  HARNESS_DB_PATH="$test_home/data/harness.db" \
+  HARNESS_HOST="127.0.0.1" \
+  HARNESS_PORT="$test_port" \
+  DEEPSEEK_API_KEY=fake \
+  pytest -ra
 ```
 
-### 原子提交原则
+禁止：
 
-- 一个 commit 只做一件事
-- 不要混合同类改动（如 docs 和 feat 放在不同 commit）
-- 每个 commit 必须通过全部测试
+- 读取或修改真实 `~/.hermes`；
+- 使用真实用户 DB、Memory、Prompt 或 Secret；
+- 普通 CI 访问外部 API；
+- 依赖开发机已有 package、源码 symlink 或仓库相对路径证明发布可用；
+- 用重试、skip 或弱化断言掩盖缺陷。
 
-## 分支策略 | Branch Strategy
+在 `QA-001` 建立正式通道前，至少运行目标测试和完整 `pytest -ra`。之后统一使用 `make test-fast`、`make test-integration`，Release 类 Work ID 还必须运行 `make test-release`。
 
-| 分支 | 用途 | 说明 |
-|------|------|------|
-| `master` | 发布分支 | 受保护，必须通过 PR 合并 |
-| `feat/<name>` | 功能开发 | 从 master 创建 |
-| `fix/<name>` | 缺陷修复 | 从 master 创建 |
-| `docs/<name>` | 文档更新 | 从 master 创建 |
+## 4. 分支策略 | Branch Strategy
 
-### 工作流
+完整政策见 `docs/contributing/BRANCH_POLICY.md`。
 
-1. 从 `master` 创建功能分支：`git checkout -b feat/my-feature`
-2. 在分支上开发和测试
-3. 确保全部测试通过：`pytest -v`
-4. 提交代码（遵循提交约定）
-5. 推送到 GitHub：`git push origin feat/my-feature`
-6. 创建 Pull Request 到 `master`
-7. 等待 Review 和 CI 通过后合并
+| 分支 | 用途 | 规则 |
+|---|---|---|
+| `develop` | 唯一开发集成分支与默认分支 | 普通 PR 的唯一目标；不得直接推送业务变更 |
+| `master` | Release Gate 通过后的可发布基线 | 只接收 G3 通过后的 `develop → master` RC PR |
+| `fix/<scope>` | P0/P1 修复 | 从 `develop` 创建，PR 回 `develop` |
+| `test/<scope>` | 测试基础设施或回归规格 | 从 `develop` 创建，PR 回 `develop` |
+| `docs/<scope>` | 文档和治理 | 从 `develop` 创建，PR 回 `develop` |
+| `chore/<scope>` | 构建、版本、CI、工具链 | 从 `develop` 创建，PR 回 `develop` |
+| `feat/<scope>` | 经计划明确批准的必要功能 | 必须有 Work ID；默认不接受新增功能 |
 
-## Pull Request 规范
+标准流程：
 
-- PR 标题遵循提交格式（`<类型>: <描述>`）
-- PR 描述说明改动背景、技术方案和验证方式
-- 如果改动涉及多个模块，列出每个模块的变更要点
-- 包含测试通过的截图或日志（非必需但推荐）
+```bash
+git fetch origin
+git switch develop
+git pull --ff-only origin develop
+git switch -c fix/<work-id>-<scope>
+```
 
-## 问题与讨论 | Issues
+完成后向 `develop` 创建 PR。普通贡献不得向 `master` 创建业务 PR。Release PR 由 Gate 协调者在 G3 PASS 后发起。
 
-- Bug 报告：描述复现步骤、期望行为和实际行为，附上日志或截图
-- 功能请求：说明背景、使用场景和价值
-- 架构讨论：欢迎在 Issue 中讨论新的设计模式（I-15 及以后）
+## 5. Work ID 与变更边界 | Work Scope
 
----
+每个执行 Issue 必须包含：
 
-再次感谢你的贡献。对于任何问题，请直接提交 Issue。
+- Work ID、Requirement ID、CR/XF ID 和优先级；
+- 当前行为、期望行为和最小复现；
+- 可证伪假设及其源码/测试依据；
+- Owner、估算和硬依赖；
+- 允许修改的路径；
+- 自动验收测试和失败输出；
+- 配置、数据、隐私和兼容性影响；
+- Upgrade/Rollback；
+- 文档改动和明确不做事项。
+
+若实现必须修改 Issue 未授权路径，停止并更新计划/Issue；不得临场扩大范围。一个 Commit 只对应一个 Work ID。
+
+## 6. 编码规范 | Coding Standards
+
+### 类型与边界
+
+- 所有公共函数和领域服务必须有类型注解；
+- Hermes Adapter、FastAPI Adapter 与领域逻辑分离；
+- Tool、API 和 Storage 的输入模型必须来自单一契约源；
+- 运行时状态必须按 Session 或明确生命周期隔离；
+- 数据写入必须使用事务和明确不变量；
+- 辅助能力失败必须可诊断并按契约降级。
+
+### 日志与错误
+
+- 使用 `logging.getLogger(__name__)`，不得用 `print()` 代替运行日志；
+- 错误必须包含稳定 error code 和用户可执行的恢复建议；
+- 默认不记录 Prompt、Tool Result、Memory 原文、Secret 或绝对敏感路径；
+- 禁止把原始异常 traceback 返回给模型或普通用户。
+
+### 变更纪律
+
+- 最小实现，不顺手重构；
+- 不批量格式化无关文件；
+- 不新增 Innovation 或非目标平台；
+- 不复制第二份业务实现绕过 package/compatibility 问题；
+- 不把降级实现描述为原生模型或 Hermes 能力。
+
+## 7. 当前与目标仓库结构 | Repository Layout
+
+当前审查基线仍主要使用：
+
+```text
+plugins/deepseek-harness/
+plugins/deepseek-context/
+mcp/harness_server/
+packages/platform_core/
+tests/
+docs/
+```
+
+M1 目标结构是：
+
+```text
+src/
+├── deepseek_harness/
+├── deepseek_context/
+└── harness_server/
+```
+
+在 `PKG-001` 完成前，不得假装目标结构已经存在；完成后旧目录只允许保留 Hermes 所需的 manifest 和薄适配入口，不得保留第二套业务源码。
+
+## 8. 测试要求 | Testing Requirements
+
+每个 Work ID 必须同时提供：
+
+1. 文件层证据：文件可解析、构建或安装；
+2. 集成层证据：真实调用方 import 并调用实现；
+3. 管线层证据：用户入口到可观察结果完整通过。
+
+已知缺陷使用 strict XFAIL 固化。修复后必须删除 XFAIL 并保持断言强度。不得把 XPASS 当作成功后继续保留标记。
+
+提交前至少运行：
+
+```bash
+pytest -ra
+git diff --check
+```
+
+若 CI 失败，读取日志并修复根因；不得仅重跑失败任务掩盖稳定缺陷。
+
+## 9. Commit 约定 | Commit Convention
+
+Commit 使用双语格式：
+
+```text
+<type>(<scope>): English title | 简体中文标题
+
+English:
+<what changed, why, and verification>
+
+简体中文:
+<改了什么、为什么、如何验证>
+```
+
+类型：`feat`、`fix`、`docs`、`chore`、`ci`、`refactor`、`test`、`style`。
+
+标题示例：
+
+```text
+fix(ctx-001): preserve tail message uniqueness | 保证尾部消息唯一性
+```
+
+## 10. Pull Request 要求 | Pull Requests
+
+PR 必须使用仓库模板，并包含：
+
+- Work ID 与 Issue；
+- Requirement/Test/CR/XF 链接；
+- 当前行为、期望行为和实现假设；
+- 修改文件及范围说明；
+- 测试命令和 Passed/Failed/XPASS/XFAIL 数量；
+- 数据、隐私、安全、兼容和迁移影响；
+- Rollback；
+- Evidence 文档和 CI Run；
+- 明确不做事项。
+
+合并条件：
+
+- 硬依赖已完成；
+- Required CI 全绿；
+- 无越界文件；
+- 正常、边界和故障测试通过；
+- 文档与实际能力一致；
+- Requirement → Test → PR → Commit → Evidence 可追踪。
+
+默认使用 Squash Merge，使一个 Work ID 在 `develop` 上形成一个可回滚 Commit。
+
+## 11. 安全停止条件 | Stop Conditions
+
+出现以下任一情况必须停止并在 Issue 中报告：
+
+- 需要真实 Token、PyPI/GitHub 发布权限或用户账号；
+- 需要删除/迁移用户数据但没有备份与 rollback 测试；
+- Hermes 实际接口与固定兼容版本不一致；
+- 新依赖改变许可证、安全或支持平台；
+- 发现新的 P0 或现有通过测试非预期回归；
+- Requirement、Schema 和现有数据无法同时兼容；
+- 需要修改未授权业务域。
+
+## 12. 当前发布限制 | Release Restrictions
+
+在 G0 通过前不得开始 M1。在 G3 通过前不得向 `master` 合入 Release Candidate。在 G5 通过前不得发布 `v3.0.0`。
+
+任何贡献都不得创建、移动或覆盖 Git Tag，不得上传 PyPI，不得替换 GitHub Release 制品，除非对应 Release Work ID 已明确授权。

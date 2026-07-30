@@ -6,6 +6,9 @@ dist/
 *.pyc
 .venv/
 
+# AI Agent 运行时 / 元数据
+.workbuddy/
+
 # AI Agent 运行时 / 临时产物
 .omc/
 .omo/

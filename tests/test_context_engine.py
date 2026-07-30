@@ -1,8 +1,9 @@
-"""context_engine.py 单元测试 — 验证 I-03/04/07/13 功能。
+"""Context Engine unit and concurrency tests for I-03/04/07/13 and CTX-004."""
 
-被测对象：plugins/deepseek-context/__init__.py 中的 DeepSeekContextEngine。
-不测试 compress()（需 LLM 调用），只测试纯 Python 逻辑的函数。
-"""
+from concurrent.futures import ThreadPoolExecutor
+from threading import Lock
+
+import pytest
 
 from deepseek_context import DeepSeekContextEngine
 
@@ -86,7 +87,6 @@ class TestI03HardConstraintProtection:
         ]
         protected = e.protect_hard_constraints(messages)
         assert 1 in protected
-        # assert 0 not protected (no constraint kw)
         assert 0 not in protected
 
     def test_protect_hard_constraints_with_list_content(self):
@@ -107,14 +107,14 @@ class TestI04HardConstraintExtraction:
 
     def test_extract_simple(self):
         e = make_engine()
-        messages = [make_msg("user", "不能修改配置文件。请帮我写代码。")]
+        messages = [make_msg("user", "不能修改配置文件。请帮我写代码。")] 
         constraints = e.extract_hard_constraints(messages)
         assert len(constraints) >= 1
         assert "不能修改配置文件" in constraints[0]
 
     def test_extract_multiple_sentences(self):
         e = make_engine()
-        messages = [make_msg("user", "不能删除数据库。不要修改系统配置。")]
+        messages = [make_msg("user", "不能删除数据库。不要修改系统配置。")] 
         constraints = e.extract_hard_constraints(messages)
         assert len(constraints) >= 1
 
@@ -176,13 +176,8 @@ class TestI07ReviewDepth:
         """在阈值 8K 附近±10% 内不应反复切换。"""
         e = make_engine(context_length=128_000)
         d1 = e.get_review_depth(7000, plan_complexity=3.0)
-        # 进入 shallow
         assert d1 == "shallow"
-        # 升到 8500（在 8K 的+10% 滞后区），不应直接跳到 medium
         d2 = e.get_review_depth(8500, plan_complexity=3.0)
-        # 由于 hysteresis 机制，8K*1.1 = 8800，8500 < 8800，不应切换
-        # 但 7K->8.5K 增幅足够 => 实际上是否会切换取决于精确计算
-        # 我们只验证不崩溃并返回有效值
         assert d2 in ("shallow", "medium")
 
     def test_get_context_state_structure(self):
@@ -246,7 +241,6 @@ class TestI13PrefixFreeze:
 class TestShouldCompress:
     def test_below_threshold(self):
         e = make_engine(context_length=128_000)
-        # threshold = 128000 * 0.75 = 96000
         assert e.should_compress(50000) is False
 
     def test_above_threshold(self):
@@ -257,3 +251,77 @@ class TestShouldCompress:
         e = make_engine(context_length=128_000)
         e.last_prompt_tokens = 100000
         assert e.should_compress() is True
+
+
+# ========= CTX-004 concurrent Session state =========
+
+
+def test_concurrent_contextvars_do_not_cross_compressor_history(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Concurrent ContextVars restore each Session's own committed summary."""
+    engine = make_engine(
+        context_length=10_000,
+        threshold_percent=0.5,
+        protect_first_n=1,
+        protect_last_n=1,
+    )
+    monkeypatch.setattr(
+        engine._compressor,
+        "prune_old_tool_results",
+        lambda messages, **kwargs: (messages, 0),
+    )
+    monkeypatch.setattr(
+        engine._compressor,
+        "align_boundary_forward",
+        lambda messages, start: 2,
+    )
+    monkeypatch.setattr(
+        engine._compressor,
+        "find_tail_cut_by_tokens",
+        lambda messages, start, token_budget: 6,
+    )
+
+    prompt_lock = Lock()
+    prompts: dict[str, list[str]] = {"session-a": [], "session-b": []}
+
+    def fake_llm(prompt: str, max_tokens: int, model: str | None = None) -> str:
+        session_id = "session-a" if "marker-a" in prompt else "session-b"
+        with prompt_lock:
+            prompts[session_id].append(prompt)
+            sequence = len(prompts[session_id])
+        return f"summary-{session_id}-{sequence}"
+
+    monkeypatch.setattr(engine._compressor, "_call_deepseek_llm", fake_llm)
+
+    def run_session(session_id: str, marker: str) -> None:
+        engine.on_session_start(session_id)
+        messages = [
+            {"role": "system", "content": "system"},
+            {"role": "user", "content": "head"},
+            {"role": "assistant", "content": marker * 400},
+            {"role": "user", "content": "B" * 1200},
+            {"role": "assistant", "content": "C" * 1200},
+            {"role": "user", "content": "D" * 1200},
+            {"role": "assistant", "content": "tail"},
+            {"role": "user", "content": f"latest-{marker}"},
+        ]
+        first = engine.compress(messages, current_tokens=8_000)
+        second = engine.compress(messages, current_tokens=8_000)
+        assert first is not messages
+        assert second is not messages
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        futures = [
+            executor.submit(run_session, "session-a", "marker-a"),
+            executor.submit(run_session, "session-b", "marker-b"),
+        ]
+        for future in futures:
+            future.result()
+
+    assert len(prompts["session-a"]) == 2
+    assert len(prompts["session-b"]) == 2
+    assert "summary-session-a-1" in prompts["session-a"][1]
+    assert "summary-session-b-1" not in prompts["session-a"][1]
+    assert "summary-session-b-1" in prompts["session-b"][1]
+    assert "summary-session-a-1" not in prompts["session-b"][1]
