@@ -1,14 +1,14 @@
 # Open-source Release Traceability
 
-- Normative plan: [`OPEN_SOURCE_RELEASE_PLAN.md`](../roadmap/OPEN_SOURCE_RELEASE_PLAN.md) v2.3.11
+- Normative plan: [`OPEN_SOURCE_RELEASE_PLAN.md`](../roadmap/OPEN_SOURCE_RELEASE_PLAN.md) v2.3.12
 - Complete task ledger: [`OPEN_SOURCE_RELEASE_PLAN_2.2.md`](../roadmap/archive/OPEN_SOURCE_RELEASE_PLAN_2.2.md)
 - Test ownership source: [`TEST_PLAN.md`](../testing/TEST_PLAN.md)
 - Last synchronized: 2026-07-29
 - Fixed scope: **48 Work IDs · 48 unique GitHub Issues · 88 FR IDs · 17 CR IDs · 100 Test IDs**
 - Current Gate: **G1 PASS**
-- Current serial task: **CTX-004 #29**
+- Current serial task: **SES-001 #30**
 
-> 一个 Work ID 只有一个 canonical Issue。`CTX-001`、`CTX-002`、`CTX-003` 已闭环；`CR-P0-002/003/004`、`XF-CTX-001/002/003` 已关闭。固定分母不变。
+> 一个 Work ID 只有一个 canonical Issue。`CTX-001`、`CTX-002`、`CTX-003`、`CTX-004` 已闭环；固定分母不变。
 
 ## 1. Work ID → Issue → Delivery
 
@@ -33,8 +33,8 @@
 | M2 | `CTX-001` | G1 | `CR-P0-002`；`TC-CTX-003` | #26 | PR #81 · `4026fea2` · `CTX-001.md` | Complete |
 | M2 | `CTX-002` | CTX-001 | `CR-P0-003`；`TC-CTX-004–006` | #27 | PR #83 · `bf4ab49e` · `CTX-002.md` | Complete |
 | M2 | `CTX-003` | CTX-002 | `CR-P0-004`；`TC-CTX-007–009/014` | #28 | PR #85 · `0eb68d70` · `CTX-003.md` | Complete |
-| M2 | `CTX-004` | CTX-003 | `TC-CTX-001–002/011–013` | #29 | `CTX-004.md` when executed | **Next serial task** |
-| M2 | `SES-001` | G1 + PKG-001 | `CR-P0-005`；`TC-POLICY-001–005` | #30 | pending | Dependency satisfied; queued |
+| M2 | `CTX-004` | CTX-003 | `TC-CTX-001–002/011–013` | #29 | PR #90 · `5ad013b3` · `CTX-004.md` | **Complete** |
+| M2 | `SES-001` | G1 + PKG-001 | `CR-P0-005`；`TC-POLICY-001–005` | #30 | pending | **Next serial task** |
 | M2 | `PRIV-001` | CTX-003 + SES-001 | privacy/redaction | #31 | pending | Blocked |
 | M3 | `CON-001` | G2 + PKG-001 | `TC-CONTRACT-001–010` | #32 | pending | Blocked |
 | M3 | `MEM-001` | CON-001 | Memory store/query/dedup | #33 | pending | Blocked |
@@ -114,11 +114,7 @@
 - https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/56
 - https://github.com/yuanchenglu/oh-my-deepseek-harness/issues/57
 
-## 2. G1 trace
-
-G1：**PASS (10 PASS / 0 FAIL / 0 BLOCKED)**。PR #77 initial FAIL → PR #78 remediation → PR #79 PASS。Real Hermes E2E remains `COMPAT-001` / G3.
-
-## 3. Requirement-domain ownership — 88 FR IDs
+## 2. Requirement-domain ownership — 88 FR IDs
 
 | Domain | Count | Primary Work IDs |
 |---|---:|---|
@@ -136,14 +132,14 @@ G1：**PASS (10 PASS / 0 FAIL / 0 BLOCKED)**。PR #77 initial FAIL → PR #78 re
 | `FR-QA-001–009` | 9 | QA-ART-001、QA-001、QA-002、COMPAT-001、REL-006 |
 | **Total** | **88** | **0 orphan domains** |
 
-## 4. Code Review blocker ownership — 17 CR IDs
+## 3. Code Review blocker ownership — 17 CR IDs
 
 | CR ID | Primary owner | State |
 |---|---|---|
 | `CR-P0-001` | PKG/RUN/INS/QA-ART chain | Complete |
 | `CR-P0-002` | CTX-001 | Complete by PR #81 |
 | `CR-P0-003` | CTX-002 | Complete by PR #83 |
-| `CR-P0-004` | CTX-003 | **Complete by PR #85** |
+| `CR-P0-004` | CTX-003 | Complete by PR #85 |
 | `CR-P0-005` | SES-001 | Open |
 | `CR-P1-001` | CON-001 | Open |
 | `CR-P1-002` | AUD-001 | Open |
@@ -158,13 +154,13 @@ G1：**PASS (10 PASS / 0 FAIL / 0 BLOCKED)**。PR #77 initial FAIL → PR #78 re
 | `CR-P2-004` | QA-ART-001/QA-001 | G1 protected; G3 continues |
 | `CR-P2-005` | DOC-001/DOC-002 | Open |
 
-## 5. Canonical strict-XFAIL ownership
+## 4. Canonical strict-XFAIL ownership
 
 | XF ID / test family | Exact owner | State |
 |---|---|---|
 | `XF-CTX-001` | CTX-001 #26 | Fixed by PR #81 |
 | `XF-CTX-002` | CTX-002 #27 | Fixed by PR #83 |
-| `XF-CTX-003` | CTX-003 #28 | **Fixed by PR #85** |
+| `XF-CTX-003` | CTX-003 #28 | Fixed by PR #85 |
 | `XF-POLICY-001` | SES-001 #30 | Open |
 | `XF-AUDIT-001` | AUD-001 #39 | Open |
 | `XF-CONTRACT-001–003` | CON-001 #32 | Open |
@@ -175,7 +171,7 @@ G1：**PASS (10 PASS / 0 FAIL / 0 BLOCKED)**。PR #77 initial FAIL → PR #78 re
 
 Current suite has **6 strict XFAIL tests** and no orphan owner.
 
-## 6. Test ID unique primary ownership — exactly 100
+## 5. Test ID unique primary ownership — exactly 100
 
 | Test IDs | Count | Primary Work ID |
 |---|---:|---|
@@ -206,12 +202,12 @@ Current suite has **6 strict XFAIL tests** and no orphan owner.
 | `TC-MIG-001–006` | 6 | MIG-001 |
 | **Total** | **100** | **100 unique primary assignments; 0 orphan IDs** |
 
-## 7. Gate dependency summary
+## 6. Gate dependency summary
 
 ```text
 M0 → G0 PASS
 M1 → G1 PASS
-CTX-001 + CTX-002 + CTX-003 Complete → CTX-004 → SES-001 → PRIV-001 → G2
+CTX-001 + CTX-002 + CTX-003 + CTX-004 Complete → SES-001 → PRIV-001 → G2
 G2 PASS → M3 → M4/G3 → exact-master verification
-BETA-001 → feedback/G4 → Stable/SOAK/G5 → REL-008
+BETA-001 → real feedback/G4 → Stable/SOAK/G5 → REL-008
 ```
