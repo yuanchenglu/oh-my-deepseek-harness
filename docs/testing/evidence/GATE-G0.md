@@ -27,7 +27,7 @@ G0 不回答 Runtime 是否可发布，也不替代 G1–G5。
 | `GOV-001` | #12 | Complete — Security、Issue/PR Forms、Release Checklist |
 | `REL-003` | #15 | Complete — 48 canonical Issues 和完整追踪 |
 | `REL-005` | #16 | Complete — GitHub-only Beta；PyPI 未认证前禁用 |
-| `COMPAT-000` | #17 | Complete when the compatibility target files are present in the G0 base and this PR passes Required CI |
+| `COMPAT-000` | #17 | Complete — PR #60 / `c7f6212a`；Hermes v0.19.0 候选和静态契约固定 |
 
 Hard dependency result：`REL-003 + REL-005 + COMPAT-000` is satisfied by the merged repository state validated by this branch.
 
@@ -111,15 +111,13 @@ Full integrated product target: Python 3.11, 3.12; Linux/macOS
 Python 3.10 + Hermes v0.19.0: expected unsupported precondition
 ```
 
-Static verification confirms the project Hook set is a subset of the selected Hermes Hook set and preserves the 10/9 Tool contract.
+Static verification confirms:
 
-Known compatibility gap:
+- the project Hook set is a subset of the selected Hermes Hook set;
+- the 10-target / 9-runtime Tool contract is preserved;
+- `DeepSeekContextEngine` exposes the required `name` property, core methods and token counters.
 
-```text
-DeepSeekContextEngine required property `name`: missing
-Owners: PKG-001 #18 and COMPAT-001 #46
-Effect: blocks G1/G3 real compatibility; does not invalidate candidate selection or G0 planning readiness
-```
+This static result does not claim real Hermes compatibility. `COMPAT-001` #46 still owns clean installation, discovery, explicit selection, lifecycle payload and Tool E2E evidence.
 
 ## 5. Traceability completeness
 
@@ -147,7 +145,8 @@ Publishing Work IDs remain blocked by later Gates and explicit execution-time au
 - canonical Issue ledger contains 48 unique Work IDs and 48 unique Issue URLs;
 - fixed-scope declarations include 88 FR, 17 CR and 100 Test IDs;
 - publishing decision is GitHub-only with PyPI disabled;
-- Hermes fixture is v0.19.0, full Python is 3.11–3.12 and the missing `name` gap is owned;
+- Hermes fixture is v0.19.0 and full Python is 3.11–3.12;
+- the current Context Engine statically provides the required property and methods;
 - main/status documents do not claim Public Beta or Stable completion.
 
 Required CI must pass on Python 3.10, 3.11 and 3.12 before this Gate evidence can enter `develop`.
@@ -156,7 +155,7 @@ Required CI must pass on Python 3.10, 3.11 and 3.12 before this Gate evidence ca
 
 G0 intentionally leaves implementation blockers open, with owners:
 
-- standard installable package and missing ContextEngine `name`: `PKG-001` #18;
+- standard installable package: `PKG-001` #18;
 - dependencies: `PKG-002` #19;
 - Runtime/installer: #20–#25;
 - Context/Session/privacy: #26–#31;

@@ -1,0 +1,91 @@
+# 7+1 意图策略绑定配置
+# 每个意图包含：描述、关键词、策略参数、常见蔓延方向（用于排除清单）
+
+intents:
+  refactor:
+    description: 在已有代码基础上改变结构而不改变外部行为
+    keywords: [重构, 拆, 拆分, 迁移, restructure, refactor, 模块拆分, 重组, 重写]
+    strategy:
+      interview_depth: deep
+      plan_granularity: fine  # 模块级
+      review_standard: strict  # 契约一致性
+      execution_mode: sequential
+    common_creep:  # 常见蔓延方向（用于排除清单）
+      - 不新增功能
+      - 不修改 API 契约
+      - 不引入新依赖
+      - 不改数据库 schema
+
+  new:
+    description: 从零开始构建新项目或新功能
+    keywords: [新建, 从零, 创建, new, create, 项目, 初始化, 生成]
+    strategy:
+      interview_depth: medium
+      plan_granularity: coarse  # 里程碑级
+      review_standard: standard  # 结构合理性
+      execution_mode: parallel_subtasks
+    common_creep:
+      - 不加权限系统
+      - 不加 OAuth
+      - 不加多租户
+      - 不加 CI/CD
+
+  medium:
+    description: 在现有项目中添加或修改中等规模功能
+    keywords: [添加, 修改, 更新, 增加, add, modify, 功能, 扩展]
+    strategy:
+      interview_depth: light
+      plan_granularity: medium  # 文件级
+      review_standard: standard  # 局部正确性
+      execution_mode: sequential
+
+  collaboration:
+    description: 多 Agent 或人机协作
+    keywords: [协作, 多人, 分派, 并行, collaborate, parallel, team, 分工]
+    strategy:
+      interview_depth: heavy
+      plan_granularity: layered  # 子 Plan + 协调 Plan
+      review_standard: interface  # 契约兼容性
+      execution_mode: multi_agent_parallel
+    common_creep:
+      - 不急的优化
+      - 不要额外协调轮次
+
+  architecture:
+    description: 系统级架构设计和决策
+    keywords: [架构, 设计, 选型, architecture, design, system, 系统, 方案]
+    strategy:
+      interview_depth: deepest
+      plan_granularity: abstract  # 架构决策层
+      review_standard: multi_dimension  # 每个 NFR 独立审查
+      execution_mode: single_agent_with_human_gates
+    common_creep:
+      - 不深入到具体实现
+      - 不做代码修改
+
+  research:
+    description: 探索性任务，产出是知识和建议
+    keywords: [调研, 分析, 评估, research, investigate, 研究, 调查, 探究]
+    strategy:
+      interview_depth: iterative
+      plan_granularity: flexible  # 可调整
+      review_standard: loose  # 完整性 > 精确性
+      execution_mode: single_agent_iterative
+
+  simple:
+    description: 单文件或极少文件的明确修改
+    keywords: [修复, 改, 更新版本, fix, 更新, change, update, 简单, 修改]
+    strategy:
+      interview_depth: none
+      plan_granularity: minimal  # 1-2 步
+      review_standard: shallow  # diff 正确性
+      execution_mode: direct
+
+  spec_driven:
+    description: 基于结构化 Spec 推导策略
+    keywords: []
+    strategy:
+      interview_depth: spec_derived
+      plan_granularity: spec_derived
+      review_standard: spec_derived
+      execution_mode: spec_derived

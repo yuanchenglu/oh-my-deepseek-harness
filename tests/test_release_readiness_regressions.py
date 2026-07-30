@@ -13,6 +13,11 @@ from pathlib import Path
 import pytest
 import yaml
 
+try:
+    import tomllib
+except ModuleNotFoundError:  # Python 3.10
+    import tomli as tomllib
+
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -101,22 +106,29 @@ def test_plan_status_schema_matches_service_enum() -> None:
     assert set(status_schema.get("enum", [])) == {s.value for s in PlanStatus}
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="已知缺陷：安装脚本未安装或复制 mcp/harness_server",
-)
-def test_install_script_installs_harness_server_runtime() -> None:
+def test_install_path_deploys_packaged_harness_server_runtime() -> None:
+    """XF-INSTALL-001 closed: one installed CLI path starts the packaged Supervisor."""
     install_text = (ROOT / "scripts" / "install.sh").read_text(encoding="utf-8")
-    assert "mcp/harness_server" in install_text or "harness_server" in install_text
+    installer_text = (
+        ROOT / "src" / "deepseek_harness" / "installer.py"
+    ).read_text(encoding="utf-8")
+
+    assert "deepseek_harness.cli install" in install_text
+    assert "from harness_server.supervisor import Supervisor" in installer_text
+    assert "supervisor.start(" in installer_text
+    assert "pip install" not in installer_text
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="已知缺陷：Context Engine 运行依赖 openai，但正式依赖未声明",
-)
 def test_runtime_dependencies_include_openai() -> None:
-    pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
-    assert re.search(r'["\']openai(?:[<>=!~].*)?["\']', pyproject)
+    """XF-DEPS-001 closed: Context-capable variants declare OpenAI explicitly."""
+    with (ROOT / "pyproject.toml").open("rb") as handle:
+        project = tomllib.load(handle)["project"]
+
+    base = "\n".join(project["dependencies"]).lower()
+    extras = project["optional-dependencies"]
+    assert "openai" not in base
+    for extra in ("context", "all", "dev"):
+        assert any(requirement.lower().startswith("openai") for requirement in extras[extra])
 
 
 def _manifest_version_from_python(python_version: str) -> str:
@@ -145,10 +157,10 @@ def test_project_versions_are_consistent() -> None:
     expected_manifest_version = _manifest_version_from_python(root_version)
 
     harness = yaml.safe_load(
-        (ROOT / "plugins" / "deepseek-harness" / "plugin.yaml").read_text(encoding="utf-8")
+        (ROOT / "src" / "deepseek_harness" / "resources" / "plugin.yaml").read_text(encoding="utf-8")
     )
     context = yaml.safe_load(
-        (ROOT / "plugins" / "deepseek-context" / "plugin.yaml").read_text(encoding="utf-8")
+        (ROOT / "src" / "deepseek_context" / "resources" / "plugin.yaml").read_text(encoding="utf-8")
     )
 
     assert root_version == "3.0.0b1"
@@ -182,12 +194,20 @@ def test_memory_import_storage_is_idempotent(tmp_path: Path) -> None:
 
 
 def test_harness_server_defaults_to_loopback() -> None:
-    """安全基线：默认监听地址必须是本机回环地址。"""
-    server_text = (ROOT / "mcp" / "harness_server" / "server.py").read_text(encoding="utf-8")
-    assert 'os.environ.get("HARNESS_HOST", "127.0.0.1")' in server_text
+    """安全基线：默认回环，非回环监听必须被拒绝。"""
+    from harness_server.config import RuntimeConfig
+
+    assert RuntimeConfig.from_env({}).host == "127.0.0.1"
+    assert RuntimeConfig.from_env({"HARNESS_HOST": "localhost"}).host == "localhost"
+    assert RuntimeConfig.from_env({"HARNESS_HOST": "127.0.0.1"}).host == "127.0.0.1"
+    assert RuntimeConfig.from_env({"HARNESS_HOST": "::1"}).host == "::1"
+    with pytest.raises(ValueError, match="loopback"):
+        RuntimeConfig.from_env({"HARNESS_HOST": "0.0.0.0"})
+    with pytest.raises(ValueError, match="loopback"):
+        RuntimeConfig.from_env({"HARNESS_HOST": "192.168.1.10"})
 
 
 def test_sqlite_updates_use_field_allowlist() -> None:
     """安全基线：动态 UPDATE 字段必须经过白名单过滤。"""
-    storage_text = (ROOT / "mcp" / "harness_server" / "storage.py").read_text(encoding="utf-8")
+    storage_text = (ROOT / "src" / "harness_server" / "storage.py").read_text(encoding="utf-8")
     assert 'allowed = {"text", "key", "status", "parent_id", "dependency_ids", "association_strength"}' in storage_text
