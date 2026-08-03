@@ -67,11 +67,8 @@ def test_immune_audit_parses_assessor_output_format() -> None:
     assert rows[0]["constraint"] == "不能删除数据库"
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="已知缺陷：memory_filter 工具发送 lambda_value，而 API 只接收 lambda 别名",
-)
 def test_memory_filter_tool_uses_api_contract(monkeypatch: pytest.MonkeyPatch) -> None:
+    """XF-CONTRACT-001 -> CON-001: memory_filter must send 'lambda' alias, not 'lambda_value'."""
     from deepseek_harness import tools
 
     captured: dict = {}
@@ -86,22 +83,16 @@ def test_memory_filter_tool_uses_api_contract(monkeypatch: pytest.MonkeyPatch) -
     assert captured["json"] == {"lambda": 0.5}
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="已知缺陷：checkpoint_create 工具 schema 未声明 API 的两个必填字段",
-)
 def test_checkpoint_tool_schema_matches_api_required_fields() -> None:
+    """XF-CONTRACT-002 -> CON-001: checkpoint_create schema must declare plan_id, plan_steps, completed_step_ids."""
     from deepseek_harness.tools import _TOOL_SCHEMAS
 
     required = set(_TOOL_SCHEMAS["checkpoint_create"].get("required", []))
     assert {"plan_id", "plan_steps", "completed_step_ids"} <= required
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="已知缺陷：plan_update_step schema 描述 blocked，但服务枚举不支持该状态",
-)
 def test_plan_status_schema_matches_service_enum() -> None:
+    """XF-CONTRACT-003 -> CON-001: plan_update_step status enum must match PlanStatus values."""
     from deepseek_harness.tools import _TOOL_SCHEMAS
     from harness_server.models import PlanStatus
 
