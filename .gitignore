@@ -24,3 +24,4 @@ migration-report.md
 # 运行时符号链接（conftest.py 自动生成）
 plugins/deepseek_context
 plugins/deepseek_harness
+build/

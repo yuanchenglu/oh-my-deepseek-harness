@@ -15,7 +15,8 @@ import os
 import re
 from typing import Any, Dict, Optional
 
-from .gate import _current_hard_constraints
+from .gate import _current_hard_constraints, _HARD_CONSTRAINT_PATTERN
+from .session_policy import SessionPolicyStore
 
 logger = logging.getLogger(__name__)
 
@@ -141,14 +142,21 @@ def _check_constraint_violation(
 ) -> Optional[Dict[str, Any]]:
     """检查工具调用是否违反活跃硬约束。
 
-    对写类工具检查文件路径，对执行类工具检查命令文本。
-    无活跃约束或工具类型不匹配时返回 None。
-    返回格式：{"quality": "violation", "constraint": str, "evidence": str, "tool": str}
+    SES-001: 从 SessionPolicyStore 按 session_id 读取约束，
+    不再使用模块级全局集合。
     """
-    if not _current_hard_constraints:
+    # 优先从 SessionPolicyStore 读取（SES-001 隔离路径）
+    store = SessionPolicyStore.get_instance()
+    active_constraints = store.get_active_constraints(session_id)
+
+    # 兼容层：如果 store 为空，回退到旧全局集合
+    if not active_constraints:
+        active_constraints = _current_hard_constraints
+
+    if not active_constraints:
         return None
 
-    for constraint in list(_current_hard_constraints):
+    for constraint in list(active_constraints):
         if tool_name in ("write", "edit", "apply_patch"):
             file_path = args.get("filePath", args.get("path", ""))
             if isinstance(file_path, str) and _check_path_against_constraint(
