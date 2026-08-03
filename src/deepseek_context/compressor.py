@@ -21,6 +21,8 @@ import re
 import time
 from typing import Any, Dict, List, Optional
 
+from .redaction import redact_outbound_payload
+
 logger = logging.getLogger(__name__)
 
 # -- Constants (from Hermes context_compressor.py) ---------------------------
@@ -477,7 +479,9 @@ class DeepSeekCompressor:
                 content = content[:_CONTENT_HEAD] + "\n...[truncated]...\n" + content[-_CONTENT_TAIL:]
             parts.append(f"[{role.upper()}]: {content}")
 
-        return "\n\n".join(parts)
+        result = "\n\n".join(parts)
+        # PRIV-001: redact secrets before any outbound payload
+        return redact_outbound_payload(result)
 
     # -- Summary generation via DeepSeek API ---------------------------------
 
@@ -540,6 +544,8 @@ class DeepSeekCompressor:
 
         summary_budget = self._compute_summary_budget(turns_to_summarize)
         content_to_summarize = self.serialize_for_summary(turns_to_summarize)
+        # PRIV-001: double-check redaction on the final prompt content
+        content_to_summarize = redact_outbound_payload(content_to_summarize)
 
         preamble = (
             "You are a summarization agent creating a context checkpoint. "

@@ -13,6 +13,10 @@ ENV_PORT = "HARNESS_PORT"
 ENV_DB_PATH = "HARNESS_DB_PATH"
 ENV_IMPORT_MEMORIES = "HARNESS_IMPORT_MEMORIES"
 ENV_MEMORIES_DIR = "HARNESS_MEMORIES_DIR"
+ENV_SUMMARY_ENABLED = "HARNESS_SUMMARY_ENABLED"
+ENV_SUMMARY_OUTBOUND_POLICY = "HARNESS_SUMMARY_OUTBOUND_POLICY"
+ENV_SUMMARY_ALLOW_TOOL_ARGS = "HARNESS_SUMMARY_ALLOW_TOOL_ARGUMENTS"
+ENV_LOG_INCLUDE_CONTENT = "HARNESS_LOG_INCLUDE_CONTENT"
 RUNTIME_ENV_VARS = frozenset(
     {
         ENV_HOST,
@@ -20,6 +24,10 @@ RUNTIME_ENV_VARS = frozenset(
         ENV_DB_PATH,
         ENV_IMPORT_MEMORIES,
         ENV_MEMORIES_DIR,
+        ENV_SUMMARY_ENABLED,
+        ENV_SUMMARY_OUTBOUND_POLICY,
+        ENV_SUMMARY_ALLOW_TOOL_ARGS,
+        ENV_LOG_INCLUDE_CONTENT,
     }
 )
 
@@ -58,6 +66,9 @@ class RuntimeConfig:
     db_path: str = "~/.hermes/mcp/harness.db"
     import_memories: bool = False
     memories_dir: str = "~/.hermes/memories"
+    summary_enabled: bool = False
+    summary_allow_tool_args: bool = False
+    log_include_content: bool = False
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "host", _validate_loopback(self.host))
@@ -96,4 +107,16 @@ class RuntimeConfig:
                 name=ENV_IMPORT_MEMORIES,
             ),
             memories_dir=env.get(ENV_MEMORIES_DIR, "~/.hermes/memories"),
+            summary_enabled=_parse_bool(
+                env.get(ENV_SUMMARY_ENABLED, "0"),
+                name=ENV_SUMMARY_ENABLED,
+            ),
+            summary_allow_tool_args=_parse_bool(
+                env.get(ENV_SUMMARY_ALLOW_TOOL_ARGS, "0"),
+                name=ENV_SUMMARY_ALLOW_TOOL_ARGS,
+            ),
+            log_include_content=_parse_bool(
+                env.get(ENV_LOG_INCLUDE_CONTENT, "0"),
+                name=ENV_LOG_INCLUDE_CONTENT,
+            ),
         )

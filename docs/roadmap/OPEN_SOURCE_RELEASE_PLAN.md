@@ -1,12 +1,12 @@
 # 开源发布执行计划（Open-source Release Execution Plan）
 
-> 文档版本：2.3.13（SES-001 Complete / PRIV-001 Next）
+> 文档版本：2.3.14（PRIV-001 Complete / G2 Ready）
 >
 > 状态日期：2026-08-03
 >
-> 当前实现事实基线：`develop@c6ba74a05310af0c180b3b6434e11941cba53543`
+> 当前实现事实基线：`develop@d7fd12f`
 >
-> 计划状态：`M1_COMPLETE / G1_PASS / CTX_001_002_003_004_COMPLETE / SES_001_COMPLETE / M2_NEXT_PRIV_001`
+> 计划状态：`M1_COMPLETE / G1_PASS / CTX_001_002_003_004_COMPLETE / SES_001_COMPLETE / PRIV_001_COMPLETE / G2_READY`
 >
 > 当前产品成熟度：`Experimental Preview`
 >
@@ -39,17 +39,18 @@
 - `CTX-003`：稳定 ID、硬约束/最新请求逐字保留、Tool Pair 完整性与属性测试；
 - `CTX-004`：压缩事务、实际输入 Token 减量、per-Session Compressor 状态、拒绝候选回滚与 Provider 失败 cooldown；
 - `SES-001`：SessionPolicyStore 按 session_id 隔离硬约束状态、显式取消、Session end cleanup、两线程并发 barrier。
+- `PRIV-001`：外发前 Secret Redaction、Summary 默认关闭、数据发送提示、日志隐私默认关闭。
 
 ## 2. 固定 Work ID 进度
 
 | 状态 | 数量 | 比例 |
 |---|---:|---:|
-| Complete | 21 | 43.8% |
+| Complete | 22 | 45.8% |
 | In progress | 0 | 0.0% |
-| Not started / dependency blocked | 27 | 56.2% |
+| Not started / dependency blocked | 26 | 54.2% |
 | Total | 48 | 100% |
 
-启动 `PRIV-001` 后：Complete 21 / In progress 1 / Not started 26。
+G2 评估启动后：Complete 22 / G2 in progress / Not started 26。
 
 ## 3. Gate 状态
 
@@ -58,7 +59,7 @@
 | Plan Ready | PASS | 48 Issues、88 FR、17 CR、100 Test IDs |
 | G0 | PASS | PR #61 · `ee516c9b` |
 | G1 | PASS | PR #77 FAIL → PR #78 remediation → PR #79 PASS |
-| G2 | NOT_STARTED | `PRIV-001` 尚未完成 |
+| G2 | READY | SES-001 + PRIV-001 complete; evaluation pending |
 | G3 | NOT_STARTED | 依赖 M2、M3、M4 与 RC Evidence |
 | G4 | NOT_STARTED | 依赖真实 Beta 反馈闭环 |
 | G5 | NOT_STARTED | 依赖 Stable 阶段与真实 soak |
@@ -101,7 +102,7 @@ G1 PASS：PR #79；Run #193 / ID `30384094675`；Squash `b0b9d2e0337a9f40f2abcdb
 | `CTX-003` | #28 | CTX-002 | PR #85 · `0eb68d7077a0b8b8898b61f20bb209175619ec42` | Complete |
 | `CTX-004` | #29 | CTX-003 | PR #90 · `5ad013b3e121aa53eddce65a300e8ae737e14d21` · `CTX-004.md` | **Complete** |
 | `SES-001` | #30 | G1 + PKG-001 | PR #94 · `SES-001.md` | **Complete** |
-| `PRIV-001` | #31 | CTX-003 + SES-001 | pending | **Next serial task** |
+| `PRIV-001` | #31 | CTX-003 + SES-001 | PR #95 · `PRIV-001.md` | **Complete** |
 
 ### CTX-004 final acceptance
 
@@ -121,34 +122,18 @@ Review Threads: 0 unresolved
 Codex exact-final-Head review: +1
 ```
 
-## 7. PRIV-001 execution contract
+## 7. G2 Gate evaluation
 
-`PRIV-001` is now the only legal implementation task.
+G2 is now ready for evaluation. All M2 Work IDs are complete.
 
-Before changes:
+Before declaring G2 PASS:
 
-1. read Issue #31 and all comments;
-2. read PRD, Technical Architecture, Traceability and the v2.2 ledger;
-3. review FR-POLICY-007, TC-CTX-010, TC-SEC-001 and privacy requirements;
-4. create a dedicated branch and Draft PR before production implementation.
-
-Authorized paths are limited to:
-
-```text
-src/deepseek_context/compressor.py
-src/deepseek_context/_public_engine.py
-src/harness_server/config.py
-src/harness_server/config.yaml
-tests/test_context_properties.py
-tests/test_context_engine.py
-docs/testing/evidence/PRIV-001.md
-docs/roadmap/OPEN_SOURCE_RELEASE_PLAN.md
-docs/roadmap/EXECUTION_STATUS.md
-docs/roadmap/SESSION_HANDOFF_PROMPT.md
-docs/traceability/RELEASE_TRACEABILITY.md
-```
-
-SES-001 SessionPolicyStore remains the single Session Policy path. PRIV-001 must not create a second Session runtime or modify constraint isolation behavior.
+1. verify all M2 evidence files exist (CTX-001 through CTX-004, SES-001, PRIV-001);
+2. run full test suite on Python 3.10/3.11/3.12;
+3. confirm no unresolved review threads on any M2 PR;
+4. confirm develop is clean and CI is green;
+5. create `docs/testing/evidence/GATE-G2.md`;
+6. update Plan/Status/Traceability/Handoff.
 
 ## 8. 固定支持边界
 
@@ -164,8 +149,7 @@ SES-001 SessionPolicyStore remains the single Session Policy path. PRIV-001 must
 ## 9. 固定串行顺序
 
 ```text
-PRIV-001 -> G2
-G2 PASS -> M3 -> M4/G3 -> exact-master RC
+G2 evaluation -> G2 PASS -> M3 -> M4/G3 -> exact-master RC
 v3.0.0-beta.1 -> real Beta feedback/G4 -> Stable prep/SOAK/G5 -> v3.0.0
 ```
 

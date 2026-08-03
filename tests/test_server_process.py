@@ -138,6 +138,10 @@ def test_runtime_environment_contract_and_loopback_policy(tmp_path: Path) -> Non
         "HARNESS_DB_PATH": str(tmp_path / "runtime.db"),
         "HARNESS_IMPORT_MEMORIES": "true",
         "HARNESS_MEMORIES_DIR": str(tmp_path / "memories"),
+        "HARNESS_SUMMARY_ENABLED": "false",
+        "HARNESS_SUMMARY_OUTBOUND_POLICY": "off",
+        "HARNESS_SUMMARY_ALLOW_TOOL_ARGUMENTS": "false",
+        "HARNESS_LOG_INCLUDE_CONTENT": "false",
     }
     runtime = RuntimeConfig.from_env(env)
     assert RUNTIME_ENV_VARS == frozenset(env)
@@ -146,6 +150,9 @@ def test_runtime_environment_contract_and_loopback_policy(tmp_path: Path) -> Non
     assert runtime.server_url == "http://127.0.0.1:9123"
     assert runtime.import_memories is True
     assert runtime.db_path == str(tmp_path / "runtime.db")
+    assert runtime.summary_enabled is False
+    assert runtime.summary_allow_tool_args is False
+    assert runtime.log_include_content is False
 
     with pytest.raises(ValueError, match="loopback"):
         RuntimeConfig.from_env({"HARNESS_HOST": "0.0.0.0"})
