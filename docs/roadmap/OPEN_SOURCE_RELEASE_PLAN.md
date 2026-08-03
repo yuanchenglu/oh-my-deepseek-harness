@@ -1,12 +1,12 @@
 # 开源发布执行计划（Open-source Release Execution Plan）
 
-> 文档版本：2.3.12（CTX-004 Complete / SES-001 Next）
+> 文档版本：2.3.13（SES-001 Complete / PRIV-001 Next）
 >
-> 状态日期：2026-07-29
+> 状态日期：2026-08-03
 >
-> 当前实现事实基线：`develop@5ad013b3e121aa53eddce65a300e8ae737e14d21`
+> 当前实现事实基线：`develop@c6ba74a05310af0c180b3b6434e11941cba53543`
 >
-> 计划状态：`M1_COMPLETE / G1_PASS / CTX_001_002_003_004_COMPLETE / M2_NEXT_SES_001`
+> 计划状态：`M1_COMPLETE / G1_PASS / CTX_001_002_003_004_COMPLETE / SES_001_COMPLETE / M2_NEXT_PRIV_001`
 >
 > 当前产品成熟度：`Experimental Preview`
 >
@@ -26,7 +26,7 @@
 
 ## 1. 当前发布判断
 
-当前产品仍是 **Experimental Preview**。G1 PASS 与 CTX-004 Complete 只推进 M2，不表示 Public Beta、master、Tag、GitHub Release、PyPI 或 Stable Ready。
+当前产品仍是 **Experimental Preview**。G1 PASS、CTX-004 Complete 与 SES-001 Complete 只推进 M2，不表示 Public Beta、master、Tag、GitHub Release、PyPI 或 Stable Ready。
 
 已完成：
 
@@ -37,18 +37,19 @@
 - `CTX-001`：Merge 尾部消息唯一性；
 - `CTX-002`：摘要失败无损回退；
 - `CTX-003`：稳定 ID、硬约束/最新请求逐字保留、Tool Pair 完整性与属性测试；
-- `CTX-004`：压缩事务、实际输入 Token 减量、per-Session Compressor 状态、拒绝候选回滚与 Provider 失败 cooldown。
+- `CTX-004`：压缩事务、实际输入 Token 减量、per-Session Compressor 状态、拒绝候选回滚与 Provider 失败 cooldown；
+- `SES-001`：SessionPolicyStore 按 session_id 隔离硬约束状态、显式取消、Session end cleanup、两线程并发 barrier。
 
 ## 2. 固定 Work ID 进度
 
 | 状态 | 数量 | 比例 |
 |---|---:|---:|
-| Complete | 20 | 41.7% |
+| Complete | 21 | 43.8% |
 | In progress | 0 | 0.0% |
-| Not started / dependency blocked | 28 | 58.3% |
+| Not started / dependency blocked | 27 | 56.2% |
 | Total | 48 | 100% |
 
-启动 `SES-001` 后：Complete 20 / In progress 1 / Not started 27。
+启动 `PRIV-001` 后：Complete 21 / In progress 1 / Not started 26。
 
 ## 3. Gate 状态
 
@@ -57,7 +58,7 @@
 | Plan Ready | PASS | 48 Issues、88 FR、17 CR、100 Test IDs |
 | G0 | PASS | PR #61 · `ee516c9b` |
 | G1 | PASS | PR #77 FAIL → PR #78 remediation → PR #79 PASS |
-| G2 | NOT_STARTED | `SES-001`、`PRIV-001` 尚未完成 |
+| G2 | NOT_STARTED | `PRIV-001` 尚未完成 |
 | G3 | NOT_STARTED | 依赖 M2、M3、M4 与 RC Evidence |
 | G4 | NOT_STARTED | 依赖真实 Beta 反馈闭环 |
 | G5 | NOT_STARTED | 依赖 Stable 阶段与真实 soak |
@@ -99,8 +100,8 @@ G1 PASS：PR #79；Run #193 / ID `30384094675`；Squash `b0b9d2e0337a9f40f2abcdb
 | `CTX-002` | #27 | CTX-001 | PR #83 · `bf4ab49e1b3c5bbe752931d19460ad2de4243a6f` | Complete |
 | `CTX-003` | #28 | CTX-002 | PR #85 · `0eb68d7077a0b8b8898b61f20bb209175619ec42` | Complete |
 | `CTX-004` | #29 | CTX-003 | PR #90 · `5ad013b3e121aa53eddce65a300e8ae737e14d21` · `CTX-004.md` | **Complete** |
-| `SES-001` | #30 | G1 + PKG-001 | pending | **Next serial task** |
-| `PRIV-001` | #31 | CTX-003 + SES-001 | pending | Blocked by SES-001 |
+| `SES-001` | #30 | G1 + PKG-001 | PR #94 · `SES-001.md` | **Complete** |
+| `PRIV-001` | #31 | CTX-003 + SES-001 | pending | **Next serial task** |
 
 ### CTX-004 final acceptance
 
@@ -120,36 +121,34 @@ Review Threads: 0 unresolved
 Codex exact-final-Head review: +1
 ```
 
-## 7. SES-001 execution contract
+## 7. PRIV-001 execution contract
 
-`SES-001` is now the only legal implementation task.
+`PRIV-001` is now the only legal implementation task.
 
 Before changes:
 
-1. read Issue #30 and all comments;
+1. read Issue #31 and all comments;
 2. read PRD, Technical Architecture, Traceability and the v2.2 ledger;
-3. convert `tests/test_release_readiness_regressions.py::test_hard_constraints_are_isolated_between_sessions` from strict XFAIL to an ordinary failing test;
-4. add `TC-POLICY-001–005`, including a two-thread barrier, explicit cancel, Session end cleanup and isolation tests;
-5. create a dedicated branch and Draft PR before production implementation.
+3. review FR-POLICY-007, TC-CTX-010, TC-SEC-001 and privacy requirements;
+4. create a dedicated branch and Draft PR before production implementation.
 
 Authorized paths are limited to:
 
 ```text
-src/deepseek_harness/session_policy.py
-src/deepseek_harness/gate.py
-src/deepseek_harness/assessor.py
-tests/test_gate_v2.py
-tests/test_assessor_v2.py
-tests/test_session_policy.py
-tests/test_release_readiness_regressions.py
-docs/testing/evidence/SES-001.md
+src/deepseek_context/compressor.py
+src/deepseek_context/_public_engine.py
+src/harness_server/config.py
+src/harness_server/config.yaml
+tests/test_context_properties.py
+tests/test_context_engine.py
+docs/testing/evidence/PRIV-001.md
 docs/roadmap/OPEN_SOURCE_RELEASE_PLAN.md
 docs/roadmap/EXECUTION_STATUS.md
 docs/roadmap/SESSION_HANDOFF_PROMPT.md
 docs/traceability/RELEASE_TRACEABILITY.md
 ```
 
-CTX-004 per-Session compressor state remains Context-internal metrics state. SES-001 must not create a second Context runtime, second production Session loop or competing compressor store.
+SES-001 SessionPolicyStore remains the single Session Policy path. PRIV-001 must not create a second Session runtime or modify constraint isolation behavior.
 
 ## 8. 固定支持边界
 
@@ -159,15 +158,15 @@ CTX-004 per-Session compressor state remains Context-internal metrics state. SES
 - real Hermes E2E 属于 `COMPAT-001` / M4 / G3；
 - byte-for-byte reproducibility、SBOM、provenance 属于 `REL-006`；
 - Runtime 当前 9 Tools，目标 10；不得添加 placeholder `memory_store`；
-- 当前 6 strict XFAIL owners：`SES-001`、`AUD-001`、`CON-001`×3、`MEM-002`；
+- 当前 5 strict XFAIL owners：`AUD-001`、`CON-001`×3、`MEM-002`；
 - PyPI 按 `REL-005` 保持禁用。
 
 ## 9. 固定串行顺序
 
 ```text
-SES-001 → PRIV-001 → G2
-G2 PASS → M3 → M4/G3 → exact-master RC
-v3.0.0-beta.1 → real Beta feedback/G4 → Stable prep/SOAK/G5 → v3.0.0
+PRIV-001 -> G2
+G2 PASS -> M3 -> M4/G3 -> exact-master RC
+v3.0.0-beta.1 -> real Beta feedback/G4 -> Stable prep/SOAK/G5 -> v3.0.0
 ```
 
 严格边界：不提前合入 master、Tag、Release 或 PyPI；不声称 Public Beta Ready；不访问真实 HOME/DB/Memory/Secret；不弱化 PID、symlink、traversal、rollback 或 destructive-operation 防线。
