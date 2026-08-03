@@ -70,17 +70,19 @@ class TestToolContract:
     def test_runtime_registries_match_derived_names(self):
         from deepseek_harness.tools import (
             RUNTIME_PUBLIC_TOOL_NAMES,
+            TARGET_PUBLIC_TOOL_NAMES,
             _TOOL_DESCRIPTIONS,
             _TOOL_HANDLERS,
             _TOOL_SCHEMAS,
         )
 
-        expected = set(RUNTIME_PUBLIC_TOOL_NAMES)
-        assert set(_TOOL_HANDLERS) == expected
-        assert set(_TOOL_SCHEMAS) == expected
-        assert set(_TOOL_DESCRIPTIONS) == expected
+        expected_runtime = set(RUNTIME_PUBLIC_TOOL_NAMES)
+        assert set(_TOOL_HANDLERS) == expected_runtime
+        assert set(_TOOL_DESCRIPTIONS) == expected_runtime
+        # CON-001: schemas include all 10 targets (memory_store schema defined, handler pending MEM-001)
+        assert set(_TOOL_SCHEMAS) == set(TARGET_PUBLIC_TOOL_NAMES)
         assert "memory_store" not in _TOOL_HANDLERS
-        assert "memory_store" not in _TOOL_SCHEMAS
+        assert "memory_store" in _TOOL_SCHEMAS
         assert "memory_store" not in _TOOL_DESCRIPTIONS
 
 

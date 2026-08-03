@@ -118,11 +118,12 @@ def _tool_memory_query(**kwargs) -> str:
 
 
 def _tool_memory_filter(**kwargs) -> str:
+    # CON-001: API 接收 "lambda" 别名（FilterRequest.lambda_value alias="lambda"）
     return _format_result(
         _call_server(
             "POST",
             "/memory/filter",
-            json={"lambda_value": kwargs.get("lambda_value", 0.5)},
+            json={"lambda": kwargs.get("lambda_value", 0.5)},
         )
     )
 
@@ -156,7 +157,11 @@ _TOOL_SCHEMAS = {
         "type": "object",
         "properties": {
             "step_id": {"type": "string", "description": "步骤 ID"},
-            "status": {"type": "string", "description": "新状态（pending/in_progress/completed/blocked）"},
+            "status": {
+                "type": "string",
+                "enum": ["pending", "in_progress", "completed", "pending_review"],
+                "description": "新状态（与 PlanStatus 枚举一致）",
+            },
             "text": {"type": "string", "description": "更新后的步骤内容"},
         },
         "required": ["step_id"],
@@ -194,6 +199,16 @@ _TOOL_SCHEMAS = {
         },
         "required": ["lambda_value"],
     },
+    "memory_store": {
+        "type": "object",
+        "properties": {
+            "content": {"type": "string", "description": "记忆内容文本"},
+            "tags": {"type": "array", "items": {"type": "string"}, "description": "标签列表"},
+            "layer": {"type": "string", "enum": ["constraint", "preference", "style", "decision", "pattern"], "description": "记忆层级"},
+            "source": {"type": "string", "description": "记忆来源标识"},
+        },
+        "required": ["content"],
+    },
     "checkpoint_create": {
         "type": "object",
         "properties": {
@@ -202,7 +217,7 @@ _TOOL_SCHEMAS = {
             "completed_step_ids": {"type": "array", "items": {"type": "string"}, "description": "已完成的步骤 ID"},
             "unexpected_findings": {"type": "array", "items": {"type": "string"}, "description": "意外发现"},
         },
-        "required": ["plan_id"],
+        "required": ["plan_id", "plan_steps", "completed_step_ids"],
     },
     "checkpoint_review": {
         "type": "object",
@@ -238,15 +253,24 @@ _TOOL_DESCRIPTIONS = {
 
 def _validate_runtime_registry() -> None:
     expected = set(RUNTIME_PUBLIC_TOOL_NAMES)
+    # CON-001: memory_store schema exists in _TOOL_SCHEMAS but is not yet registered
+    # (pending MEM-001). Schema set = target 10, handler set = runtime 9.
+    expected_handlers = expected
+    expected_schemas = set(TARGET_PUBLIC_TOOL_NAMES)
     registries = {
         "handlers": set(_TOOL_HANDLERS),
         "schemas": set(_TOOL_SCHEMAS),
         "descriptions": set(_TOOL_DESCRIPTIONS),
     }
+    expected_sets = {
+        "handlers": expected_handlers,
+        "schemas": expected_schemas,
+        "descriptions": expected_handlers,  # descriptions follow runtime set
+    }
     mismatches = {
-        registry: sorted(values ^ expected)
+        registry: sorted(values ^ expected_sets[registry])
         for registry, values in registries.items()
-        if values != expected
+        if values != expected_sets[registry]
     }
     if mismatches:
         raise RuntimeError(f"Tool registry contract mismatch: {mismatches}")
