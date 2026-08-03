@@ -22,14 +22,12 @@ except ModuleNotFoundError:  # Python 3.10
 ROOT = Path(__file__).resolve().parents[1]
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="已知缺陷：硬约束保存在模块级全局集合，未按 session_id 隔离",
-)
 def test_hard_constraints_are_isolated_between_sessions() -> None:
+    """XF-POLICY-001 -> SES-001: 硬约束必须按 session_id 隔离，不再使用模块级全局集合。"""
     from deepseek_harness import gate
+    from deepseek_harness.session_policy import SessionPolicyStore
 
-    gate._current_hard_constraints.clear()
+    SessionPolicyStore.reset_instance()
     gate.on_pre_llm_call(
         session_id="session-a",
         is_first_turn=True,
@@ -41,7 +39,12 @@ def test_hard_constraints_are_isolated_between_sessions() -> None:
         user_message="请查看项目状态",
     )
 
-    assert not gate._current_hard_constraints
+    # session-b 从未设置约束 -> 应为空
+    assert SessionPolicyStore.get_instance().get_active_constraints("session-b") == set()
+    # session-a 的约束应存在
+    assert "不能删除数据库" in SessionPolicyStore.get_instance().get_active_constraints("session-a") or \
+        any("删除数据库" in c for c in SessionPolicyStore.get_instance().get_active_constraints("session-a"))
+    SessionPolicyStore.reset_instance()
 
 
 @pytest.mark.xfail(

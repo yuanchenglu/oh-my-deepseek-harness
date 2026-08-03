@@ -44,11 +44,16 @@ _I08_BRIEF = (
 )
 
 # ── I-01: 硬约束横切状态通道 ──
-# 在 on_pre_llm_call 中从用户消息提取，由 assessor.py 的 on_post_tool_call 读取
-_current_hard_constraints: set[str] = set()
+# SES-001: 约束按 session_id 隔离存储，不再使用模块级全局集合
+from .session_policy import SessionPolicyStore
+
 _HARD_CONSTRAINT_PATTERN = re.compile(
     r'(?:不能|不要|不得|禁止|严禁|不允许|千万别|绝对不|必须)[^，。；、！？\n]{2,60}'
 )
+
+# 兼容层：保留 _current_hard_constraints 名称供旧测试读取，
+# 但实际存储已迁移到 SessionPolicyStore
+_current_hard_constraints: set[str] = set()
 
 
 def _core_reminders() -> list[str]:
@@ -104,13 +109,24 @@ def on_pre_llm_call(**kwargs) -> Optional[Dict[str, Any]]:
     """
     is_first = kwargs.get("is_first_turn", False)
 
-    # ── I-01: 从用户消息中提取硬约束，更新横切状态通道 ──
+    # ── I-01: 从用户消息中提取硬约束，存入 SessionPolicyStore ──
+    session_id = kwargs.get("session_id", "")
     user_message = kwargs.get("user_message", "")
     if isinstance(user_message, str) and user_message.strip():
         matches = _HARD_CONSTRAINT_PATTERN.findall(user_message)
         if matches:
-            _current_hard_constraints.clear()
-            _current_hard_constraints.update(c.strip() for c in matches if c.strip())
+            extracted = {c.strip() for c in matches if c.strip()}
+            if extracted and session_id:
+                store = SessionPolicyStore.get_instance()
+                store.add_constraints(session_id, extracted, turn_id=kwargs.get("turn_id", ""))
+                # 同步兼容层（供旧测试读取当前 session 约束）
+                _current_hard_constraints.clear()
+                _current_hard_constraints.update(
+                    store.get_active_constraints(session_id)
+                )
+            elif extracted:
+                _current_hard_constraints.clear()
+                _current_hard_constraints.update(extracted)
 
     parts: list[str] = _core_reminders()
 
