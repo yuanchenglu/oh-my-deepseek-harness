@@ -36,7 +36,7 @@
 | M2 | `CTX-004` | CTX-003 | `TC-CTX-001–002/011–013` | #29 | PR #90 · `5ad013b3` · `CTX-004.md` | **Complete** |
 | M2 | `SES-001` | G1 + PKG-001 | `CR-P0-005`；`TC-POLICY-001–005` | #30 | PR #94 · `SES-001.md` | **Complete** |
 | M2 | `PRIV-001` | CTX-003 + SES-001 | privacy/redaction | #31 | PR #95 · `PRIV-001.md` | **Complete** |
-| M3 | `CON-001` | G2 + PKG-001 | `TC-CONTRACT-001–010` | #32 | pending | Blocked |
+| M3 | `CON-001` | G2 + PKG-001 | `TC-CONTRACT-001–010` | #32 | PR #97 · `CON-001.md` | **Complete** |
 | M3 | `MEM-001` | CON-001 | Memory store/query/dedup | #33 | pending | Blocked |
 | M3 | `MEM-002` | MEM-001 | Memory import/delete/idempotence | #34 | pending | Blocked |
 | M3 | `PLAN-001` | MEM-002 | DAG/cascade | #35 | pending | Blocked |
