@@ -45,4 +45,6 @@
 G2 evaluation -> G2 PASS -> M3
 ```
 
-Hermes remains v0.19.0 / tag `v2026.7.20`. Python 3.10 remains package/core/artifact-only; full Hermes candidate support remains Python 3.11–3.12. Runtime remains 9 real Tools with target 10. PyPI remains disabled.
+Hermes remains v0.19.0 / tag `v2026.7.20`. Python 3.10 remains package/core/artifact-only after `PKG-001`; the complete Hermes v0.19.0 integration combination does not support Python 3.10. Full Hermes candidate support remains Python 3.11–3.12. Runtime remains 9 real Tools with target 10; no placeholder `memory_store`. PyPI remains disabled.
+
+This state does not establish Public Beta, release-branch readiness, Tag, GitHub Release, real Hermes E2E, reproducibility, SBOM, provenance or Stable readiness.
