@@ -1,6 +1,7 @@
 """I-01 定期约束审计——读取约束违反记录，生成审计报告和 Skill 草案。"""
 
 import datetime
+import json
 import logging
 import os
 import re
@@ -70,17 +71,56 @@ def _empty_report(reason: str) -> Dict[str, Any]:
 
 
 def _parse_violations(content: str) -> List[Dict[str, str]]:
-    """从 Markdown 文本中解析违反记录条目。
-    
-    格式示例：
-    - [2026-07-14 10:30] 约束: 不能修改配置文件 | 证据: write 调用了 /etc/config.yaml | 工具: write
+    """从文本解析违反记录条目（AUD-001）。
+
+    支持两种源：
+    1. JSONL 事件行：`{"quality":..., "constraint":..., "evidence":..., "tool":...}`
+    2. Markdown 格式（assessor 兼容）：`## 时间` 标题 + `- **约束**: X` 等多行字段
     """
     entries = []
+    # 先按 ## 标题分段（assessor 多行 Markdown 格式）
+    current: Dict[str, str] = {}
     for line in content.split("\n"):
         line = line.strip()
-        if not line or line.startswith("#"):
+        if not line:
             continue
-        # 尝试匹配格式：- [日期时间] 约束: X | 证据: Y | 工具: Z
+        # JSONL 事件行
+        if line.startswith("{"):
+            try:
+                obj = json.loads(line)
+                if isinstance(obj, dict) and "constraint" in obj:
+                    entries.append(
+                        {
+                            "timestamp": obj.get("timestamp", ""),
+                            "constraint": obj["constraint"],
+                            "evidence": obj.get("evidence", ""),
+                            "tool": obj.get("tool", ""),
+                        }
+                    )
+                    continue
+            except (json.JSONDecodeError, ValueError):
+                pass  # 非 JSON，继续尝试 Markdown
+        # 新标题段：保存上一段
+        if line.startswith("## "):
+            if current.get("constraint"):
+                entries.append(current)
+            current = {"timestamp": line[3:].strip()}
+            continue
+        # 单行 Markdown 断言：- **约束**: X
+        m = re.match(r"- \*\*([^:]+)\*\*:\s*(.+)", line)
+        if m:
+            field = m.group(1).strip()
+            value = m.group(2).strip()
+            if field == "约束":
+                current["constraint"] = value
+            elif field == "工具":
+                current["tool"] = value
+            elif field == "证据":
+                current["evidence"] = value
+            elif field == "会话":
+                current["session"] = value
+            continue
+        # 尝试旧格式：- [日期时间] 约束: X | 证据: Y | 工具: Z
         m = re.match(r'- \[([^\]]+)\]\s*约束:\s*([^|]+)\s*\|\s*证据:\s*([^|]+)\s*(?:\|\s*工具:\s*(\S+))?', line)
         if m:
             entries.append({
@@ -89,6 +129,9 @@ def _parse_violations(content: str) -> List[Dict[str, str]]:
                 "evidence": m.group(3).strip(),
                 "tool": m.group(4).strip() if m.group(4) else ""
             })
+    # 收尾：保存最后一段
+    if current.get("constraint"):
+        entries.append(current)
     return entries
 
 

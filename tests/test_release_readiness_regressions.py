@@ -47,11 +47,8 @@ def test_hard_constraints_are_isolated_between_sessions() -> None:
     SessionPolicyStore.reset_instance()
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="已知缺陷：assessor 写入的 Markdown 格式无法被 immune_audit 解析",
-)
 def test_immune_audit_parses_assessor_output_format() -> None:
+    """XF-AUDIT-001 -> AUD-001: assessor 输出格式可被 immune_audit 解析。"""
     from deepseek_harness.immune_audit import _parse_violations
 
     content = """

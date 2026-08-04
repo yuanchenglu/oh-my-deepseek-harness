@@ -109,32 +109,30 @@ def _check_command_against_constraint(command: str, constraint: str) -> bool:
 
 
 def _record_violation(violation: Dict[str, Any], session_id: str) -> None:
-    """将违反记录追加到 constraint-violations.md，异常时静默降级。"""
+    """将违反记录作为结构化事件追加到 JSONL（AUD-001 唯一事实源）。
+
+    异常时静默降级（不阻断工具流程）。
+    """
     try:
-        now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
-        entry = (
-            f"\n## {now}\n"
-            f"- **约束**: {violation['constraint']}\n"
-            f"- **工具**: {violation['tool']}\n"
-            f"- **证据**: {violation['evidence']}\n"
-            f"- **会话**: {session_id}\n"
-        )
-        parent_dir = os.path.dirname(_CONSTRAINT_VIOLATIONS_FILE)
-        if parent_dir and not os.path.exists(parent_dir):
-            os.makedirs(parent_dir, exist_ok=True)
-        with open(_CONSTRAINT_VIOLATIONS_FILE, "a", encoding="utf-8") as f:
-            f.write(entry)
+        from .audit_events import append_event
+
+        event = {
+            "quality": violation.get("quality", "violation"),
+            "constraint": violation["constraint"],
+            "tool": violation["tool"],
+            "evidence": violation["evidence"],
+            "session": session_id,
+        }
+        append_event(event)
         logger.info(
-            "约束违反记录已写入: %s — %s",
+            "约束违反事件已写入: %s — %s",
             violation["constraint"],
             violation["tool"],
         )
     except PermissionError:
-        logger.warning("写入约束违反记录文件权限不足: %s", _CONSTRAINT_VIOLATIONS_FILE)
+        logger.warning("写入审计事件文件权限不足")
     except OSError as e:
-        logger.warning(
-            "写入约束违反记录文件 IO 错误: %s — %s", _CONSTRAINT_VIOLATIONS_FILE, e
-        )
+        logger.warning("写入审计事件文件 IO 错误: %s", e)
 
 
 def _check_constraint_violation(

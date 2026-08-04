@@ -43,7 +43,7 @@
 | M3 | `PLAN-002` | PLAN-001 | state machine | #36 | PR #104 · `PLAN-002.md` | **Complete** |
 | M3 | `PLAN-003` | PLAN-002 | query/archive/delete | #37 | PR #105 · `PLAN-003.md` | **Complete** |
 | M3 | `CP-001` | PLAN-003 | Checkpoint | #38 | PR #106 · `CP-001.md` | **Complete** |
-| M3 | `AUD-001` | SES-001 | Audit source of truth | #39 | pending | Blocked |
+| M3 | `AUD-001` | SES-001 | Audit source of truth | #39 | PR #107 · `AUD-001.md` | **Complete** |
 | M3 | `OPS-001` | AUD-001 | manual audit CLI | #40 | pending | Blocked |
 | M3 | `INTENT-001` | CON-001 | intent confidence | #41 | pending | Blocked |
 | M4 | `DOC-001` | M2 + M3 | capability docs | #42 | pending | Blocked |
@@ -142,7 +142,7 @@
 | `CR-P0-004` | CTX-003 | Complete by PR #85 |
 | `CR-P0-005` | SES-001 | Open |
 | `CR-P1-001` | CON-001 | Open |
-| `CR-P1-002` | AUD-001 | Open |
+| `CR-P1-002` | AUD-001 | Complete (JSONL 审计事件源) |
 | `CR-P1-003` | OPS-001 | Open |
 | `CR-P1-004` | MEM-002 | Complete (storage dedup 由 MEM-001, delete/import 由 MEM-002) |
 | `CR-P1-005` | PLAN-001 | Complete (DAG 校验 + cascade) |
