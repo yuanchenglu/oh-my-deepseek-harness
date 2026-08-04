@@ -218,6 +218,10 @@ class MemoryEntry(BaseModel):
         default_factory=lambda: datetime.now(timezone.utc),
         description="创建时间（UTC ISO-8601）",
     )
+    source: Optional[str] = Field(
+        default=None,
+        description="记忆来源标识（如文件名），用于内容去重与来源追溯",
+    )
 
     model_config = {"from_attributes": True}
 
