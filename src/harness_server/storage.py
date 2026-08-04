@@ -172,6 +172,8 @@ class HarnessStorage:
             # ── 第 2 组：Memory Tagger 表 ─────────────────
             # memories 表：存储每条记忆的内容、标签、层级
             # tags 用 JSON 字符串存储（因为 SQLite 没有数组类型）
+            # content_hash = sha256(content|source)，配合唯一索引实现
+            # TC-MEM-003/004 要求的去重不变量（同内容同来源 → 一条）。
             conn.execute("""
                 CREATE TABLE IF NOT EXISTS memories (
                     id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -179,7 +181,8 @@ class HarnessStorage:
                     tags        TEXT    NOT NULL DEFAULT '[]',
                     layer       TEXT    NOT NULL,
                     created_at  TEXT    NOT NULL,
-                    source      TEXT    DEFAULT NULL
+                    source      TEXT    DEFAULT NULL,
+                    content_hash TEXT   NOT NULL DEFAULT ''
                 )
             """)
             conn.execute(
@@ -187,6 +190,46 @@ class HarnessStorage:
             )
             conn.execute(
                 "CREATE INDEX IF NOT EXISTS idx_memories_created_at ON memories(created_at)"
+            )
+            # content_hash + source 唯一索引：同内容同来源只保留一条（TC-MEM-003）
+            # 注意：旧库可能还没有 content_hash 列，索引创建必须放在下面的
+            # ALTER 迁移之后，否则会报 "no such column"。
+
+            # 兼容旧库：确保 memories 表有 content_hash 列且唯一索引已建。
+            # 分两种情况：
+            #   A) 列不存在（老库）→ 加列 + 清理重复 + 回填 + 建索引
+            #   B) 列存在但未回填（此前 ALTER 加了列但回填失败/中断）→ 补回填
+            cols = {
+                r["name"]
+                for r in conn.execute("PRAGMA table_info(memories)").fetchall()
+            }
+            if "content_hash" not in cols:
+                conn.execute(
+                    "ALTER TABLE memories ADD COLUMN content_hash TEXT NOT NULL DEFAULT ''"
+                )
+            # 回填前先清理重复：同 content+source 的旧行只保留 id 最大的一条，
+            # 避免唯一索引因存量脏数据（CR-P1-004 导入不幂等）建索引失败。
+            conn.execute(
+                "DELETE FROM memories WHERE id NOT IN ("
+                "  SELECT MAX(id) FROM memories "
+                "  GROUP BY content, source"
+                ")"
+            )
+            # 回填所有 content_hash 为空的行（含旧行与中断残留）
+            empty_rows = conn.execute(
+                "SELECT id, content, source FROM memories"
+            ).fetchall()
+            for r in empty_rows:
+                conn.execute(
+                    "UPDATE memories SET content_hash = ? WHERE id = ?",
+                    (
+                        self._content_hash(r["content"], r["source"]),
+                        r["id"],
+                    ),
+                )
+            conn.execute(
+                "CREATE UNIQUE INDEX IF NOT EXISTS idx_memories_content_source "
+                "ON memories(content_hash)"
             )
 
             # ── 第 3 组：Checkpoint Review 表 ──────────────
@@ -464,12 +507,15 @@ class HarnessStorage:
     def insert_memory(self, entry: MemoryEntry, source: Optional[str] = None) -> int:
         """插入一条记忆
 
+        通过 content_hash（content + source 的 sha256）配合唯一索引实现幂等：
+        同内容 + 同来源重复插入时，INSERT OR IGNORE 会静默跳过，不产生重复行。
+
         Args:
             entry: 记忆条目对象
             source: 记忆来源（比如文件名），可选
 
         Returns:
-            新插入记录的自增 ID
+            新插入记录的自增 ID；若因去重被忽略则返回 0
         """
         conn = self._connection()
         try:
@@ -477,15 +523,28 @@ class HarnessStorage:
             created = entry.created_at.isoformat() if entry.created_at else (
                 datetime.now(timezone.utc).isoformat()
             )
+            content_hash = self._content_hash(entry.content, source)
             cur = conn.execute(
-                "INSERT INTO memories (content, tags, layer, created_at, source) "
-                "VALUES (?, ?, ?, ?, ?)",
-                (entry.content, tags_json, entry.layer.value, created, source),
+                "INSERT OR IGNORE INTO memories "
+                "(content, tags, layer, created_at, source, content_hash) "
+                "VALUES (?, ?, ?, ?, ?, ?)",
+                (entry.content, tags_json, entry.layer.value, created, source, content_hash),
             )
             conn.commit()
             return cur.lastrowid or 0
         finally:
             conn.close()
+
+    @staticmethod
+    def _content_hash(content: str, source: Optional[str]) -> str:
+        """计算内容指纹：content + source 的 sha256
+
+        把来源标识拼进哈希，使得"同内容不同来源"（TC-MEM-004）能保留两条，
+        而"同内容同来源"（TC-MEM-003）哈希相同、被唯一索引去重。
+        """
+        import hashlib
+
+        return hashlib.sha256(f"{content}|{source or ''}".encode("utf-8")).hexdigest()
 
     def bulk_insert_memories(
         self, entries: List[MemoryEntry], source: Optional[str] = None,
@@ -507,10 +566,14 @@ class HarnessStorage:
                 created = e.created_at.isoformat() if e.created_at else (
                     datetime.now(timezone.utc).isoformat()
                 )
-                data.append((e.content, tags_json, e.layer.value, created, source))
+                content_hash = self._content_hash(e.content, source)
+                data.append(
+                    (e.content, tags_json, e.layer.value, created, source, content_hash)
+                )
             conn.executemany(
-                "INSERT INTO memories (content, tags, layer, created_at, source) "
-                "VALUES (?, ?, ?, ?, ?)",
+                "INSERT OR IGNORE INTO memories "
+                "(content, tags, layer, created_at, source, content_hash) "
+                "VALUES (?, ?, ?, ?, ?, ?)",
                 data,
             )
             conn.commit()
@@ -685,6 +748,7 @@ class HarnessStorage:
             tags=tags,
             layer=MemoryLayer(row["layer"]),
             created_at=created,
+            source=row["source"],
         )
 
     # ════════════════════════════════════════════════════════════

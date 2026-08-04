@@ -164,11 +164,8 @@ def test_project_versions_are_consistent() -> None:
     assert requires_python_match.group(1) == ">=3.10,<3.13"
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="已知缺陷：启动导入没有内容唯一键，同一记忆会重复写入",
-)
 def test_memory_import_storage_is_idempotent(tmp_path: Path) -> None:
+    """XF-MEM-001 -> MEM-001: storage 层 content_hash+source 唯一索引使导入幂等。"""
     from harness_server.models import MemoryEntry, MemoryLayer
     from harness_server.storage import HarnessStorage
 

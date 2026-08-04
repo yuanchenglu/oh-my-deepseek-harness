@@ -28,28 +28,28 @@
 任何交接快照与 GitHub 事实冲突时，以远程事实为准并同步修正文档。
 
 ════════════════════════════════════════════════
-二、当前事实快照（2026-08-03）
+二、当前事实快照（2026-08-04）
 ════════════════════════════════════════════════
-- 当前 develop 基线：593dadf（docs(status) snapshot at MEM-001）
+- 当前 develop 基线：b10427e（MEM-001 merge 后更新）
 - master：398701c5cf6495180a7a7566f09921cf126a054a（与 develop diverged，不提前合并）
 - 固定 Work ID：48
-- Complete：23/48（47.9%）
-- Not started / dependency blocked：25/48
+- Complete：24/48（50.0%）
+- Not started / dependency blocked：24/48
 - M0：Complete / G0：PASS
 - M1：8/8 Complete / G1：PASS
 - M2：Complete（CTX-001/002/003/004 + SES-001 + PRIV-001）/ G2：PASS
-- M3：CON-001 Complete（PR #97）
+- M3：CON-001 + MEM-001 Complete（PR #97 / PR #101）
 - 产品成熟度：Experimental Preview
-- 下一唯一合法任务：MEM-001 / Issue #33
-- 2 strict XFAIL：XF-AUDIT-001（→AUD-001 #39）、XF-MEM-001（→MEM-002 #34）
+- 下一唯一合法任务：MEM-002 / Issue #34
+- 1 strict XFAIL：XF-AUDIT-001（→AUD-001 #39）；XF-MEM-001 已由 MEM-001 关闭
 - master、Tag、GitHub Release、PyPI 均未进入发布阶段
 - PyPI 按 REL-005 保持禁用
 
 ════════════════════════════════════════════════
-三、剩余任务全清单（25 个 Work ID + 4 个 Gate）
+三、剩余任务全清单（24 个 Work ID + 4 个 Gate）
 ════════════════════════════════════════════════
 M3（Contract & Data Integrity，退出 G3）：
-- MEM-001 #33：memory_store/Tag/Query、content hash、source identity、mtime、import batch、λ 连续边界
+- MEM-001 #33：✅ Complete（PR #101）— memory_store/Tag/Query、content hash、source identity、mtime、import batch、λ 连续边界
 - MEM-002 #34：默认关闭 startup import、固定 CLI/API delete、dry run、迁移报告；Delete 缺 --confirm 拒绝；不增加公共 Tool
 - PLAN-001 #35：自依赖/缺失依赖/跨 Plan/循环、更新后校验、Cascade 影响集合
 - PLAN-002 #36：状态机、创建/更新事务、短任务重复步骤修复

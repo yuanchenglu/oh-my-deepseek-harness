@@ -37,7 +37,7 @@
 | M2 | `SES-001` | G1 + PKG-001 | `CR-P0-005`；`TC-POLICY-001–005` | #30 | PR #94 · `SES-001.md` | **Complete** |
 | M2 | `PRIV-001` | CTX-003 + SES-001 | privacy/redaction | #31 | PR #95 · `PRIV-001.md` | **Complete** |
 | M3 | `CON-001` | G2 + PKG-001 | `TC-CONTRACT-001–010` | #32 | PR #97 · `CON-001.md` | **Complete** |
-| M3 | `MEM-001` | CON-001 | Memory store/query/dedup | #33 | pending | Blocked |
+| M3 | `MEM-001` | CON-001 | Memory store/query/dedup | #33 | PR #101 · `MEM-001.md` | **Complete** |
 | M3 | `MEM-002` | MEM-001 | Memory import/delete/idempotence | #34 | pending | Blocked |
 | M3 | `PLAN-001` | MEM-002 | DAG/cascade | #35 | pending | Blocked |
 | M3 | `PLAN-002` | PLAN-001 | state machine | #36 | pending | Blocked |
@@ -144,7 +144,7 @@
 | `CR-P1-001` | CON-001 | Open |
 | `CR-P1-002` | AUD-001 | Open |
 | `CR-P1-003` | OPS-001 | Open |
-| `CR-P1-004` | MEM-002 | Open |
+| `CR-P1-004` | MEM-002 | Partial (storage dedup 由 MEM-001 完成) |
 | `CR-P1-005` | PLAN-001 | Open |
 | `CR-P1-006` | INTENT-001 | Open |
 | `CR-P1-007` | PRIV-001 | Open |
@@ -164,7 +164,7 @@
 | `XF-POLICY-001` | SES-001 #30 | Open |
 | `XF-AUDIT-001` | AUD-001 #39 | Open |
 | `XF-CONTRACT-001–003` | CON-001 #32 | Open |
-| `XF-MEM-001` | MEM-002 #34 | Open |
+| `XF-MEM-001` | MEM-001 #33 | Fixed (storage dedup) |
 | `XF-INSTALL-001` | INS-001 #22 | Fixed |
 | `XF-DEPS-001` | PKG-002 #19 | Fixed |
 | `XF-RELEASE-001` | REL-001 #5 | Fixed |
