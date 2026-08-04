@@ -26,9 +26,12 @@ Plan 创建非原子：create_plan + insert_steps 分开调用，insert 失败�
 ## 3. CI evidence
 
 PR #104:
-- test (3.10): PENDING
-- test (3.11): PENDING
-- test (3.12): PENDING
+- test (3.10): SUCCESS
+- test (3.11): SUCCESS
+- test (3.12): SUCCESS
+
+Note: 首次 CI 因 test_tool_contract 的过时 no-blocked 断言失败（与 FR-PLAN-004
+冲突），删除该断言后重跑全绿。
 
 ## 4. TC coverage
 
