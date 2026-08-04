@@ -40,7 +40,7 @@
 | M3 | `MEM-001` | CON-001 | Memory store/query/dedup | #33 | PR #101 · `MEM-001.md` | **Complete** |
 | M3 | `MEM-002` | MEM-001 | Memory import/delete/idempotence | #34 | PR #102 · `MEM-002.md` | **Complete** |
 | M3 | `PLAN-001` | MEM-002 | DAG/cascade | #35 | PR #103 · `PLAN-001.md` | **Complete** |
-| M3 | `PLAN-002` | PLAN-001 | state machine | #36 | pending | Blocked |
+| M3 | `PLAN-002` | PLAN-001 | state machine | #36 | PR #104 · `PLAN-002.md` | **Complete** |
 | M3 | `PLAN-003` | PLAN-002 | query/archive/delete | #37 | pending | Blocked |
 | M3 | `CP-001` | PLAN-003 | Checkpoint | #38 | pending | Blocked |
 | M3 | `AUD-001` | SES-001 | Audit source of truth | #39 | pending | Blocked |

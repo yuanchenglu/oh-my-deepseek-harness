@@ -263,6 +263,58 @@ class HarnessStorage:
     # Plan Engine CRUD 方法
     # ════════════════════════════════════════════════════════════
 
+    def create_plan_with_steps(self, plan_id: str, steps: List[OKRPlanStep]) -> bool:
+        """原子创建 Plan + Steps（TC-PLAN-001）
+
+        与 create_plan + insert_steps 分开调用不同，本方法把 Plan 元数据
+        创建与步骤插入放进同一个事务：
+        - 先校验 DAG 不变量（复用 _validate_dag）
+        - 单连接内完成 plan 创建 + steps 插入
+        - 任一步失败整体回滚，不残留半状态（FR-PLAN-006）
+
+        Args:
+            plan_id: Plan 唯一标识
+            steps: 步骤列表
+
+        Returns:
+            True 表示创建成功；False 表示 Plan 已存在
+        """
+        self._validate_dag(plan_id, steps)
+        now = datetime.now(timezone.utc).isoformat()
+        conn = self._connection()
+        try:
+            conn.execute(
+                "INSERT INTO plans (plan_id, created_at, updated_at) VALUES (?, ?, ?)",
+                (plan_id, now, now),
+            )
+            data = []
+            for s in steps:
+                dep_json = json.dumps(s.dependency_ids, ensure_ascii=False)
+                data.append(
+                    (
+                        s.step_id, plan_id, s.text, s.key,
+                        s.status.value, s.parent_id, dep_json,
+                        s.association_strength.value,
+                    )
+                )
+            if data:
+                conn.executemany(
+                    "INSERT INTO steps "
+                    "(step_id, plan_id, text, key, status, parent_id, dependency_ids_json, association_strength) "
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                    data,
+                )
+            conn.commit()
+            return True
+        except sqlite3.IntegrityError:
+            logger.warning("Plan 已存在: %s", plan_id)
+            return False
+        except sqlite3.Error as e:
+            logger.error("原子创建 Plan 失败: %s", e)
+            raise
+        finally:
+            conn.close()
+
     def create_plan(self, plan_id: str) -> bool:
         """创建 Plan 记录
 
@@ -468,6 +520,18 @@ class HarnessStorage:
                 association_strength=current.association_strength,
             )
             self._validate_dag(plan_id, [updated])
+
+        # 若更新状态，校验状态转换合法性（TC-PLAN-008：非法转换拒绝）
+        if "status" in fields:
+            current = self.get_step(step_id)
+            if current is None:
+                return False
+            new_status = fields["status"]
+            if isinstance(new_status, PlanStatus):
+                if not current.status.can_transition_to(new_status):
+                    raise ValueError(
+                        f"非法状态转换: {current.status.value} -> {new_status.value}"
+                    )
 
         conn = self._connection()
         try:
