@@ -1146,10 +1146,15 @@ async def cascade(req: CascadeRequest):
     summary="获取 Plan 状态和依赖图",
     description="返回完整 Plan + 依赖图邻接表",
 )
-async def get_plan_status(plan_id: str):
-    """GET /plan/status/{plan_id} — 获取 Plan 状态和依赖图"""
+async def get_plan_status(
+    plan_id: str, include_archived: bool = False,
+):
+    """GET /plan/status/{plan_id} — 获取 Plan 状态和依赖图
+
+    默认不返回已归档 Plan（TC-PLAN-012），include_archived=true 可查。
+    """
     try:
-        meta = storage.get_plan_meta(plan_id)
+        meta = storage.get_plan_meta(plan_id, include_archived=include_archived)
         if not meta:
             raise HTTPException(status_code=404, detail=f"Plan 不存在: {plan_id}")
 
