@@ -47,7 +47,7 @@
 | M3 | `OPS-001` | AUD-001 | manual audit CLI | #40 | PR #108 · `OPS-001.md` | **Complete** |
 | M3 | `INTENT-001` | CON-001 | intent confidence | #41 | PR #109 · `INTENT-001.md` | **Complete** |
 | M4 | `DOC-001` | M2 + M3 | capability docs | #42 | PR #110 · `DOC-001.md` | **Complete** |
-| M4 | `DOC-002` | DOC-001 | lifecycle/privacy guides | #43 | pending | Blocked |
+| M4 | `DOC-002` | DOC-001 | lifecycle/privacy guides | #43 | PR #112 · `DOC-002.md` | **Complete** |
 | M4 | `QA-001` | M2 + M3 | test channels | #44 | pending | Blocked |
 | M4 | `QA-002` | QA-001 | quality/audits | #45 | pending | Blocked |
 | M4 | `COMPAT-001` | COMPAT-000 + QA-002 | real Hermes E2E | #46 | pending | Blocked |
@@ -147,7 +147,7 @@
 | `CR-P1-004` | MEM-002 | Complete (storage dedup 由 MEM-001, delete/import 由 MEM-002) |
 | `CR-P1-005` | PLAN-001 | Complete (DAG 校验 + cascade) |
 | `CR-P1-006` | INTENT-001 | Complete (否定语义 + override + 阈值) |
-| `CR-P1-007` | PRIV-001 | Open |
+| `CR-P1-007` | PRIV-001 + DOC-002 | Complete (隐私指南) |
 | `CR-P2-001` | DOC-001 | Complete (Skill 学习收敛为候选提示) |
 | `CR-P2-002` | REL-001 | Complete |
 | `CR-P2-003` | QA-001/QA-002 | Open |
