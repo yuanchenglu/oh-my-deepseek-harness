@@ -48,7 +48,7 @@
 | M3 | `INTENT-001` | CON-001 | intent confidence | #41 | PR #109 · `INTENT-001.md` | **Complete** |
 | M4 | `DOC-001` | M2 + M3 | capability docs | #42 | PR #110 · `DOC-001.md` | **Complete** |
 | M4 | `DOC-002` | DOC-001 | lifecycle/privacy guides | #43 | PR #112 · `DOC-002.md` | **Complete** |
-| M4 | `QA-001` | M2 + M3 | test channels | #44 | pending | Blocked |
+| M4 | `QA-001` | M2 + M3 | test channels | #44 | PR #113 · `QA-001.md` | **Complete** |
 | M4 | `QA-002` | QA-001 | quality/audits | #45 | pending | Blocked |
 | M4 | `COMPAT-001` | COMPAT-000 + QA-002 | real Hermes E2E | #46 | pending | Blocked |
 | M4 | `SEC-001` | COMPAT-001 + PRIV-001 | license/SBOM/dependency | #47 | pending | Blocked |
