@@ -1,19 +1,19 @@
 # Open-source Release Execution Status
 
 - Status date: 2026-08-04
-- Normative contract: `OPEN_SOURCE_RELEASE_PLAN.md` v2.3.20
-- Implementation baseline: `develop@master`（PLAN-003 merge 后更新）
+- Normative contract: `OPEN_SOURCE_RELEASE_PLAN.md` v2.3.21
+- Implementation baseline: `develop@master`（CP-001 merge 后更新）
 - Product maturity: **Experimental Preview**
-- Decision: **G0 PASS · G1 PASS · G2 PASS · M2 Complete · M3: CON/MEM-001/MEM-002/PLAN-001/PLAN-002/PLAN-003 Complete**
-- Next serial step: **CP-001 / Issue #38**
+- Decision: **G0 PASS · G1 PASS · G2 PASS · M2 Complete · M3: CON/MEM-001/MEM-002/PLAN-001/PLAN-002/PLAN-003/CP-001 Complete**
+- Next serial step: **AUD-001 / Issue #39**
 
 ## Progress
 
 | Status | Work IDs | Ratio |
 |---|---:|---:|
-| Complete | 28 | 58.3% |
+| Complete | 29 | 60.4% |
 | In progress | 0 | 0.0% |
-| Not started / blocked | 20 | 41.7% |
+| Not started / blocked | 19 | 39.6% |
 | Total | 48 | 100% |
 
 ## Gates
@@ -38,8 +38,8 @@
 | PLAN-001 | #35 | PR #103 · `PLAN-001.md` | Complete |
 | PLAN-002 | #36 | PR #104 · `PLAN-002.md` | Complete |
 | PLAN-003 | #37 | PR #105 · `PLAN-003.md` | Complete |
-| CP-001 | #38 | pending | **Next** |
-| AUD-001 | #39 | pending | Blocked |
+| CP-001 | #38 | PR #106 · `CP-001.md` | Complete |
+| AUD-001 | #39 | pending | **Next** |
 | OPS-001 | #40 | pending | Blocked |
 | INTENT-001 | #41 | pending | Blocked |
 
