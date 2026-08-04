@@ -30,17 +30,18 @@
 ════════════════════════════════════════════════
 二、当前事实快照（2026-08-04）
 ════════════════════════════════════════════════
-- 当前 develop 基线：master（INTENT-001 merge 后更新）
+- 当前 develop 基线：master（DOC-001 merge 后更新）
 - master：398701c5cf6495180a7a7566f09921cf126a054a（与 develop diverged，不提前合并）
 - 固定 Work ID：48
-- Complete：32/48（66.7%）
-- Not started / dependency blocked：16/48
+- Complete：33/48（68.8%）
+- Not started / dependency blocked：15/48
 - M0：Complete / G0：PASS
 - M1：8/8 Complete / G1：PASS
 - M2：Complete（CTX-001/002/003/004 + SES-001 + PRIV-001）/ G2：PASS
 - M3：Complete（10/10）— CON-001 + MEM-001/002 + PLAN-001/002/003 + CP-001 + AUD-001 + OPS-001 + INTENT-001
+- M4：DOC-001 Complete（PR #110）— 能力状态分级 + evidence-backed README
 - 产品成熟度：Experimental Preview
-- 下一唯一合法任务：G3 Gate（M3 退出）
+- 下一唯一合法任务：DOC-002（#43）
 - XFAIL：**0（全清）**
 - master、Tag、GitHub Release、PyPI 均未进入发布阶段
 - PyPI 按 REL-005 保持禁用
@@ -60,7 +61,7 @@ M3（Contract & Data Integrity，退出 G3）：
 - INTENT-001 #41：✅ Complete（PR #109）— 修复低置信阈值、否定语义、用户显式优先（CON-001 后可并行）
 
 M4（开源可用性、兼容性、RC，退出 G3）：
-- DOC-001 #42：README 按 Stable/Beta/Experimental/Degraded/Removed 分级
+- DOC-001 #42：✅ Complete（PR #110）— 能力五级状态分级 + evidence-backed README（CR-P2-001/005 收敛）
 - DOC-002 #43：安装/升级/Doctor/卸载/隐私/Troubleshooting/Known Limitations
 - QA-001 #44：test-fast / test-integration / test-release 三条通道
 - QA-002 #45：Ruff、类型、ShellCheck、Coverage、依赖与 Secret 扫描

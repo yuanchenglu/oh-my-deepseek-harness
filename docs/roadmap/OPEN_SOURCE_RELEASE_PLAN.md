@@ -148,7 +148,7 @@ G2已评估通过。Evidence: `docs/testing/evidence/GATE-G2.md`. PR #96 · `a84
 | `AUD-001` | #39 | CON-001 | PR #107 · `AUD-001.md` | **Complete** |
 | `OPS-001` | #40 | AUD-001 | PR #108 · `OPS-001.md` | **Complete** |
 | `INTENT-001` | #41 | CON-001 | PR #109 · `INTENT-001.md` | **Complete** |
-| `DOC-001` | #42 | M2 + M3 | pending | **Next** |
+| `DOC-001` | #42 | M2 + M3 | PR #110 · `DOC-001.md` | **Complete** |
 ## 8. 固定支持边界
 
 - Hermes 候选固定为 **Hermes Agent v0.19.0 / Git tag `v2026.7.20`**；
