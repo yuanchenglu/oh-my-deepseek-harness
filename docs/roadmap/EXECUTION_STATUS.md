@@ -1,20 +1,20 @@
 # Open-source Release Execution Status
 
 - Status date: 2026-08-04
-- Normative contract: `OPEN_SOURCE_RELEASE_PLAN.md` v2.3.24
-- Implementation baseline: `develop@master`（DOC-001 merge 后更新）
+- Normative contract: `OPEN_SOURCE_RELEASE_PLAN.md` v2.3.26
+- Implementation baseline: `develop@master`（DOC-002 merge 后更新）
 - Product maturity: **Experimental Preview**
-- Decision: **G0 PASS · G1 PASS · G2 PASS · M2 Complete · M3 Complete（10/10）**
-- Next serial step: **DOC-002（M4 第 2 项）**
+- Decision: **G0 PASS · G1 PASS · G2 PASS · M2 Complete · M3 Complete · M4: DOC-001/DOC-002 Complete**
+- Next serial step: **QA-001 / Issue #44**
 - XFAIL: **0（全清）**
 
 ## Progress
 
 | Status | Work IDs | Ratio |
 |---|---:|---:|
-| Complete | 33 | 68.8% |
+| Complete | 34 | 70.8% |
 | In progress | 0 | 0.0% |
-| Not started / blocked | 15 | 31.3% |
+| Not started / blocked | 14 | 29.2% |
 | Total | 48 | 100% |
 
 ## Gates
@@ -49,8 +49,8 @@
 | Work ID | Issue | Delivery | Status |
 |---|---:|---|---|
 | DOC-001 | #42 | PR #110 · `DOC-001.md` | Complete |
-| DOC-002 | #43 | pending | **Next** |
-| QA-001 | #44 | pending | Blocked |
+| DOC-002 | #43 | PR #112 · `DOC-002.md` | Complete |
+| QA-001 | #44 | pending | **Next** |
 | QA-002 | #45 | pending | Blocked |
 | COMPAT-001 | #46 | pending | Blocked |
 | SEC-001 | #47 | pending | Blocked |
