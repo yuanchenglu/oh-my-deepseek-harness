@@ -139,14 +139,24 @@ class HarnessStorage:
         conn = self._connection()
         try:
             # ── 第 1 组：Plan Engine 表 ──────────────────
-            # plans 表：存储 Plan 元数据（ID + 时间戳）
+            # plans 表：存储 Plan 元数据（ID + 时间戳 + archived 标志）
             conn.execute("""
                 CREATE TABLE IF NOT EXISTS plans (
                     plan_id     TEXT PRIMARY KEY,
                     created_at  TEXT NOT NULL,
-                    updated_at  TEXT NOT NULL
+                    updated_at  TEXT NOT NULL,
+                    archived    INTEGER NOT NULL DEFAULT 0
                 )
             """)
+            # 兼容旧库：补 archived 列
+            plan_cols = {
+                r["name"]
+                for r in conn.execute("PRAGMA table_info(plans)").fetchall()
+            }
+            if "archived" not in plan_cols:
+                conn.execute(
+                    "ALTER TABLE plans ADD COLUMN archived INTEGER NOT NULL DEFAULT 0"
+                )
             # steps 表：存储每个 PlanStep 的完整数据
             # dependency_ids 用 JSON 字符串存储（因为 SQLite 没有数组类型）
             conn.execute("""
@@ -358,27 +368,78 @@ class HarnessStorage:
         finally:
             conn.close()
 
-    def get_plan_meta(self, plan_id: str) -> Optional[Dict]:
+    def get_plan_meta(
+        self, plan_id: str, include_archived: bool = False,
+    ) -> Optional[Dict]:
         """获取 Plan 元数据（不含步骤）
 
         Args:
             plan_id: Plan 唯一标识
+            include_archived: 是否包含已归档 Plan（默认 False，TC-PLAN-012）
 
         Returns:
             包含 plan_id / created_at / updated_at 的字典，不存在则 None
         """
         conn = self._connection()
         try:
-            row = conn.execute(
-                "SELECT * FROM plans WHERE plan_id = ?", (plan_id,)
-            ).fetchone()
+            sql = "SELECT * FROM plans WHERE plan_id = ?"
+            params: List[object] = [plan_id]
+            if not include_archived:
+                sql += " AND archived = 0"
+            row = conn.execute(sql, params).fetchone()
             if row:
                 return {
                     "plan_id": row["plan_id"],
                     "created_at": row["created_at"],
                     "updated_at": row["updated_at"],
+                    "archived": bool(row["archived"]),
                 }
             return None
+        finally:
+            conn.close()
+
+    def archive_plan(self, plan_id: str) -> bool:
+        """归档 Plan（TC-PLAN-012）
+
+        归档后默认查询（plan_status）不返回，include_archived 可返回。
+
+        Args:
+            plan_id: Plan 唯一标识
+
+        Returns:
+            True 表示归档成功；False 表示 Plan 不存在
+        """
+        conn = self._connection()
+        try:
+            cur = conn.execute(
+                "UPDATE plans SET archived = 1, updated_at = ? WHERE plan_id = ?",
+                (datetime.now(timezone.utc).isoformat(), plan_id),
+            )
+            conn.commit()
+            return cur.rowcount > 0
+        finally:
+            conn.close()
+
+    def delete_plan(self, plan_id: str) -> bool:
+        """删除 Plan 及其所有步骤（TC-PLAN-013）
+
+        只删除目标 Plan，不影响其他 Plan（隔离断言）。
+
+        Args:
+            plan_id: Plan 唯一标识
+
+        Returns:
+            True 表示删除成功；False 表示 Plan 不存在
+        """
+        conn = self._connection()
+        try:
+            # 先删步骤（外键约束），再删 plan 元数据
+            conn.execute("DELETE FROM steps WHERE plan_id = ?", (plan_id,))
+            cur = conn.execute(
+                "DELETE FROM plans WHERE plan_id = ?", (plan_id,)
+            )
+            conn.commit()
+            return cur.rowcount > 0
         finally:
             conn.close()
 

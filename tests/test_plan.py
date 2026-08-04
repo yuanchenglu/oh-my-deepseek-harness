@@ -236,3 +236,72 @@ def test_concurrent_update_no_half_state(tmp_path: Path) -> None:
     # 最终状态必须一致（无半状态）
     final = store.get_step("s1").status
     assert final in (PlanStatus.IN_PROGRESS, PlanStatus.COMPLETED)
+
+
+# ════════════════════════════════════════════════════════════════
+# PLAN-003: 查询/归档/删除（TC-PLAN-011/012/013）
+# ════════════════════════════════════════════════════════════════
+
+
+def test_plan_status_returns_full_graph_or_not_found(tmp_path: Path) -> None:
+    """TC-PLAN-011: 按 ID 查询返回完整图或 not_found envelope。"""
+    store = HarnessStorage(str(tmp_path / "plan.db"))
+    store.create_plan_with_steps(
+        "p1",
+        [_step("s1"), _step("s2", deps=["s1"])],
+    )
+
+    meta = store.get_plan_meta("p1")
+    assert meta is not None
+    steps = store.get_steps("p1")
+    assert len(steps) == 2
+
+    # 不存在的 plan → not_found
+    assert store.get_plan_meta("ghost") is None
+
+
+def test_archive_excludes_from_default_query(tmp_path: Path) -> None:
+    """TC-PLAN-012: archive 后默认查询不返回，include-archived 可返回。"""
+    from harness_server.app import get_plan_status
+    from fastapi import HTTPException
+
+    store = HarnessStorage(str(tmp_path / "plan.db"))
+    store.create_plan_with_steps("p1", [_step("s1")])
+
+    # 归档前可查询
+    assert store.get_plan_meta("p1") is not None
+
+    # 归档
+    store.archive_plan("p1")
+
+    # 默认查询（不含 archived）→ 不返回
+    assert store.get_plan_meta("p1", include_archived=False) is None
+    # include-archived → 可返回
+    assert store.get_plan_meta("p1", include_archived=True) is not None
+
+
+def test_delete_requires_confirm_and_isolates_target(tmp_path: Path) -> None:
+    """TC-PLAN-013: 无 --confirm 拒绝；确认后只删目标 Plan。"""
+    from deepseek_harness.cli import main
+
+    store = HarnessStorage(str(tmp_path / "plan.db"))
+    store.create_plan_with_steps("p1", [_step("s1")])
+    store.create_plan_with_steps("p2", [_step("s2")])
+
+    # 无 --confirm → 拒绝，无变化
+    rc = main(
+        ["plan", "delete", "--plan-id", "p1", "--db-path", str(tmp_path / "plan.db")]
+    )
+    assert rc != 0
+    assert store.get_plan_meta("p1") is not None  # 未删除
+
+    # 确认后 → 只删目标 p1，不影响 p2
+    rc = main(
+        [
+            "plan", "delete", "--plan-id", "p1",
+            "--db-path", str(tmp_path / "plan.db"), "--confirm",
+        ]
+    )
+    assert rc == 0
+    assert store.get_plan_meta("p1") is None
+    assert store.get_plan_meta("p2") is not None  # p2 不受影响

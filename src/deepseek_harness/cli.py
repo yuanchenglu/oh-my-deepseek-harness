@@ -157,6 +157,31 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Confirm destructive deletion of memory entries",
     )
+
+    plan = commands.add_parser("plan", help="Manage Plan lifecycle")
+    plan_actions = plan.add_subparsers(dest="plan_command", required=True)
+    _add_common_runtime_options(plan)
+
+    plan_archive = plan_actions.add_parser(
+        "archive", help="Archive a Plan (excluded from default queries)"
+    )
+    plan_archive.add_argument("--plan-id", required=True, help="Plan ID to archive")
+    plan_archive.add_argument(
+        "--db-path", help="SQLite database path (default: RuntimeConfig.db_path)"
+    )
+
+    plan_delete = plan_actions.add_parser(
+        "delete", help="Delete a Plan and its steps"
+    )
+    plan_delete.add_argument("--plan-id", required=True, help="Plan ID to delete")
+    plan_delete.add_argument(
+        "--db-path", help="SQLite database path (default: RuntimeConfig.db_path)"
+    )
+    plan_delete.add_argument(
+        "--confirm",
+        action="store_true",
+        help="Confirm destructive deletion of the Plan",
+    )
     return parser
 
 
@@ -401,6 +426,62 @@ def _run_memory(args: argparse.Namespace) -> int:
         return 2
 
 
+def _run_plan(args: argparse.Namespace) -> int:
+    """处理 plan archive / delete 子命令。
+
+    - archive: 归档 Plan（默认查询不返回，TC-PLAN-012）
+    - delete: 删除 Plan；缺 --confirm 时拒绝（TC-PLAN-013）
+    """
+    try:
+        from harness_server.storage import HarnessStorage
+
+        db_path = args.db_path or RuntimeConfig.from_env().db_path
+        store = HarnessStorage(db_path)
+
+        if args.plan_command == "archive":
+            ok = store.archive_plan(args.plan_id)
+            _emit(
+                {"state": "ok", "archived": ok, "plan_id": args.plan_id},
+                as_json=args.json,
+            )
+            return 0 if ok else 4
+
+        if args.plan_command == "delete":
+            if not args.confirm:
+                _emit(
+                    {
+                        "state": "confirm_required",
+                        "message": "delete requires --confirm to proceed",
+                        "plan_id": args.plan_id,
+                    },
+                    as_json=args.json,
+                    stream=sys.stderr,
+                )
+                return 4
+            ok = store.delete_plan(args.plan_id)
+            _emit(
+                {"state": "ok", "deleted": ok, "plan_id": args.plan_id},
+                as_json=args.json,
+            )
+            return 0 if ok else 4
+
+        raise AssertionError("unsupported plan command")
+    except ValueError as exc:
+        _emit(
+            {"state": "config_error", "message": str(exc)},
+            as_json=args.json,
+            stream=sys.stderr,
+        )
+        return 3
+    except RuntimeStateError as exc:
+        _emit(
+            {"state": "state_error", "message": str(exc)},
+            as_json=args.json,
+            stream=sys.stderr,
+        )
+        return 2
+
+
 def _run_server(args: argparse.Namespace) -> int:
     supervisor = _supervisor(args)
     try:
@@ -473,6 +554,8 @@ def main(argv: list[str] | None = None) -> int:
         return _run_server(args)
     if args.command == "memory":
         return _run_memory(args)
+    if args.command == "plan":
+        return _run_plan(args)
     parser.error("unsupported command")
     return 2
 
