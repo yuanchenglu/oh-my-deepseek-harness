@@ -1,12 +1,12 @@
 # 开源发布执行计划（Open-source Release Execution Plan）
 
-> 文档版本：2.3.14（PRIV-001 Complete / G2 Ready）
+> 文档版本：2.3.16（MEM-001 Complete / M3 1/10）
 >
-> 状态日期：2026-08-03
+> 状态日期：2026-08-04
 >
-> 当前实现事实基线：`develop@d7fd12f`
+> 当前实现事实基线：`develop@b10427e`（MEM-001 merge 后更新）
 >
-> 计划状态：`M1_COMPLETE / G1_PASS / CTX_001_002_003_004_COMPLETE / SES_001_COMPLETE / PRIV_001_COMPLETE / G2_READY`
+> 计划状态：`M1_COMPLETE / G1_PASS / M2_COMPLETE / G2_PASS / CON_001_COMPLETE / MEM_001_COMPLETE / M3_IN_PROGRESS`
 >
 > 当前产品成熟度：`Experimental Preview`
 >
@@ -26,7 +26,7 @@
 
 ## 1. 当前发布判断
 
-当前产品仍是 **Experimental Preview**。G1 PASS、CTX-004 Complete 与 SES-001 Complete 只推进 M2，不表示 Public Beta、master、Tag、GitHub Release、PyPI 或 Stable Ready。
+当前产品仍是 **Experimental Preview**。M2 Complete 与 G2 PASS、CON-001 与 MEM-001 Complete 只推进 M3，不表示 Public Beta、master、Tag、GitHub Release、PyPI 或 Stable Ready。
 
 已完成：
 
@@ -40,17 +40,17 @@
 - `CTX-004`：压缩事务、实际输入 Token 减量、per-Session Compressor 状态、拒绝候选回滚与 Provider 失败 cooldown；
 - `SES-001`：SessionPolicyStore 按 session_id 隔离硬约束状态、显式取消、Session end cleanup、两线程并发 barrier。
 - `PRIV-001`：外发前 Secret Redaction、Summary 默认关闭、数据发送提示、日志隐私默认关闭。
+- `CON-001`：10-Tool 契约、统一错误 Envelope、memory_store schema 定义。
+- `MEM-001`：memory_store 幂等去重（content_hash + source identity）、λ 连续边界、Tag/Store/Query、10k 性能。
 
 ## 2. 固定 Work ID 进度
 
 | 状态 | 数量 | 比例 |
 |---|---:|---:|
-| Complete | 22 | 45.8% |
+| Complete | 24 | 50.0% |
 | In progress | 0 | 0.0% |
-| Not started / dependency blocked | 26 | 54.2% |
+| Not started / dependency blocked | 24 | 50.0% |
 | Total | 48 | 100% |
-
-G2 评估启动后：Complete 22 / G2 in progress / Not started 26。
 
 ## 3. Gate 状态
 
@@ -59,7 +59,7 @@ G2 评估启动后：Complete 22 / G2 in progress / Not started 26。
 | Plan Ready | PASS | 48 Issues、88 FR、17 CR、100 Test IDs |
 | G0 | PASS | PR #61 · `ee516c9b` |
 | G1 | PASS | PR #77 FAIL → PR #78 remediation → PR #79 PASS |
-| G2 | READY | SES-001 + PRIV-001 complete; evaluation pending |
+| G2 | PASS | GATE-G2.md · PR #96 |
 | G3 | NOT_STARTED | 依赖 M2、M3、M4 与 RC Evidence |
 | G4 | NOT_STARTED | 依赖真实 Beta 反馈闭环 |
 | G5 | NOT_STARTED | 依赖 Stable 阶段与真实 soak |
@@ -124,16 +124,22 @@ Codex exact-final-Head review: +1
 
 ## 7. G2 Gate evaluation
 
-G2 is now ready for evaluation. All M2 Work IDs are complete.
+G2已评估通过。Evidence: `docs/testing/evidence/GATE-G2.md`. PR #96 · `a84a0b4`.
 
-Before declaring G2 PASS:
+## 7b. M3 当前状态（Contract & Data Integrity）
 
-1. verify all M2 evidence files exist (CTX-001 through CTX-004, SES-001, PRIV-001);
-2. run full test suite on Python 3.10/3.11/3.12;
-3. confirm no unresolved review threads on any M2 PR;
-4. confirm develop is clean and CI is green;
-5. create `docs/testing/evidence/GATE-G2.md`;
-6. update Plan/Status/Traceability/Handoff.
+| Work ID | Issue | Dependency | Delivery | 状态 |
+|---|---:|---|---|---|
+| `CON-001` | #32 | G2 | PR #97 · `CON-001.md` | **Complete** |
+| `MEM-001` | #33 | CON-001 | PR #101 · `MEM-001.md` | **Complete** |
+| `MEM-002` | #34 | MEM-001 | pending | **Next** |
+| `PLAN-001` | #35 | MEM-002 | pending | Blocked |
+| `PLAN-002` | #36 | PLAN-001 | pending | Blocked |
+| `PLAN-003` | #37 | PLAN-002 | pending | Blocked |
+| `CP-001` | #38 | PLAN-003 | pending | Blocked |
+| `AUD-001` | #39 | CON-001 | pending | Blocked |
+| `OPS-001` | #40 | AUD-001 | pending | Blocked |
+| `INTENT-001` | #41 | CON-001 | pending | Blocked (可并行) |
 
 ## 8. 固定支持边界
 
@@ -143,13 +149,13 @@ Before declaring G2 PASS:
 - real Hermes E2E 属于 `COMPAT-001` / M4 / G3；
 - byte-for-byte reproducibility、SBOM、provenance 属于 `REL-006`；
 - Runtime 当前 9 Tools，目标 10；不得添加 placeholder `memory_store`；
-- 当前 5 strict XFAIL owners：`AUD-001`、`CON-001`×3、`MEM-002`；
+- 当前 1 strict XFAIL owner：`AUD-001`（XF-MEM-001 已由 MEM-001 关闭）；
 - PyPI 按 `REL-005` 保持禁用。
 
 ## 9. 固定串行顺序
 
 ```text
-G2 evaluation -> G2 PASS -> M3 -> M4/G3 -> exact-master RC
+M3 (MEM-002 -> ... -> OPS-001/INTENT-001) -> M4/G3 -> exact-master RC
 v3.0.0-beta.1 -> real Beta feedback/G4 -> Stable prep/SOAK/G5 -> v3.0.0
 ```
 

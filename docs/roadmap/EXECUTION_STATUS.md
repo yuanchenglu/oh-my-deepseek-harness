@@ -1,19 +1,19 @@
 # Open-source Release Execution Status
 
-- Status date: 2026-08-03
-- Normative contract: `OPEN_SOURCE_RELEASE_PLAN.md` v2.3.15
-- Implementation baseline: `develop@02a6c38`
+- Status date: 2026-08-04
+- Normative contract: `OPEN_SOURCE_RELEASE_PLAN.md` v2.3.16
+- Implementation baseline: `develop@b10427e`（MEM-001 merge 后更新）
 - Product maturity: **Experimental Preview**
-- Decision: **G0 PASS · G1 PASS · G2 PASS · M2 Complete · CON-001 Complete**
-- Next serial step: **MEM-001 / Issue #33**
+- Decision: **G0 PASS · G1 PASS · G2 PASS · M2 Complete · M3: CON-001+MEM-001 Complete**
+- Next serial step: **MEM-002 / Issue #34**
 
 ## Progress
 
 | Status | Work IDs | Ratio |
 |---|---:|---:|
-| Complete | 23 | 47.9% |
+| Complete | 24 | 50.0% |
 | In progress | 0 | 0.0% |
-| Not started / blocked | 25 | 52.1% |
+| Not started / blocked | 24 | 50.0% |
 | Total | 48 | 100% |
 
 ## Gates
@@ -33,8 +33,8 @@
 | Work ID | Issue | Delivery | Status |
 |---|---:|---|---|
 | CON-001 | #32 | PR #97 · `CON-001.md` | Complete |
-| MEM-001 | #33 | pending | **Next** |
-| MEM-002 | #34 | pending | Blocked |
+| MEM-001 | #33 | PR #101 · `MEM-001.md` | Complete |
+| MEM-002 | #34 | pending | **Next** |
 | PLAN-001 | #35 | pending | Blocked |
 | PLAN-002 | #36 | pending | Blocked |
 | PLAN-003 | #37 | pending | Blocked |
@@ -45,9 +45,10 @@
 
 ## XFAIL inventory
 
-2 strict XFAIL remaining:
+1 strict XFAIL remaining:
 - `XF-AUDIT-001` → AUD-001 (#39)
-- `XF-MEM-001` → MEM-002 (#34)
+
+`XF-MEM-001` 已由 MEM-001 关闭（storage 层 content_hash+source 去重）。
 
 Hermes remains v0.19.0 / tag `v2026.7.20`. Python 3.10 remains package/core/artifact-only after `PKG-001`; the complete Hermes v0.19.0 integration combination does not support Python 3.10. Full Hermes candidate support remains Python 3.11–3.12. Runtime remains 9 real Tools with target 10; no placeholder `memory_store`. PyPI remains disabled.
 
