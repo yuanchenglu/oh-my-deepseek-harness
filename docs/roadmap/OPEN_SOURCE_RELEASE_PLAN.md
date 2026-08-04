@@ -1,12 +1,12 @@
 # 开源发布执行计划（Open-source Release Execution Plan）
 
-> 文档版本：2.3.16（MEM-001 Complete / M3 1/10）
+> 文档版本：2.3.17（MEM-002 Complete / M3 3/10）
 >
 > 状态日期：2026-08-04
 >
-> 当前实现事实基线：`develop@b10427e`（MEM-001 merge 后更新）
+> 当前实现事实基线：`develop@d844b5c`（MEM-002 merge 后更新）
 >
-> 计划状态：`M1_COMPLETE / G1_PASS / M2_COMPLETE / G2_PASS / CON_001_COMPLETE / MEM_001_COMPLETE / M3_IN_PROGRESS`
+> 计划状态：`M1_COMPLETE / G1_PASS / M2_COMPLETE / G2_PASS / CON_001_COMPLETE / MEM_001_COMPLETE / MEM_002_COMPLETE / M3_IN_PROGRESS`
 >
 > 当前产品成熟度：`Experimental Preview`
 >
@@ -26,7 +26,7 @@
 
 ## 1. 当前发布判断
 
-当前产品仍是 **Experimental Preview**。M2 Complete 与 G2 PASS、CON-001 与 MEM-001 Complete 只推进 M3，不表示 Public Beta、master、Tag、GitHub Release、PyPI 或 Stable Ready。
+当前产品仍是 **Experimental Preview**。M2 Complete 与 G2 PASS、CON-001/MEM-001/MEM-002 Complete 只推进 M3，不表示 Public Beta、master、Tag、GitHub Release、PyPI 或 Stable Ready。
 
 已完成：
 
@@ -42,14 +42,15 @@
 - `PRIV-001`：外发前 Secret Redaction、Summary 默认关闭、数据发送提示、日志隐私默认关闭。
 - `CON-001`：10-Tool 契约、统一错误 Envelope、memory_store schema 定义。
 - `MEM-001`：memory_store 幂等去重（content_hash + source identity）、λ 连续边界、Tag/Store/Query、10k 性能。
+- `MEM-002`：默认关闭 startup import、CLI memory import/delete（dry-run、--confirm）、按 source 删除。
 
 ## 2. 固定 Work ID 进度
 
 | 状态 | 数量 | 比例 |
 |---|---:|---:|
-| Complete | 24 | 50.0% |
+| Complete | 25 | 52.1% |
 | In progress | 0 | 0.0% |
-| Not started / dependency blocked | 24 | 50.0% |
+| Not started / dependency blocked | 23 | 47.9% |
 | Total | 48 | 100% |
 
 ## 3. Gate 状态
@@ -132,8 +133,8 @@ G2已评估通过。Evidence: `docs/testing/evidence/GATE-G2.md`. PR #96 · `a84
 |---|---:|---|---|---|
 | `CON-001` | #32 | G2 | PR #97 · `CON-001.md` | **Complete** |
 | `MEM-001` | #33 | CON-001 | PR #101 · `MEM-001.md` | **Complete** |
-| `MEM-002` | #34 | MEM-001 | pending | **Next** |
-| `PLAN-001` | #35 | MEM-002 | pending | Blocked |
+| `MEM-002` | #34 | MEM-001 | PR #102 · `MEM-002.md` | **Complete** |
+| `PLAN-001` | #35 | MEM-002 | pending | **Next** |
 | `PLAN-002` | #36 | PLAN-001 | pending | Blocked |
 | `PLAN-003` | #37 | PLAN-002 | pending | Blocked |
 | `CP-001` | #38 | PLAN-003 | pending | Blocked |
