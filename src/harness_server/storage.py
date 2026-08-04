@@ -24,6 +24,7 @@ import json
 import logging
 import os
 import sqlite3
+import threading
 from datetime import datetime, timezone
 from typing import Dict, List, Optional, Tuple
 
@@ -82,6 +83,11 @@ def _parse_datetime(text: str) -> datetime:
         except (ValueError, TypeError):
             continue
     return datetime.now(timezone.utc)
+
+
+# ponytail: 全局编号锁，保证同进程并发 Checkpoint 编号不重复（TC-CP-004）。
+# 若未来需跨进程唯一，改为数据库事务内 SELECT ... ORDER BY 生成。
+_checkpoint_number_lock = threading.Lock()
 
 
 class HarnessStorage:
@@ -259,6 +265,18 @@ class HarnessStorage:
             )
             conn.execute(
                 "CREATE INDEX IF NOT EXISTS idx_cp_plan_number ON checkpoints(plan_id, checkpoint_number)"
+            )
+            # 唯一索引：同 Plan 内 checkpoint_number 不重复（TC-CP-004 并发编号）
+            # 迁移：先清理旧重复（保留 checkpoint_id 最小的一条），再建唯一索引
+            conn.execute(
+                "DELETE FROM checkpoints WHERE checkpoint_id NOT IN ("
+                "  SELECT MIN(checkpoint_id) FROM checkpoints "
+                "  GROUP BY plan_id, checkpoint_number"
+                ")"
+            )
+            conn.execute(
+                "CREATE UNIQUE INDEX IF NOT EXISTS idx_cp_plan_number_unique "
+                "ON checkpoints(plan_id, checkpoint_number)"
             )
 
             conn.commit()
@@ -992,6 +1010,7 @@ class HarnessStorage:
 
         Checkpoint 编号在每个 Plan 内从 1 递增。
         用 COALESCE(MAX(checkpoint_number), 0) 处理 Plan 还没有 Checkpoint 的情况。
+        加线程锁保证同进程并发编号唯一（TC-CP-004）。
 
         Args:
             plan_id: Plan 唯一标识
@@ -999,19 +1018,23 @@ class HarnessStorage:
         Returns:
             下一个编号（整数，>= 1）
         """
-        conn = self._connection()
-        try:
-            row = conn.execute(
-                "SELECT COALESCE(MAX(checkpoint_number), 0) AS max_num "
-                "FROM checkpoints WHERE plan_id = ?",
-                (plan_id,),
-            ).fetchone()
-            return (row["max_num"] if row["max_num"] else 0) + 1
-        finally:
-            conn.close()
+        with _checkpoint_number_lock:
+            conn = self._connection()
+            try:
+                row = conn.execute(
+                    "SELECT COALESCE(MAX(checkpoint_number), 0) AS max_num "
+                    "FROM checkpoints WHERE plan_id = ?",
+                    (plan_id,),
+                ).fetchone()
+                return (row["max_num"] if row["max_num"] else 0) + 1
+            finally:
+                conn.close()
 
     def insert_checkpoint(self, checkpoint: Checkpoint) -> str:
         """插入一个 Checkpoint 快照
+
+        插入前校验 Plan 存在（TC-CP-002）：
+        - plan 不存在 → 抛 ValueError，不写入。
 
         Args:
             checkpoint: Checkpoint 对象
@@ -1019,35 +1042,40 @@ class HarnessStorage:
         Returns:
             checkpoint_id（与传入的相同）
         """
-        conn = self._connection()
-        try:
-            # 整个 Checkpoint 对象序列化为 JSON 存储在 data_json 字段
-            data_json_str = checkpoint.model_dump_json()
-            conn.execute(
-                "INSERT INTO checkpoints "
-                "(checkpoint_id, plan_id, created_at, checkpoint_number, data_json) "
-                "VALUES (?, ?, ?, ?, ?)",
-                (
+        # 校验 Plan 存在（TC-CP-002）
+        if self.get_plan_meta(checkpoint.plan_id) is None:
+            raise ValueError(f"Plan 不存在: {checkpoint.plan_id}")
+        # 加锁保证编号生成+插入原子（TC-CP-004 并发编号唯一）
+        with _checkpoint_number_lock:
+            conn = self._connection()
+            try:
+                # 整个 Checkpoint 对象序列化为 JSON 存储在 data_json 字段
+                data_json_str = checkpoint.model_dump_json()
+                conn.execute(
+                    "INSERT INTO checkpoints "
+                    "(checkpoint_id, plan_id, created_at, checkpoint_number, data_json) "
+                    "VALUES (?, ?, ?, ?, ?)",
+                    (
+                        checkpoint.checkpoint_id,
+                        checkpoint.plan_id,
+                        checkpoint.created_at,
+                        checkpoint.checkpoint_number,
+                        data_json_str,
+                    ),
+                )
+                conn.commit()
+                logger.info(
+                    "Checkpoint 已保存: %s (plan=%s, #%d)",
                     checkpoint.checkpoint_id,
                     checkpoint.plan_id,
-                    checkpoint.created_at,
                     checkpoint.checkpoint_number,
-                    data_json_str,
-                ),
-            )
-            conn.commit()
-            logger.info(
-                "Checkpoint 已保存: %s (plan=%s, #%d)",
-                checkpoint.checkpoint_id,
-                checkpoint.plan_id,
-                checkpoint.checkpoint_number,
-            )
-            return checkpoint.checkpoint_id
-        except sqlite3.Error as e:
-            logger.error("Checkpoint 保存失败: %s", e)
-            raise
-        finally:
-            conn.close()
+                )
+                return checkpoint.checkpoint_id
+            except sqlite3.Error as e:
+                logger.error("Checkpoint 保存失败: %s", e)
+                raise
+            finally:
+                conn.close()
 
     def get_checkpoint(self, checkpoint_id: str) -> Optional[Checkpoint]:
         """按 checkpoint_id 查询单个 Checkpoint

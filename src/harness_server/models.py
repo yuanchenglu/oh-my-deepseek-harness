@@ -18,7 +18,7 @@ from datetime import datetime, timezone
 from enum import Enum
 from typing import Dict, List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 # ════════════════════════════════════════════════════════════════
@@ -448,6 +448,18 @@ class CreateCheckpointRequest(BaseModel):
         default_factory=list,
         description="执行过程中发现的非预期信息",
     )
+
+    @field_validator("completed_step_ids")
+    @classmethod
+    def _validate_completed_ids_belong_to_plan(cls, v: List[str], info) -> List[str]:
+        """TC-CP-003: completed_step_ids 必须属于 plan_steps 的步骤。"""
+        values = info.data
+        plan_steps = values.get("plan_steps", [])
+        step_ids = {s.step_id for s in plan_steps}
+        for cid in v:
+            if cid not in step_ids:
+                raise ValueError(f"completed_step_id 不属于 Plan: {cid}")
+        return v
 
 
 class CreateCheckpointResponse(BaseModel):

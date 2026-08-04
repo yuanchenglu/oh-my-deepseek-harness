@@ -90,10 +90,18 @@ class TestMemoryEndpoints:
 
 class TestCheckpointEndpoints:
     def test_checkpoint_create(self, client: TestClient):
+        # 先创建合法 Plan（TC-CP-001：Checkpoint 需要合法 Plan 归属）
+        plan_resp = client.post(
+            "/plan/create",
+            json={"task_description": "设计数据库 schema、实现 API、编写测试"},
+        )
+        assert plan_resp.status_code == 200
+        plan_id = plan_resp.json()["plan_id"]
+
         response = client.post(
             "/checkpoint/create",
             json={
-                "plan_id": "test-plan-001",
+                "plan_id": plan_id,
                 "plan_steps": [
                     {"step_id": "s1", "text": "步骤一", "status": "completed"},
                     {"step_id": "s2", "text": "步骤二", "status": "pending"},
@@ -104,7 +112,7 @@ class TestCheckpointEndpoints:
         assert response.status_code == 200
         data = response.json()
         assert "checkpoint" in data
-        assert data["checkpoint"]["plan_id"] == "test-plan-001"
+        assert data["checkpoint"]["plan_id"] == plan_id
 
     def test_checkpoint_review_not_found(self, client: TestClient):
         response = client.post("/checkpoint/review/nonexistent-id", json={})
