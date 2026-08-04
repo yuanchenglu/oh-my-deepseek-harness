@@ -19,6 +19,17 @@
 - [`capabilities/STATUS.md`](capabilities/STATUS.md)：能力状态分级定义（Stable/Beta/Experimental/Degraded/Removed）。
 - [`capabilities/CAPABILITY_MATRIX.md`](capabilities/CAPABILITY_MATRIX.md)：能力分级矩阵与证据链接。
 
+## 3b. Guides（全新用户入口）
+
+- [`guides/README.md`](guides/README.md)：生命周期/隐私/排障指南索引。
+- [`guides/INSTALL.md`](guides/INSTALL.md)：安装（预览、安装、验证、幂等）。
+- [`guides/UPGRADE.md`](guides/UPGRADE.md)：升级（预览、备份、迁移、回滚）。
+- [`guides/UNINSTALL.md`](guides/UNINSTALL.md)：卸载（普通卸载、确认清除）。
+- [`guides/DOCTOR.md`](guides/DOCTOR.md)：只读诊断、退出码、JSON 输出。
+- [`guides/PRIVACY.md`](guides/PRIVACY.md)：外发同意、数据最小化、本地 API。
+- [`guides/TROUBLESHOOTING.md`](guides/TROUBLESHOOTING.md)：用户错误、日志、恢复。
+- [`release/KNOWN_LIMITATIONS.md`](release/KNOWN_LIMITATIONS.md)：已知限制与边界。
+
 ## 4. Testing
 
 - [`testing/TEST_PLAN.md`](testing/TEST_PLAN.md)：100 个唯一 Test ID、主责 Work ID、CI 通道和退出标准。

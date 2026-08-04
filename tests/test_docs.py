@@ -1,4 +1,5 @@
 """DOC-001: Capability documentation must be evidence-backed and status-classified.
+DOC-002: Lifecycle/privacy/troubleshooting guides must be verified and complete.
 
 CR-P2-001 / CR-P2-005: README must not over-claim beyond code evidence.
 Every capability claim must carry a Stable/Beta/Experimental/Degraded/Removed
@@ -10,6 +11,15 @@ TC-DOC-001-003: CAPABILITY_MATRIX.md rows only use valid statuses.
 TC-DOC-001-004: every matrix row links to an existing evidence file.
 TC-DOC-001-005: README (zh/en) must not contain absolute over-claims.
 TC-DOC-001-006: docs/README.md indexes the capability docs.
+
+TC-DOC-002-001: lifecycle guides exist for install/upgrade/uninstall/doctor.
+TC-DOC-002-002: every guide command is a real `deepseek-harness` subcommand.
+TC-DOC-002-003: every relative link in guides resolves to an existing file.
+TC-DOC-002-004: privacy guide covers consent, minimization and local API.
+TC-DOC-002-005: troubleshooting guide covers FR-OBS-003/004/005.
+TC-DOC-002-006: KNOWN_LIMITATIONS.md exists and is indexed.
+TC-DOC-002-007: README (zh/en) links to the guides index.
+TC-DOC-002-008: scripts/test_docs.sh runs the new-user rehearsal.
 """
 
 from __future__ import annotations
@@ -109,6 +119,107 @@ class TestDocsIndex:
         assert "capabilities" in text
 
 
+# ── DOC-002 ──────────────────────────────────────────────
+
+GUIDES = REPO / "docs" / "guides"
+KNOWN_LIMITATIONS = REPO / "docs" / "release" / "KNOWN_LIMITATIONS.md"
+
+# Real subcommands dispatcher provides (must match src/deepseek_harness/cli.py)
+REAL_SUBCOMMANDS = {
+    "install",
+    "upgrade",
+    "recover",
+    "uninstall",
+    "doctor",
+    "server",
+    "memory",
+    "plan",
+    "audit",
+}
+REAL_SERVER_ACTIONS = {"start", "status", "stop", "restart"}
+REAL_MEMORY_ACTIONS = {"import", "delete"}
+REAL_PLAN_ACTIONS = {"archive", "delete"}
+
+# Commands that MUST appear in the lifecycle guides (FR-INSTALL-001~006)
+REQUIRED_LIFECYCLE_TOKENS = {
+    "install --dry-run",
+    "install",
+    "upgrade --dry-run",
+    "upgrade",
+    "doctor",
+    "uninstall --purge-data --confirm",
+    "server status",
+    "server stop",
+}
+
+
+class TestLifecycleGuides:
+    def test_guides_exist(self):
+        for name in ("INSTALL.md", "UPGRADE.md", "UNINSTALL.md", "DOCTOR.md"):
+            assert (GUIDES / name).exists(), f"missing guide {name}"
+
+    def test_guide_commands_are_real_subcommands(self):
+        text = "\n".join(p.read_text(encoding="utf-8") for p in GUIDES.glob("*.md"))
+        for token in _code_tokens(text):
+            if token.startswith("deepseek-harness") or token.startswith("scripts/install.sh"):
+                assert _is_real_command(token), f"guide references unknown command: {token!r}"
+
+    def test_required_lifecycle_tokens_present(self):
+        text = "\n".join(p.read_text(encoding="utf-8") for p in GUIDES.glob("*.md"))
+        for token in REQUIRED_LIFECYCLE_TOKENS:
+            assert token in text, f"lifecycle guide missing required token {token!r}"
+
+    def test_guide_links_resolve(self):
+        for p in GUIDES.glob("*.md"):
+            text = p.read_text(encoding="utf-8")
+            for link in _md_links(text):
+                if link.startswith(("http://", "https://", "#")):
+                    continue
+                target = (p.parent / link.split("#")[0]).resolve()
+                assert target.exists(), f"{p.name} broken link: {link!r}"
+
+
+class TestPrivacyGuide:
+    def test_privacy_guide_exists(self):
+        assert (GUIDES / "PRIVACY.md").exists()
+
+    def test_covers_consent_minimization_local_api(self):
+        text = (GUIDES / "PRIVACY.md").read_text(encoding="utf-8").lower()
+        for term in ("consent", "最小化", "minimization", "loopback", "127.0.0.1"):
+            assert term in text, f"PRIVACY.md missing {term!r}"
+
+
+class TestTroubleshootingGuide:
+    def test_troubleshooting_guide_exists(self):
+        assert (GUIDES / "TROUBLESHOOTING.md").exists()
+
+    def test_covers_obs_003_004_005(self):
+        text = (GUIDES / "TROUBLESHOOTING.md").read_text(encoding="utf-8").lower()
+        for term in ("日志", "log", "doctor", "server status", "恢复", "recover"):
+            assert term in text, f"TROUBLESHOOTING.md missing {term!r}"
+
+
+class TestKnownLimitations:
+    def test_known_limitations_exists(self):
+        assert KNOWN_LIMITATIONS.exists()
+
+    def test_known_limitations_indexed_in_docs_readme(self):
+        text = (REPO / "docs" / "README.md").read_text(encoding="utf-8")
+        assert "KNOWN_LIMITATIONS" in text
+
+
+class TestReadmeLinksGuides:
+    def test_readme_links_guides(self):
+        for fn in ("README.md", "README_EN.md"):
+            text = (REPO / fn).read_text(encoding="utf-8")
+            assert "docs/guides/" in text, f"{fn} must link to docs/guides/"
+
+
+class TestNewUserRehearsalScript:
+    def test_script_exists(self):
+        assert (REPO / "scripts" / "test_docs.sh").exists()
+
+
 # ── helpers ──────────────────────────────────────────────
 
 _STATUS_RE = re.compile(r"^\|\s*([^|]+)\s*\|\s*([^|]+)\s*\|\s*([^|]+)\s*\|\s*([^|]+)\s*\|")
@@ -141,3 +252,44 @@ def _matrix_rows(text: str) -> list[dict]:
             }
         )
     return rows
+
+
+_CODE_TOKEN_RE = re.compile(r"`([^`]+)`")
+
+
+def _code_tokens(text: str) -> list[str]:
+    """Extract inline/block code spans containing the CLI command."""
+    tokens = []
+    for m in _CODE_TOKEN_RE.finditer(text):
+        token = m.group(1).strip()
+        if token.startswith("deepseek-harness") or token.startswith("scripts/install.sh"):
+            tokens.append(token)
+    return tokens
+
+
+def _is_real_command(token: str) -> bool:
+    """Validate a doc command token against the real CLI subcommand surface."""
+    parts = token.split()
+    if parts[0] == "scripts/install.sh":
+        return True  # convenience wrapper; the CLI subcommand is checked below
+    # deepseek-harness <sub> [action] ...
+    if len(parts) < 2:
+        return False
+    sub = parts[1]
+    if sub not in REAL_SUBCOMMANDS:
+        return False
+    if sub == "server" and len(parts) >= 3:
+        return parts[2] in REAL_SERVER_ACTIONS
+    if sub == "memory" and len(parts) >= 3:
+        return parts[2] in REAL_MEMORY_ACTIONS
+    if sub == "plan" and len(parts) >= 3:
+        return parts[2] in REAL_PLAN_ACTIONS
+    return True
+
+
+_MD_LINK_RE = re.compile(r"\[[^\]]*\]\(([^)]+)\)")
+
+
+def _md_links(text: str) -> list[str]:
+    """Extract markdown link targets (relative paths only checked by caller)."""
+    return [m.group(1).strip() for m in _MD_LINK_RE.finditer(text)]

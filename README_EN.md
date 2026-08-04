@@ -131,6 +131,8 @@ Python 3.10 remains covered by package/core CI but is not a Hermes v0.19.0 full-
 
 The install script automatically handles: backup SOUL.md/MEMORY.md/USER.md, create plugin symlinks, register Hooks, and install dependencies.
 
+See the [lifecycle, privacy & troubleshooting guides](docs/guides/README.md) for install, upgrade, Doctor, uninstall, privacy and troubleshooting with no source-tree knowledge required.
+
 ## Directory Structure
 
 ```
@@ -226,11 +228,20 @@ The harness_server process (port 8200) is auto-launched by `tools.py` via `_ensu
 ## Uninstall
 
 ```bash
-hermes plugins disable deepseek-harness
-rm -rf ~/.hermes/plugins/deepseek-harness/
+deepseek-harness uninstall                     # ordinary: keeps data + distribution
+deepseek-harness uninstall --purge-data --confirm   # also purge data (needs confirmation)
 ```
 
-Backup files created during installation (`*.bak.*`) are retained and must be cleaned up manually.
+Distribution removal is explicit test-harness work, not product CLI work:
+
+```bash
+python -m pip uninstall oh-my-deepseek-harness
+```
+
+See [UNINSTALL guide](docs/guides/UNINSTALL.md).
+
+> Full lifecycle, privacy and troubleshooting guides: [docs/guides](docs/guides/README.md) —
+> [INSTALL](docs/guides/INSTALL.md) · [UPGRADE](docs/guides/UPGRADE.md) · [UNINSTALL](docs/guides/UNINSTALL.md) · [DOCTOR](docs/guides/DOCTOR.md) · [PRIVACY](docs/guides/PRIVACY.md) · [TROUBLESHOOTING](docs/guides/TROUBLESHOOTING.md) · [KNOWN LIMITATIONS](docs/release/KNOWN_LIMITATIONS.md)
 
 ## License
 

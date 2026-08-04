@@ -247,10 +247,13 @@ Python 3.10 仍在包级/纯模块 CI 中验证，但不是 Hermes v0.19.0 的�
 
 **我想卸载？**
 ```bash
-hermes plugins disable deepseek-harness
-rm -rf ~/.hermes/plugins/deepseek-harness/
+deepseek-harness uninstall          # 普通卸载：保留数据与 distribution
+deepseek-harness uninstall --purge-data --confirm   # 连数据一起清除（需二次确认）
 ```
-安装时创建的备份 `*.bak.*` 会保留，需手动清理。
+详见 [卸载指南](docs/guides/UNINSTALL.md)。
+
+> 完整生命周期、隐私与排障指南见 [docs/guides](docs/guides/README.md)：
+> [安装](docs/guides/INSTALL.md) · [升级](docs/guides/UPGRADE.md) · [卸载](docs/guides/UNINSTALL.md) · [Doctor](docs/guides/DOCTOR.md) · [隐私](docs/guides/PRIVACY.md) · [排障](docs/guides/TROUBLESHOOTING.md) · [已知限制](docs/release/KNOWN_LIMITATIONS.md)
 
 ---
 
