@@ -54,3 +54,24 @@ def test_security_md_references_release_checklist() -> None:
     """SECURITY.md 引用 RELEASE_CHECKLIST.md。"""
     text = (ROOT / "SECURITY.md").read_text(encoding="utf-8")
     assert "RELEASE_CHECKLIST.md" in text
+
+
+# ── REL-006 ──────────────────────────────────────────────────
+
+
+def test_release_script_exists_and_reproducible() -> None:
+    """build_rc.sh 存在且做可复现构建 + provenance。"""
+    text = (ROOT / "scripts" / "release" / "build_rc.sh").read_text(encoding="utf-8")
+    assert "-m build" in text
+    assert "shasum -a 256" in text
+    assert "provenance" in text
+    assert "withdrawal" in text
+
+
+def test_release_workflow_least_privilege_and_non_publishing() -> None:
+    """release.yml 用最小权限，不发布。"""
+    text = (ROOT / ".github" / "workflows" / "release.yml").read_text(encoding="utf-8")
+    assert "contents: read" in text
+    assert "build_rc.sh" in text
+    assert "test_release.sh" in text
+    assert "publish" not in text.lower() or "non-publishing" in text.lower()
