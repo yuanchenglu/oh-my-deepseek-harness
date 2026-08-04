@@ -1,20 +1,20 @@
 # Open-source Release Execution Status
 
 - Status date: 2026-08-04
-- Normative contract: `OPEN_SOURCE_RELEASE_PLAN.md` v2.3.23
-- Implementation baseline: `develop@master`（OPS-001 merge 后更新）
+- Normative contract: `OPEN_SOURCE_RELEASE_PLAN.md` v2.3.24
+- Implementation baseline: `develop@master`（INTENT-001 merge 后更新）
 - Product maturity: **Experimental Preview**
-- Decision: **G0 PASS · G1 PASS · G2 PASS · M2 Complete · M3: CON/MEM-001/MEM-002/PLAN-001/PLAN-002/PLAN-003/CP-001/AUD-001/OPS-001 Complete**
-- Next serial step: **INTENT-001 / Issue #41**
+- Decision: **G0 PASS · G1 PASS · G2 PASS · M2 Complete · M3 Complete（10/10）**
+- Next serial step: **G3 Gate（M3 退出）**
 - XFAIL: **0（全清）**
 
 ## Progress
 
 | Status | Work IDs | Ratio |
 |---|---:|---:|
-| Complete | 31 | 64.6% |
+| Complete | 32 | 66.7% |
 | In progress | 0 | 0.0% |
-| Not started / blocked | 17 | 35.4% |
+| Not started / blocked | 16 | 33.3% |
 | Total | 48 | 100% |
 
 ## Gates
@@ -42,7 +42,7 @@
 | CP-001 | #38 | PR #106 · `CP-001.md` | Complete |
 | AUD-001 | #39 | PR #107 · `AUD-001.md` | Complete |
 | OPS-001 | #40 | PR #108 · `OPS-001.md` | Complete |
-| INTENT-001 | #41 | pending | **Next** |
+| INTENT-001 | #41 | PR #109 · `INTENT-001.md` | Complete |
 
 ## XFAIL inventory
 
