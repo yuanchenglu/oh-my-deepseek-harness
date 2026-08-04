@@ -108,3 +108,57 @@ def test_normal_tool_no_false_positive(tmp_path: Path) -> None:
     # 普通 read 调用（不违反约束）→ 不触发
     result = _check_constraint_violation("read", {"filePath": "/tmp/readme.md"}, "s")
     assert result is None
+
+
+# ════════════════════════════════════════════════════════════════
+# OPS-001: 手工 audit CLI + scheduler 无副作用（TC-AUDIT-CLI-001）
+# ════════════════════════════════════════════════════════════════
+
+
+def test_audit_cli_generates_report(tmp_path: Path) -> None:
+    """TC-AUDIT-CLI-001: 手工 audit 生成报告且不修改 scheduler。"""
+    from deepseek_harness.cli import main
+
+    events_file = tmp_path / "audit.jsonl"
+    append_event(_event(), str(events_file))
+
+    # scheduler 快照：audit 前后 crontab 引用不变（installer 不安装 cron）
+    import subprocess
+
+    def _cron_refs() -> str:
+        try:
+            return subprocess.run(
+                ["crontab", "-l"], capture_output=True, text=True, timeout=5
+            ).stdout
+        except Exception:
+            return ""
+
+    before = _cron_refs()
+    rc = main(["audit", "--events-file", str(events_file)])
+    after = _cron_refs()
+    assert rc == 0
+    assert before == after  # scheduler 未被修改
+
+
+def test_audit_cli_json_contract(tmp_path: Path) -> None:
+    """OPS-001: audit --json 输出固定结构。"""
+    import json as _json
+
+    from deepseek_harness.cli import main
+
+    events_file = tmp_path / "audit.jsonl"
+    append_event(_event(), str(events_file))
+
+    import io
+    import sys
+    from contextlib import redirect_stdout
+
+    buf = io.StringIO()
+    with redirect_stdout(buf):
+        rc = main(["audit", "--json", "--events-file", str(events_file)])
+    assert rc == 0
+    payload = _json.loads(buf.getvalue())
+    assert payload["state"] == "ok"
+    assert payload["event_count"] == 1
+    assert payload["valid_count"] == 1
+    assert "报告" in payload["report"] or "report" in payload["report"]
