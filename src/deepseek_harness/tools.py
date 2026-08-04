@@ -159,7 +159,7 @@ _TOOL_SCHEMAS = {
             "step_id": {"type": "string", "description": "步骤 ID"},
             "status": {
                 "type": "string",
-                "enum": ["pending", "in_progress", "completed", "pending_review"],
+                "enum": ["pending", "in_progress", "completed", "blocked", "pending_review", "cancelled"],
                 "description": "新状态（与 PlanStatus 枚举一致）",
             },
             "text": {"type": "string", "description": "更新后的步骤内容"},

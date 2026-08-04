@@ -33,13 +33,33 @@ class PlanStatus(str, Enum):
     - PENDING: 待执行（刚创建时的默认状态）
     - IN_PROGRESS: 执行中
     - COMPLETED: 已完成
+    - BLOCKED: 阻塞（FR-PLAN-004）
     - PENDING_REVIEW: 待审查（级联修正时被标记，需人工确认）
+    - CANCELLED: 已取消（FR-PLAN-004）
     """
 
     PENDING = "pending"
     IN_PROGRESS = "in_progress"
     COMPLETED = "completed"
+    BLOCKED = "blocked"
     PENDING_REVIEW = "pending_review"
+    CANCELLED = "cancelled"
+
+    def can_transition_to(self, target: "PlanStatus") -> bool:
+        """判断当前状态能否合法转换到目标状态。"""
+        return target in _LEGAL_TRANSITIONS.get(self, set())
+
+
+# 合法状态转换矩阵（FR-PLAN-004 / TC-PLAN-008）
+# 每个状态可转换到的目标状态集合
+_LEGAL_TRANSITIONS: dict = {
+    PlanStatus.PENDING: {PlanStatus.IN_PROGRESS, PlanStatus.COMPLETED, PlanStatus.CANCELLED},
+    PlanStatus.IN_PROGRESS: {PlanStatus.COMPLETED, PlanStatus.BLOCKED, PlanStatus.CANCELLED},
+    PlanStatus.COMPLETED: set(),  # 终态，不可再转换
+    PlanStatus.BLOCKED: {PlanStatus.IN_PROGRESS, PlanStatus.CANCELLED},
+    PlanStatus.PENDING_REVIEW: {PlanStatus.IN_PROGRESS, PlanStatus.COMPLETED, PlanStatus.CANCELLED},
+    PlanStatus.CANCELLED: set(),  # 终态，不可再转换
+}
 
 
 class AssociationStrength(str, Enum):

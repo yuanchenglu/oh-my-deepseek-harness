@@ -166,3 +166,73 @@ def test_cascade_never_alters_completed(tmp_path: Path) -> None:
     # s2 已完成 → 不应被改为 pending_review
     s2_row = store.get_step("s2")
     assert s2_row.status == PlanStatus.COMPLETED
+
+
+# ════════════════════════════════════════════════════════════════
+# PLAN-002: 状态机 + 原子变更 + 并发（TC-PLAN-001/002/008/010）
+# ════════════════════════════════════════════════════════════════
+
+
+def test_plan_create_is_atomic(tmp_path: Path) -> None:
+    """TC-PLAN-001: Plan + Steps 单事务，失败无半状态。"""
+    store = HarnessStorage(str(tmp_path / "plan.db"))
+    # 原子创建：插入非法步骤（自依赖）→ 整体回滚，不残留 plan
+    with pytest.raises(ValueError):
+        store.create_plan_with_steps("p1", [_step("s1", deps=["s1"])])
+    # plan 元数据不应残留（无半状态）
+    assert store.get_plan_meta("p1") is None
+
+
+def test_illegal_state_transition_rejected(tmp_path: Path) -> None:
+    """TC-PLAN-008: 非法状态转换被拒绝（conflict）。"""
+    store = HarnessStorage(str(tmp_path / "plan.db"))
+    store.create_plan("p1")
+    store.insert_steps("p1", [_step("s1")])
+
+    # pending → completed 是合法（跳过中间态）
+    store.update_step("s1", status=PlanStatus.COMPLETED)
+
+    # completed → pending 非法（已完成不能再回退到待执行）
+    with pytest.raises(ValueError):
+        store.update_step("s1", status=PlanStatus.PENDING)
+
+
+def test_legal_state_transition_accepted(tmp_path: Path) -> None:
+    """TC-PLAN-008: 合法状态转换通过。"""
+    store = HarnessStorage(str(tmp_path / "plan.db"))
+    store.create_plan("p1")
+    store.insert_steps("p1", [_step("s1")])
+
+    # pending → in_progress → completed 合法路径
+    store.update_step("s1", status=PlanStatus.IN_PROGRESS)
+    assert store.get_step("s1").status == PlanStatus.IN_PROGRESS
+    store.update_step("s1", status=PlanStatus.COMPLETED)
+    assert store.get_step("s1").status == PlanStatus.COMPLETED
+
+
+def test_concurrent_update_no_half_state(tmp_path: Path) -> None:
+    """TC-PLAN-010: 并发更新无半状态。"""
+    import threading
+
+    store = HarnessStorage(str(tmp_path / "plan.db"))
+    store.create_plan("p1")
+    store.insert_steps("p1", [_step("s1")])
+
+    results: list[bool] = []
+    errors: list[str] = []
+
+    def worker():
+        try:
+            results.append(store.update_step("s1", status=PlanStatus.IN_PROGRESS))
+        except ValueError as e:
+            errors.append(str(e))
+
+    threads = [threading.Thread(target=worker) for _ in range(5)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+
+    # 最终状态必须一致（无半状态）
+    final = store.get_step("s1").status
+    assert final in (PlanStatus.IN_PROGRESS, PlanStatus.COMPLETED)
