@@ -30,24 +30,24 @@
 ════════════════════════════════════════════════
 二、当前事实快照（2026-08-04）
 ════════════════════════════════════════════════
-- 当前 develop 基线：master（SEC-002 merge 后更新）
+- 当前 develop 基线：master（REL-006 merge 后更新）
 - master：398701c5cf6495180a7a7566f09921cf126a054a（与 develop diverged，不提前合并）
 - 固定 Work ID：48
-- Complete：40/48（83.3%）
-- Not started / dependency blocked：8/48
+- Complete：41/48（85.4%）
+- Not started / dependency blocked：7/48
 - M0：Complete / G0：PASS
 - M1：8/8 Complete / G1：PASS
 - M2：Complete（CTX-001/002/003/004 + SES-001 + PRIV-001）/ G2：PASS
 - M3：Complete（10/10）
-- M4：DOC-001 + DOC-002 + QA-001 + QA-002 + COMPAT-001 + SEC-001 + MIG-001 + SEC-002 Complete（PR #110/#112/#113/#116/#118/#120/#122/#123）
+- M4：Complete（9/9）— DOC-001 + DOC-002 + QA-001 + QA-002 + COMPAT-001 + SEC-001 + MIG-001 + SEC-002 + REL-006（PR #110/#112/#113/#116/#118/#120/#122/#123/#124）
 - 产品成熟度：Experimental Preview
-- 下一唯一合法任务：REL-006（#50）
+- 下一唯一合法任务：G3 Gate evaluation
 - XFAIL：**0（全清）**
 - master、Tag、GitHub Release、PyPI 均未进入发布阶段
 - PyPI 按 REL-005 保持禁用
 
 ════════════════════════════════════════════════
-三、剩余任务全清单（8 个 Work ID + 4 个 Gate）
+三、剩余任务全清单（7 个 Work ID + 4 个 Gate）
 ════════════════════════════════════════════════
 M3（Contract & Data Integrity，退出 G3）：
 - MEM-001 #33：✅ Complete（PR #101）— memory_store/Tag/Query、content hash、source identity、mtime、import batch、λ 连续边界
@@ -69,7 +69,7 @@ M4（开源可用性、兼容性、RC，退出 G3）：
 - SEC-001 #47：✅ Complete（PR #120）— SBOM + 依赖审计 + RELEASE_CHECKLIST
 - MIG-001 #48：✅ Complete（PR #122）— Config/DB/JSONL Migration、拒绝降级、失败回滚（TC-MIG-001-006）
 - SEC-002 #49：✅ Complete（PR #123）— Local API、文件权限、输入限制、Prompt Injection 边界、破坏性操作保护
-- REL-006 #50：Build/Publish/Rollback 自动化、Release Checklist
+- REL-006 #50：✅ Complete（PR #124）— Build/Publish/Rollback 自动化、Release Checklist
 
 G3 评估：确认 M2+M3+M4 evidence 齐备、RC 可重复构建、支持矩阵一致。
 
