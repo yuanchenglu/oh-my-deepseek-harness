@@ -274,7 +274,7 @@ def _is_real_command(token: str) -> bool:
         return True  # convenience wrapper; the CLI subcommand is checked below
     # deepseek-harness <sub> [action] ...
     if len(parts) < 2:
-        return False
+        return True  # bare `deepseek-harness` is the program name, not a subcommand
     sub = parts[1]
     if sub not in REAL_SUBCOMMANDS:
         return False
