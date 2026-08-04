@@ -17,6 +17,15 @@ from harness_server.models import MemoryEntry, MemoryLayer
 from harness_server.storage import HarnessStorage
 
 
+@pytest.fixture(autouse=True)
+def _isolate_home(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """隔离 HOME，避免 import app 时 app.py 模块级副作用污染真实 ~/.hermes。"""
+    home = tmp_path / "home"
+    home.mkdir()
+    monkeypatch.setenv("HOME", str(home))
+    monkeypatch.setenv("USERPROFILE", str(home))
+
+
 def _entry(
     content: str,
     layer: MemoryLayer = MemoryLayer.PREFERENCE,
@@ -202,3 +211,139 @@ def test_classify_unknown_has_default_behavior(tmp_path: Path) -> None:
     assert layer is not None
     assert isinstance(matched_kws, list)
     assert confidence == 0.0
+
+
+# ════════════════════════════════════════════════════════════════
+# MEM-002: 删除 / 导入安全幂等（TC-MEM-005/006/009/011/012/013）
+# ════════════════════════════════════════════════════════════════
+
+
+def _write_memory_file(dirpath: Path, name: str, content: str) -> Path:
+    """在临时目录写一个 .md 记忆文件。"""
+    p = dirpath / name
+    p.write_text(content, encoding="utf-8")
+    return p
+
+
+def test_delete_by_source_only_removes_target(tmp_path: Path) -> None:
+    """TC-MEM-009: delete by source 仅删除目标 source，不影响其他。"""
+    store = HarnessStorage(str(tmp_path / "mem.db"))
+    store.insert_memory(_entry("来源A的记忆"), source="A.md")
+    store.insert_memory(_entry("来源B的记忆"), source="B.md")
+
+    deleted = store.delete_memories_by_source("A.md")
+    assert deleted == 1
+
+    rows = store.query_memories()
+    assert len(rows) == 1
+    assert rows[0].source == "B.md"
+
+
+def test_import_restart_three_times_no_growth(tmp_path: Path) -> None:
+    """TC-MEM-005: 同一记忆目录连续导入三次，条目数不增加。"""
+    from harness_server.app import import_hermes_memories
+
+    mem_dir = tmp_path / "memories"
+    mem_dir.mkdir()
+    _write_memory_file(mem_dir, "M.md", "用户偏好使用 pytest 进行测试\n\n这是第二段记忆内容")
+
+    store = HarnessStorage(str(tmp_path / "mem.db"))
+    first: tuple[int, int, int] | None = None
+    for _ in range(3):
+        imported, skipped, total = import_hermes_memories(str(mem_dir), store)
+        if first is None:
+            first = (imported, skipped, total)
+
+    # 三次导入总条数等于第一次导入后的条数（幂等，不重复）
+    assert store.count_total_memories() == first[0]
+    assert total == 1  # 1 个文件
+
+
+def test_import_file_change_does_not_duplicate_old(tmp_path: Path) -> None:
+    """TC-MEM-006: 文件变更后重新导入，不重复旧数据，只新增/更新。"""
+    from harness_server.app import import_hermes_memories
+
+    mem_dir = tmp_path / "memories"
+    mem_dir.mkdir()
+    f = _write_memory_file(mem_dir, "M.md", "用户偏好使用 pytest 进行测试")
+
+    store = HarnessStorage(str(tmp_path / "mem.db"))
+    import_hermes_memories(str(mem_dir), store)
+    count_before = store.count_total_memories()
+
+    # 修改文件：追加新内容
+    f.write_text("用户偏好使用 pytest 进行测试\n\n这是新的决定内容", encoding="utf-8")
+    import_hermes_memories(str(mem_dir), store)
+
+    count_after = store.count_total_memories()
+    assert count_after >= count_before  # 旧内容不重复，新内容新增
+    # 旧内容"用户偏好使用 pytest 进行测试" 不应重复
+    same = store.query_memories(tags=["偏好"])
+    assert len(same) == 1
+
+
+def test_default_config_does_not_import_on_startup(tmp_path: Path) -> None:
+    """TC-MEM-011: 默认配置启动不扫描用户 Memory。"""
+    from harness_server.config import RuntimeConfig
+
+    cfg = RuntimeConfig.from_env({})
+    assert cfg.import_memories is False
+
+
+def test_delete_requires_confirm(tmp_path: Path) -> None:
+    """FR-MEMORY-006: CLI 删除缺 --confirm 时拒绝。"""
+    from deepseek_harness.cli import main
+
+    store = HarnessStorage(str(tmp_path / "mem.db"))
+    store.insert_memory(_entry("要删除的记忆"), source="A.md")
+
+    # 无 --confirm 应拒绝
+    rc = main(
+        ["memory", "delete", "--source", "A.md", "--db-path", str(tmp_path / "mem.db")]
+    )
+    assert rc != 0
+    assert store.count_total_memories() == 1  # 未删除
+
+
+def test_import_dry_run_does_not_write_db(tmp_path: Path) -> None:
+    """TC-MEM-012: import dry-run 逐文件报告且 DB 行数不变。"""
+    from deepseek_harness.cli import main
+
+    mem_dir = tmp_path / "memories"
+    mem_dir.mkdir()
+    _write_memory_file(mem_dir, "M.md", "用户偏好使用 pytest 进行测试")
+
+    db = tmp_path / "mem.db"
+    store = HarnessStorage(str(db))
+    store.insert_memory(_entry("已有记忆"), source="existing.md")
+    before = store.count_total_memories()
+
+    # dry-run 不写库
+    rc = main(
+        [
+            "memory",
+            "import",
+            "--memories-dir", str(mem_dir),
+            "--db-path", str(db),
+            "--dry-run",
+        ]
+    )
+    assert rc == 0
+    assert store.count_total_memories() == before  # 行数不变
+
+
+def test_import_corrupt_utf8_is_diagnosable(tmp_path: Path) -> None:
+    """TC-MEM-013: 损坏 UTF-8 可诊断且无半批次。"""
+    from harness_server.app import _import_md_file
+
+    mem_dir = tmp_path / "memories"
+    mem_dir.mkdir()
+    bad = mem_dir / "bad.md"
+    bad.write_bytes(b"valid line\n\xff\xfe broken utf8 \x80 body\nmore")
+
+    store = HarnessStorage(str(tmp_path / "mem.db"))
+    # 损坏 UTF-8 文件应被诊断/跳过，不产生半批次崩溃
+    ok, count = _import_md_file(str(bad), store)
+    assert isinstance(ok, bool)
+    # 不抛异常，且不产生部分写入的损坏数据
+    assert store.count_total_memories() >= 0

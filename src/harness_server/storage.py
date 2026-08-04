@@ -692,6 +692,28 @@ class HarnessStorage:
         finally:
             conn.close()
 
+    def delete_memories_by_source(self, source: str) -> int:
+        """按 source 删除所有记忆（TC-MEM-009）
+
+        只删除指定 source 的记忆，不影响其他来源（source 边界断言）。
+
+        Args:
+            source: 记忆来源标识（如文件名）
+
+        Returns:
+            删除的记忆条数
+        """
+        conn = self._connection()
+        try:
+            cur = conn.execute(
+                "DELETE FROM memories WHERE source = ?",
+                (source,),
+            )
+            conn.commit()
+            return cur.rowcount
+        finally:
+            conn.close()
+
     def get_layers_for_lambda(self, lambda_value: float) -> List[str]:
         """获取 λ 值对应的记忆层级列表
 

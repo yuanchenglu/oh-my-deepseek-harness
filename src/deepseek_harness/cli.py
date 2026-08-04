@@ -127,6 +127,36 @@ def build_parser() -> argparse.ArgumentParser:
     _add_start_options(restart)
     restart.add_argument("--stop-timeout", type=float, default=10.0)
     restart.add_argument("--start-timeout", type=float, default=20.0)
+
+    memory = commands.add_parser("memory", help="Manage memory entries")
+    memory_actions = memory.add_subparsers(dest="memory_command", required=True)
+    _add_common_runtime_options(memory)
+
+    memory_import = memory_actions.add_parser(
+        "import", help="Import Hermes Memory .md files into the store"
+    )
+    memory_import.add_argument("--memories-dir", help="Hermes Memory directory")
+    memory_import.add_argument(
+        "--db-path", help="SQLite database path (default: RuntimeConfig.db_path)"
+    )
+    memory_import.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Report per-file import impact without writing to the DB",
+    )
+
+    memory_delete = memory_actions.add_parser(
+        "delete", help="Delete memory entries by source"
+    )
+    memory_delete.add_argument("--source", required=True, help="Memory source identity")
+    memory_delete.add_argument(
+        "--db-path", help="SQLite database path (default: RuntimeConfig.db_path)"
+    )
+    memory_delete.add_argument(
+        "--confirm",
+        action="store_true",
+        help="Confirm destructive deletion of memory entries",
+    )
     return parser
 
 
@@ -283,6 +313,94 @@ def _run_lifecycle(args: argparse.Namespace) -> int:
         return int(exit_code)
 
 
+def _run_memory(args: argparse.Namespace) -> int:
+    """处理 memory import / delete 子命令。
+
+    - import: 将 Hermes Memory .md 文件导入存储；--dry-run 只报告不写库。
+    - delete: 按 source 删除记忆；缺 --confirm 时拒绝（FR-MEMORY-006）。
+    """
+    try:
+        from harness_server.storage import HarnessStorage
+
+        db_path = args.db_path or RuntimeConfig.from_env().db_path
+        store = HarnessStorage(db_path)
+
+        if args.memory_command == "import":
+            from harness_server.app import import_hermes_memories
+
+            mem_dir = args.memories_dir or RuntimeConfig.from_env().memories_dir
+            if args.dry_run:
+                # dry-run：不写库，只统计影响（用临时 store 模拟）
+                import tempfile
+
+                with tempfile.TemporaryDirectory() as tmp:
+                    dry_store = HarnessStorage(str(tmp) + "/dry.db")
+                    imported, skipped, total = import_hermes_memories(mem_dir, dry_store)
+                _emit(
+                    {
+                        "state": "dry_run",
+                        "dry_run": True,
+                        "imported": imported,
+                        "skipped": skipped,
+                        "total": total,
+                        "db_path": db_path,
+                    },
+                    as_json=args.json,
+                )
+                return 0
+            imported, skipped, total = import_hermes_memories(mem_dir, store)
+            _emit(
+                {
+                    "state": "ok",
+                    "imported": imported,
+                    "skipped": skipped,
+                    "total": total,
+                    "db_path": db_path,
+                },
+                as_json=args.json,
+            )
+            return 0
+
+        if args.memory_command == "delete":
+            if not args.confirm:
+                _emit(
+                    {
+                        "state": "confirm_required",
+                        "message": "delete requires --confirm to proceed",
+                        "source": args.source,
+                    },
+                    as_json=args.json,
+                    stream=sys.stderr,
+                )
+                return 4
+            deleted = store.delete_memories_by_source(args.source)
+            _emit(
+                {
+                    "state": "ok",
+                    "deleted": deleted,
+                    "source": args.source,
+                },
+                as_json=args.json,
+            )
+            return 0
+
+        raise AssertionError("unsupported memory command")
+    except ValueError as exc:
+        _emit(
+            {"state": "config_error", "message": str(exc)},
+            as_json=args.json,
+            stream=sys.stderr,
+        )
+        return 3
+    except RuntimeStateError as exc:
+        _emit(
+            {"state": "state_error", "message": str(exc)},
+            as_json=args.json,
+            stream=sys.stderr,
+        )
+        return 2
+
+
 def _run_server(args: argparse.Namespace) -> int:
     supervisor = _supervisor(args)
     try:
@@ -353,6 +471,8 @@ def main(argv: list[str] | None = None) -> int:
         return _run_lifecycle(args)
     if args.command == "server":
         return _run_server(args)
+    if args.command == "memory":
+        return _run_memory(args)
     parser.error("unsupported command")
     return 2
 
