@@ -28,9 +28,9 @@ cascade 不静默改已完成 → 授权例外改 app.py 的 cascade_correct（�
 ## 3. CI evidence
 
 PR #103:
-- test (3.10): PENDING
-- test (3.11): PENDING
-- test (3.12): PENDING
+- test (3.10): SUCCESS
+- test (3.11): SUCCESS (首次 flaky supervisor 失败，重跑通过)
+- test (3.12): SUCCESS
 
 ## 4. TC coverage
 

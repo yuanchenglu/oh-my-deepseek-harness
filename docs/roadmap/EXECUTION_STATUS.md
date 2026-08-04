@@ -1,19 +1,19 @@
 # Open-source Release Execution Status
 
 - Status date: 2026-08-04
-- Normative contract: `OPEN_SOURCE_RELEASE_PLAN.md` v2.3.17
-- Implementation baseline: `develop@d844b5c`（MEM-002 merge 后更新）
+- Normative contract: `OPEN_SOURCE_RELEASE_PLAN.md` v2.3.18
+- Implementation baseline: `develop@289ef48`（PLAN-001 merge 后更新）
 - Product maturity: **Experimental Preview**
-- Decision: **G0 PASS · G1 PASS · G2 PASS · M2 Complete · M3: CON-001+MEM-001+MEM-002 Complete**
-- Next serial step: **PLAN-001 / Issue #35**
+- Decision: **G0 PASS · G1 PASS · G2 PASS · M2 Complete · M3: CON/MEM-001/MEM-002/PLAN-001 Complete**
+- Next serial step: **PLAN-002 / Issue #36**
 
 ## Progress
 
 | Status | Work IDs | Ratio |
 |---|---:|---:|
-| Complete | 25 | 52.1% |
+| Complete | 26 | 54.2% |
 | In progress | 0 | 0.0% |
-| Not started / blocked | 23 | 47.9% |
+| Not started / blocked | 22 | 45.8% |
 | Total | 48 | 100% |
 
 ## Gates
@@ -35,8 +35,8 @@
 | CON-001 | #32 | PR #97 · `CON-001.md` | Complete |
 | MEM-001 | #33 | PR #101 · `MEM-001.md` | Complete |
 | MEM-002 | #34 | PR #102 · `MEM-002.md` | Complete |
-| PLAN-001 | #35 | pending | **Next** |
-| PLAN-002 | #36 | pending | Blocked |
+| PLAN-001 | #35 | PR #103 · `PLAN-001.md` | Complete |
+| PLAN-002 | #36 | pending | **Next** |
 | PLAN-003 | #37 | pending | Blocked |
 | CP-001 | #38 | pending | Blocked |
 | AUD-001 | #39 | pending | Blocked |

@@ -39,7 +39,7 @@
 | M3 | `CON-001` | G2 + PKG-001 | `TC-CONTRACT-001–010` | #32 | PR #97 · `CON-001.md` | **Complete** |
 | M3 | `MEM-001` | CON-001 | Memory store/query/dedup | #33 | PR #101 · `MEM-001.md` | **Complete** |
 | M3 | `MEM-002` | MEM-001 | Memory import/delete/idempotence | #34 | PR #102 · `MEM-002.md` | **Complete** |
-| M3 | `PLAN-001` | MEM-002 | DAG/cascade | #35 | pending | Blocked |
+| M3 | `PLAN-001` | MEM-002 | DAG/cascade | #35 | PR #103 · `PLAN-001.md` | **Complete** |
 | M3 | `PLAN-002` | PLAN-001 | state machine | #36 | pending | Blocked |
 | M3 | `PLAN-003` | PLAN-002 | query/archive/delete | #37 | pending | Blocked |
 | M3 | `CP-001` | PLAN-003 | Checkpoint | #38 | pending | Blocked |
@@ -145,7 +145,7 @@
 | `CR-P1-002` | AUD-001 | Open |
 | `CR-P1-003` | OPS-001 | Open |
 | `CR-P1-004` | MEM-002 | Complete (storage dedup 由 MEM-001, delete/import 由 MEM-002) |
-| `CR-P1-005` | PLAN-001 | Open |
+| `CR-P1-005` | PLAN-001 | Complete (DAG 校验 + cascade) |
 | `CR-P1-006` | INTENT-001 | Open |
 | `CR-P1-007` | PRIV-001 | Open |
 | `CR-P2-001` | DOC-001 | Open |
