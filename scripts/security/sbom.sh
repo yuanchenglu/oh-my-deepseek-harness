@@ -9,8 +9,12 @@ OUT="${1:-${ROOT}/dist/sbom.json}"
 python3 - "$ROOT" "$OUT" <<'PY'
 import json
 import sys
-import tomllib
 from pathlib import Path
+
+try:
+    import tomllib
+except ModuleNotFoundError:  # Python 3.10
+    import tomli as tomllib
 
 root = Path(sys.argv[1])
 out = Path(sys.argv[2])
