@@ -182,6 +182,15 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Confirm destructive deletion of the Plan",
     )
+
+    audit = commands.add_parser(
+        "audit", help="Generate the immune-system audit report from JSONL events"
+    )
+    _add_common_runtime_options(audit)
+    audit.add_argument(
+        "--events-file",
+        help="JSONL audit events file (default: ~/.hermes/memories/audit-events.jsonl)",
+    )
     return parser
 
 
@@ -482,6 +491,43 @@ def _run_plan(args: argparse.Namespace) -> int:
         return 2
 
 
+def _run_audit(args: argparse.Namespace) -> int:
+    """生成免疫系统审计报告（OPS-001 手工 audit 入口）。
+
+    从 JSONL 事件源读取，派生 Markdown 报告；--json 输出固定结构。
+    只读，不修改任何 scheduler / 系统状态。
+    """
+    try:
+        from .audit_events import AUDIT_EVENTS_FILE, events_to_markdown, read_events
+
+        events_file = args.events_file or AUDIT_EVENTS_FILE
+        events = read_events(events_file)
+        valid = [e for e in events if "error" not in e]
+        report = events_to_markdown(events)
+
+        if args.json:
+            _emit(
+                {
+                    "state": "ok",
+                    "events_file": events_file,
+                    "event_count": len(events),
+                    "valid_count": len(valid),
+                    "report": report,
+                },
+                as_json=True,
+            )
+        else:
+            print(report)
+        return 0
+    except OSError as e:
+        _emit(
+            {"state": "error", "message": str(e)},
+            as_json=args.json,
+            stream=sys.stderr,
+        )
+        return 2
+
+
 def _run_server(args: argparse.Namespace) -> int:
     supervisor = _supervisor(args)
     try:
@@ -556,6 +602,8 @@ def main(argv: list[str] | None = None) -> int:
         return _run_memory(args)
     if args.command == "plan":
         return _run_plan(args)
+    if args.command == "audit":
+        return _run_audit(args)
     parser.error("unsupported command")
     return 2
 
