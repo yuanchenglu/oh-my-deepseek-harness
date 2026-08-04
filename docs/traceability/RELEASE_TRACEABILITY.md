@@ -45,7 +45,7 @@
 | M3 | `CP-001` | PLAN-003 | Checkpoint | #38 | PR #106 · `CP-001.md` | **Complete** |
 | M3 | `AUD-001` | SES-001 | Audit source of truth | #39 | PR #107 · `AUD-001.md` | **Complete** |
 | M3 | `OPS-001` | AUD-001 | manual audit CLI | #40 | PR #108 · `OPS-001.md` | **Complete** |
-| M3 | `INTENT-001` | CON-001 | intent confidence | #41 | pending | Blocked |
+| M3 | `INTENT-001` | CON-001 | intent confidence | #41 | PR #109 · `INTENT-001.md` | **Complete** |
 | M4 | `DOC-001` | M2 + M3 | capability docs | #42 | pending | Blocked |
 | M4 | `DOC-002` | DOC-001 | lifecycle/privacy guides | #43 | pending | Blocked |
 | M4 | `QA-001` | M2 + M3 | test channels | #44 | pending | Blocked |
@@ -146,7 +146,7 @@
 | `CR-P1-003` | OPS-001 | Complete (audit CLI + 无 scheduler 副作用) |
 | `CR-P1-004` | MEM-002 | Complete (storage dedup 由 MEM-001, delete/import 由 MEM-002) |
 | `CR-P1-005` | PLAN-001 | Complete (DAG 校验 + cascade) |
-| `CR-P1-006` | INTENT-001 | Open |
+| `CR-P1-006` | INTENT-001 | Complete (否定语义 + override + 阈值) |
 | `CR-P1-007` | PRIV-001 | Open |
 | `CR-P2-001` | DOC-001 | Open |
 | `CR-P2-002` | REL-001 | Complete |

@@ -30,23 +30,23 @@
 ════════════════════════════════════════════════
 二、当前事实快照（2026-08-04）
 ════════════════════════════════════════════════
-- 当前 develop 基线：master（OPS-001 merge 后更新）
+- 当前 develop 基线：master（INTENT-001 merge 后更新）
 - master：398701c5cf6495180a7a7566f09921cf126a054a（与 develop diverged，不提前合并）
 - 固定 Work ID：48
-- Complete：31/48（64.6%）
-- Not started / dependency blocked：17/48
+- Complete：32/48（66.7%）
+- Not started / dependency blocked：16/48
 - M0：Complete / G0：PASS
 - M1：8/8 Complete / G1：PASS
 - M2：Complete（CTX-001/002/003/004 + SES-001 + PRIV-001）/ G2：PASS
-- M3：CON-001 + MEM-001 + MEM-002 + PLAN-001 + PLAN-002 + PLAN-003 + CP-001 + AUD-001 + OPS-001 Complete
+- M3：Complete（10/10）— CON-001 + MEM-001/002 + PLAN-001/002/003 + CP-001 + AUD-001 + OPS-001 + INTENT-001
 - 产品成熟度：Experimental Preview
-- 下一唯一合法任务：INTENT-001 / Issue #41
+- 下一唯一合法任务：G3 Gate（M3 退出）
 - XFAIL：**0（全清）**
 - master、Tag、GitHub Release、PyPI 均未进入发布阶段
 - PyPI 按 REL-005 保持禁用
 
 ════════════════════════════════════════════════
-三、剩余任务全清单（17 个 Work ID + 4 个 Gate）
+三、剩余任务全清单（16 个 Work ID + 4 个 Gate）
 ════════════════════════════════════════════════
 M3（Contract & Data Integrity，退出 G3）：
 - MEM-001 #33：✅ Complete（PR #101）— memory_store/Tag/Query、content hash、source identity、mtime、import batch、λ 连续边界
@@ -57,7 +57,7 @@ M3（Contract & Data Integrity，退出 G3）：
 - CP-001 #38：✅ Complete（PR #106）— Plan/Completed ID 归属、并发编号、Review Rule Version
 - AUD-001 #39：✅ Complete（PR #107）— JSONL 事件源 + Markdown 派生报告（XF-AUDIT-001 转 Pass）
 - OPS-001 #40：✅ Complete（PR #108）— 手工 audit 命令、Cron 降级为不自动安装示例
-- INTENT-001 #41：修复低置信阈值、否定语义、用户显式优先（CON-001 后可并行）
+- INTENT-001 #41：✅ Complete（PR #109）— 修复低置信阈值、否定语义、用户显式优先（CON-001 后可并行）
 
 M4（开源可用性、兼容性、RC，退出 G3）：
 - DOC-001 #42：README 按 Stable/Beta/Experimental/Degraded/Removed 分级

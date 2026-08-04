@@ -26,7 +26,40 @@ def _keyword_match_score(keyword: str, text: str) -> float:
         return 0.0
     keyword_chars = set(keyword_cjk)
     matches = sum(1 for character in keyword_chars if character in text_cjk)
-    return matches / len(keyword_cjk)
+    # 收紧部分匹配阈值，避免字符碎片假阳性（INTENT-001 TC-INTENT-006）
+    ratio = matches / len(keyword_cjk)
+    return ratio if ratio >= 0.7 else 0.0
+
+
+_NEGATION_PREFIXES = ("不要", "别", "无需", "勿", "不", "别要", "莫")
+
+
+def _is_negated(text: str, keyword: str) -> bool:
+    """检测关键词前是否有否定词（TC-INTENT-006）。
+
+    命中否定词则抑制该关键词匹配，避免 '不要重构' 误判为 refactor。
+    """
+    idx = text.find(keyword)
+    if idx < 0:
+        return False
+    prefix = text[max(0, idx - 3) : idx]
+    return any(neg in prefix for neg in _NEGATION_PREFIXES)
+
+
+def _find_explicit_intent(text: str) -> Optional[str]:
+    """检测显式用户意图声明（TC-INTENT-005）。
+
+    匹配 '按/用/以 X 意图' 模式，X 为已知意图名。
+    """
+    intents = _load_strategies().get("intents", {})
+    known = {name: name for name in intents}
+    for intent_name in known:
+        pattern = re.compile(
+            rf"(?:按|用|以|按照)\s*{re.escape(intent_name)}\s*(?:意图|方式|处理)"
+        )
+        if pattern.search(text):
+            return intent_name
+    return None
 
 
 def _load_strategies() -> dict:
@@ -46,6 +79,11 @@ def _load_strategies() -> dict:
 
 
 def classify_intent(task_description: str) -> Dict[str, Any]:
+    # 显式用户意图优先（TC-INTENT-005）：按/用/以 X 意图
+    explicit = _find_explicit_intent(task_description)
+    if explicit:
+        return {"intent": explicit, "confidence": 1.0}
+
     intents = _load_strategies().get("intents", {})
     scores: Dict[str, float] = {}
     for intent_name, intent_config in intents.items():
@@ -55,7 +93,8 @@ def classify_intent(task_description: str) -> Dict[str, Any]:
         score = sum(
             match
             for keyword in keywords
-            if (match := _keyword_match_score(keyword, task_description)) >= 0.5
+            if not _is_negated(task_description, keyword)
+            and (match := _keyword_match_score(keyword, task_description)) >= 0.5
         )
         if score > 0:
             scores[intent_name] = score
@@ -67,7 +106,8 @@ def classify_intent(task_description: str) -> Dict[str, Any]:
     best_intent, best_score = ranked[0]
     second_score = ranked[1][1] if len(ranked) > 1 else 0.0
     confidence = best_score / (best_score + second_score) if best_score else 0.0
-    if confidence < 0.5:
+    # 并列或低置信 → neutral/default（TC-INTENT-003）
+    if confidence < 0.6:
         return {"intent": "spec_driven", "confidence": confidence}
     return {"intent": best_intent, "confidence": confidence}
 
