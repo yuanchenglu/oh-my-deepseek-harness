@@ -1,20 +1,20 @@
 # Open-source Release Execution Status
 
 - Status date: 2026-08-04
-- Normative contract: `OPEN_SOURCE_RELEASE_PLAN.md` v2.3.32
-- Implementation baseline: `develop@master`（SEC-002 merge 后更新）
+- Normative contract: `OPEN_SOURCE_RELEASE_PLAN.md` v2.3.33
+- Implementation baseline: `develop@master`（REL-006 merge 后更新）
 - Product maturity: **Experimental Preview**
-- Decision: **G0 PASS · G1 PASS · G2 PASS · M2 Complete · M3 Complete · M4: DOC-001/DOC-002/QA-001/QA-002/COMPAT-001/SEC-001/MIG-001/SEC-002 Complete**
-- Next serial step: **REL-006 / Issue #50**
+- Decision: **G0 PASS · G1 PASS · G2 PASS · M2 Complete · M3 Complete · M4 Complete（9/9）**
+- Next serial step: **G3 Gate evaluation**
 - XFAIL: **0（全清）**
 
 ## Progress
 
 | Status | Work IDs | Ratio |
 |---|---:|---:|
-| Complete | 40 | 83.3% |
+| Complete | 41 | 85.4% |
 | In progress | 0 | 0.0% |
-| Not started / blocked | 8 | 16.7% |
+| Not started / blocked | 7 | 14.6% |
 | Total | 48 | 100% |
 
 ## Gates
@@ -56,7 +56,7 @@
 | SEC-001 | #47 | PR #120 · `SEC-001.md` | Complete |
 | MIG-001 | #48 | PR #122 · `MIG-001.md` | Complete |
 | SEC-002 | #49 | PR #123 · `SEC-002.md` | Complete |
-| REL-006 | #50 | pending | **Next** |
+| REL-006 | #50 | PR #124 · `REL-006.md` | Complete |
 | SEC-002 | #49 | pending | Blocked |
 | REL-006 | #50 | pending | Blocked |
 

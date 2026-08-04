@@ -54,7 +54,7 @@
 | M4 | `SEC-001` | COMPAT-001 + PRIV-001 | license/SBOM/dependency | #47 | PR #120 · `SEC-001.md` | **Complete** |
 | M4 | `MIG-001` | INS-003 + MEM-002 + AUD-001 | `TC-MIG-001–006` | #48 | PR #122 · `MIG-001.md` | **Complete** |
 | M4 | `SEC-002` | SEC-001 + MIG-001 | security boundaries | #49 | PR #123 · `SEC-002.md` | **Complete** |
-| M4 | `REL-006` | all M4 | RC/reproducibility/provenance | #50 | pending | Blocked |
+| M4 | `REL-006` | all M4 | RC/reproducibility/provenance | #50 | PR #124 · `REL-006.md` | **Complete** |
 | M5 | `BETA-001` | G3 + exact-master verification | `v3.0.0-beta.1` | #51 | pending | Blocked |
 | M5 | `BETA-002` | BETA-001 | external validation | #52 | pending | Blocked |
 | M5 | `BETA-003` | BETA-001 | Beta failure ledger | #53 | pending | Blocked |
