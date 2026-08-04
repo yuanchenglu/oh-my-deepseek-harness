@@ -1,12 +1,12 @@
 # 开源发布执行计划（Open-source Release Execution Plan）
 
-> 文档版本：2.3.22（AUD-001 Complete / M3 8/10）
+> 文档版本：2.3.23（OPS-001 Complete / M3 9/10）
 >
 > 状态日期：2026-08-04
 >
-> 当前实现事实基线：`develop@master`（AUD-001 merge 后更新）
+> 当前实现事实基线：`develop@master`（OPS-001 merge 后更新）
 >
-> 计划状态：`M1_COMPLETE / G1_PASS / M2_COMPLETE / G2_PASS / CON_001 / MEM_001 / MEM_002 / PLAN_001 / PLAN_002 / PLAN_003 / CP_001 / AUD_001 COMPLETE / M3_IN_PROGRESS`
+> 计划状态：`M1_COMPLETE / G1_PASS / M2_COMPLETE / G2_PASS / CON_001 / MEM_001 / MEM_002 / PLAN_001 / PLAN_002 / PLAN_003 / CP_001 / AUD_001 / OPS_001 COMPLETE / M3_IN_PROGRESS`
 >
 > 当前产品成熟度：`Experimental Preview`
 >
@@ -48,14 +48,15 @@
 - `PLAN-003`：Plan 查询/归档/删除生命周期（默认排除归档、确认删除）。
 - `CP-001`：Checkpoint 归属/唯一编号/Review 幂等/Chain 排序。
 - `AUD-001`：JSONL 审计事件源 + Markdown 派生报告（XF-AUDIT-001 转 Pass）。
+- `OPS-001`：手工 audit CLI，Cron 仅作非安装示例。
 
 ## 2. 固定 Work ID 进度
 
 | 状态 | 数量 | 比例 |
 |---|---:|---:|
-| Complete | 30 | 62.5% |
+| Complete | 31 | 64.6% |
 | In progress | 0 | 0.0% |
-| Not started / dependency blocked | 18 | 37.5% |
+| Not started / dependency blocked | 17 | 35.4% |
 | Total | 48 | 100% |
 
 ## 3. Gate 状态
@@ -144,8 +145,8 @@ G2已评估通过。Evidence: `docs/testing/evidence/GATE-G2.md`. PR #96 · `a84
 | `PLAN-003` | #37 | PLAN-002 | PR #105 · `PLAN-003.md` | **Complete** |
 | `CP-001` | #38 | PLAN-003 | PR #106 · `CP-001.md` | **Complete** |
 | `AUD-001` | #39 | CON-001 | PR #107 · `AUD-001.md` | **Complete** |
-| `OPS-001` | #40 | AUD-001 | pending | **Next** |
-| `INTENT-001` | #41 | CON-001 | pending | Blocked (可并行) |
+| `OPS-001` | #40 | AUD-001 | PR #108 · `OPS-001.md` | **Complete** |
+| `INTENT-001` | #41 | CON-001 | pending | **Next** |
 
 ## 8. 固定支持边界
 
