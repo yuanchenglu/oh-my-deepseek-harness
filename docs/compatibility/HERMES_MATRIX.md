@@ -160,6 +160,17 @@ Each supported cell must verify:
 7. no real HOME, user DB, prompts or secrets in fixtures;
 8. exact OS/Python/Hermes/project SHA/artifact/JUnit evidence.
 
+### 8.1 COMPAT-001 registration probe (committed)
+
+`tests/compatibility/probes/test_hermes_register_probe.py` drives the real
+`deepseek_harness.register(ctx)` against a Hermes v0.19.0-compatible `ctx`
+surface and asserts the plugin registers the documented 5 Hooks and all 9
+runtime Tools (10 target minus `memory_store`). This proves the plugin is
+compatible with the Hermes plugin contract and is importable by the Hermes
+Plugin manager. It is a **registration-contract probe**; a full live-Hermes
+lifecycle E2E (cell 1-8) remains the residual COMPAT-001 responsibility and
+is gated by G3.
+
 ## 9. Stop conditions
 
 Stop and reopen the compatibility decision if:
