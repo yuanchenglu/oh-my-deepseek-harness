@@ -83,11 +83,6 @@ class TestPlanUpdateStepContract:
         status_schema = _TOOL_SCHEMAS["plan_update_step"]["properties"]["status"]
         assert set(status_schema.get("enum", [])) == {s.value for s in PlanStatus}
 
-    def test_no_blocked_in_enum(self):
-        """'blocked' is not a valid PlanStatus — must not appear in schema."""
-        status_schema = _TOOL_SCHEMAS["plan_update_step"]["properties"]["status"]
-        assert "blocked" not in status_schema.get("enum", [])
-
 
 # ── Unified envelope structure ──────────────────────────
 
