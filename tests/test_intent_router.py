@@ -175,3 +175,63 @@ class TestBuildContextInjection:
         )
         assert r is not None
         assert "spec_driven" in r["context"]
+
+
+# ════════════════════════════════════════════════════════════════
+# INTENT-001: 否定语义 / 用户 override / 多类并列 / 无效 YAML
+# （TC-INTENT-003/005/006/007/008）
+# ════════════════════════════════════════════════════════════════
+
+
+class TestNegationSemantics:
+    """TC-INTENT-006: 否定语义不应因关键词误判。"""
+
+    def test_negated_keyword_not_matched(self):
+        """'不要重构' 不应判为 refactor。"""
+        r = classify_intent("不要重构这个模块，保持现状")
+        assert r["intent"] != "refactor"
+
+    def test_negated_keyword_falls_back(self):
+        """否定一个关键词后无其他命中 → spec_driven。"""
+        r = classify_intent("不要新建，只是看看")
+        assert r["intent"] == "spec_driven"
+
+
+class TestExplicitOverride:
+    """TC-INTENT-005: 显式用户分类优先于自动路由。"""
+
+    def test_explicit_research_override(self):
+        """显式声明 research 优先于默认。"""
+        r = classify_intent("按 research 意图处理：评估当前代码结构")
+        assert r["intent"] == "research"
+
+    def test_explicit_override_beats_auto(self):
+        """显式声明 simple 优先于自动 refactor。"""
+        r = classify_intent("按 simple 意图处理这个重构任务")
+        assert r["intent"] == "simple"
+
+
+class TestConfidenceTie:
+    """TC-INTENT-003: 多类并列且置信度低 → neutral/default。"""
+
+    def test_tie_between_intents_falls_back(self):
+        """多关键词并列且置信度 < 0.5 → spec_driven。"""
+        r = classify_intent("重构并调研架构")
+        assert r["intent"] == "spec_driven"
+
+
+class TestInvalidYaml:
+    """TC-INTENT-008: 无效策略 YAML → 安全默认。"""
+
+    def test_invalid_yaml_safe_default(self, monkeypatch):
+        """加载失败时返回空并安全兜底。"""
+        import yaml
+
+        monkeypatch.setattr(yaml, "safe_load", lambda *a, **k: None)
+        # 强制重新加载
+        import deepseek_harness.intent_router as ir
+
+        monkeypatch.setattr(ir, "_strategies", None)
+        r = ir.classify_intent("重构模块")
+        assert r["intent"] == "spec_driven"
+        assert r["confidence"] == 0.0
