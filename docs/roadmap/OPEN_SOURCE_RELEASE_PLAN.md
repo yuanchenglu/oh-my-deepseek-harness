@@ -1,12 +1,12 @@
 # 开源发布执行计划（Open-source Release Execution Plan）
 
-> 文档版本：2.3.19（PLAN-002 Complete / M3 5/10）
+> 文档版本：2.3.20（PLAN-003 Complete / M3 6/10）
 >
 > 状态日期：2026-08-04
 >
-> 当前实现事实基线：`develop@289ef48`（PLAN-002 merge 后更新）
+> 当前实现事实基线：`develop@master`（PLAN-003 merge 后更新）
 >
-> 计划状态：`M1_COMPLETE / G1_PASS / M2_COMPLETE / G2_PASS / CON_001 / MEM_001 / MEM_002 / PLAN_001 / PLAN_002 COMPLETE / M3_IN_PROGRESS`
+> 计划状态：`M1_COMPLETE / G1_PASS / M2_COMPLETE / G2_PASS / CON_001 / MEM_001 / MEM_002 / PLAN_001 / PLAN_002 / PLAN_003 COMPLETE / M3_IN_PROGRESS`
 >
 > 当前产品成熟度：`Experimental Preview`
 >
@@ -45,14 +45,15 @@
 - `MEM-002`：默认关闭 startup import、CLI memory import/delete（dry-run、--confirm）、按 source 删除。
 - `PLAN-001`：Plan DAG 校验（自依赖/缺失/跨 Plan/循环）、cascade 不静默改已完成。
 - `PLAN-002`：Plan 状态机（6 状态合法转换）、原子创建。
+- `PLAN-003`：Plan 查询/归档/删除生命周期（默认排除归档、确认删除）。
 
 ## 2. 固定 Work ID 进度
 
 | 状态 | 数量 | 比例 |
 |---|---:|---:|
-| Complete | 27 | 56.3% |
+| Complete | 28 | 58.3% |
 | In progress | 0 | 0.0% |
-| Not started / dependency blocked | 21 | 43.7% |
+| Not started / dependency blocked | 20 | 41.7% |
 | Total | 48 | 100% |
 
 ## 3. Gate 状态
@@ -138,8 +139,8 @@ G2已评估通过。Evidence: `docs/testing/evidence/GATE-G2.md`. PR #96 · `a84
 | `MEM-002` | #34 | MEM-001 | PR #102 · `MEM-002.md` | **Complete** |
 | `PLAN-001` | #35 | MEM-002 | PR #103 · `PLAN-001.md` | **Complete** |
 | `PLAN-002` | #36 | PLAN-001 | PR #104 · `PLAN-002.md` | **Complete** |
-| `PLAN-003` | #37 | PLAN-002 | pending | **Next** |
-| `CP-001` | #38 | PLAN-003 | pending | Blocked |
+| `PLAN-003` | #37 | PLAN-002 | PR #105 · `PLAN-003.md` | **Complete** |
+| `CP-001` | #38 | PLAN-003 | pending | **Next** |
 | `AUD-001` | #39 | CON-001 | pending | Blocked |
 | `OPS-001` | #40 | AUD-001 | pending | Blocked |
 | `INTENT-001` | #41 | CON-001 | pending | Blocked (可并行) |
