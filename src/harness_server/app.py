@@ -404,10 +404,13 @@ def cascade_correct(
                 # 按关联强度分级处理
                 if s.association_strength == AssociationStrength.STRONG:
                     affected[sid] = "pending_review"
-                    s.status = PlanStatus.PENDING_REVIEW
+                    # 已完成步骤不得被级联降级（TC-PLAN-009：不静默改已完成）
+                    if s.status != PlanStatus.COMPLETED:
+                        s.status = PlanStatus.PENDING_REVIEW
                 elif s.association_strength == AssociationStrength.MODERATE:
                     affected[sid] = "pending_review"
-                    s.status = PlanStatus.PENDING_REVIEW
+                    if s.status != PlanStatus.COMPLETED:
+                        s.status = PlanStatus.PENDING_REVIEW
                 else:
                     # WEAK 关联仅通知，不改变状态
                     affected[sid] = "notify"
@@ -420,14 +423,16 @@ def cascade_correct(
                 affected[sid] = "notify"
 
     # 持久化受影响步骤的状态变更（只有 pending_review 需要写库，notify 不改状态）
+    # 已完成步骤不得被降级：写库时用 WHERE status != 'completed' 守卫（TC-PLAN-009）
     if affected:
         conn = store._connection()
         try:
             for sid, action in affected.items():
                 if action == "pending_review":
                     conn.execute(
-                        "UPDATE steps SET status = ? WHERE step_id = ?",
-                        (PlanStatus.PENDING_REVIEW.value, sid),
+                        "UPDATE steps SET status = ? "
+                        "WHERE step_id = ? AND status != ?",
+                        (PlanStatus.PENDING_REVIEW.value, sid, PlanStatus.COMPLETED.value),
                     )
             conn.commit()
         finally:

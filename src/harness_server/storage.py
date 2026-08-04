@@ -333,6 +333,10 @@ class HarnessStorage:
     def insert_steps(self, plan_id: str, steps: List[OKRPlanStep]) -> int:
         """批量插入步骤
 
+        插入前先校验 DAG 不变量（TC-PLAN-003~007）：
+        - 无自依赖、无缺失依赖、无跨 Plan 依赖、无循环。
+        校验失败抛 ValueError，不写入任何数据（原子回滚）。
+
         Args:
             plan_id: 所属 Plan ID
             steps: 步骤列表
@@ -340,6 +344,7 @@ class HarnessStorage:
         Returns:
             成功插入的步骤数
         """
+        self._validate_dag(plan_id, steps)
         conn = self._connection()
         try:
             data = []
@@ -365,6 +370,67 @@ class HarnessStorage:
         finally:
             conn.close()
 
+    def _validate_dag(self, plan_id: str, steps: List[OKRPlanStep]) -> None:
+        """校验 Plan DAG 不变量（TC-PLAN-003~007）
+
+        校验失败抛 ValueError，不产生任何写入：
+        - 自依赖：step.dependency_ids 含自身
+        - 缺失依赖：dependency_ids 指向不存在的 step
+        - 跨 Plan 依赖：依赖的 step 属于其他 plan
+        - 循环：依赖图存在环（Kahn 拓扑排序）
+
+        注意：steps 可为部分步骤（如单步插入/更新），此时依赖可能指向
+        该 plan 已存在的其他步骤。跨 Plan 与缺失依赖校验需结合现有 DB 状态。
+        """
+        step_ids = {s.step_id for s in steps}
+        # 补充：该 plan 已存在的步骤（用于校验依赖指向）
+        existing = {
+            s.step_id: s for s in self.get_steps(plan_id)
+        }
+        all_ids = step_ids | set(existing)
+        # 合并后的完整步骤集（校验用）：新步骤优先，缺失的补历史
+        combined: Dict[str, OKRPlanStep] = dict(existing)
+        for s in steps:
+            combined[s.step_id] = s
+
+        for s in steps:
+            for dep_id in s.dependency_ids:
+                # 自依赖
+                if dep_id == s.step_id:
+                    raise ValueError(f"自依赖非法: {s.step_id} 依赖自身")
+                # 缺失依赖
+                if dep_id not in all_ids:
+                    raise ValueError(f"缺失依赖: {s.step_id} 依赖不存在的 {dep_id}")
+                # 跨 Plan 依赖：依赖的 step 属于其他 plan
+                if dep_id in existing and existing[dep_id] is not None:
+                    dep_plan = self.get_step_plan_id(dep_id)
+                    if dep_plan != plan_id:
+                        raise ValueError(
+                            f"跨 Plan 依赖非法: {s.step_id} 依赖 {dep_id}（属于 {dep_plan}）"
+                        )
+                # 新步骤的依赖若也是新步骤 → 同 plan，OK
+
+        # 循环检测：用合并后的完整图（Kahn 拓扑排序）
+        graph_ids = set(combined)
+        in_degree: Dict[str, int] = {sid: 0 for sid in graph_ids}
+        adj: Dict[str, List[str]] = {sid: [] for sid in graph_ids}
+        for sid, s in combined.items():
+            for dep_id in s.dependency_ids:
+                if dep_id in graph_ids:
+                    adj[dep_id].append(sid)
+                    in_degree[sid] += 1
+        queue = [sid for sid, deg in in_degree.items() if deg == 0]
+        visited = 0
+        while queue:
+            node = queue.pop(0)
+            visited += 1
+            for neighbor in adj.get(node, []):
+                in_degree[neighbor] -= 1
+                if in_degree[neighbor] == 0:
+                    queue.append(neighbor)
+        if visited != len(graph_ids):
+            raise ValueError("依赖图存在循环")
+
     def update_step(self, step_id: str, **kwargs) -> bool:
         """更新步骤的字段
 
@@ -383,6 +449,25 @@ class HarnessStorage:
         fields = {k: v for k, v in kwargs.items() if k in allowed and v is not None}
         if not fields:
             return False
+
+        # 若更新依赖，先校验更新后的 DAG 不变量（TC-PLAN-007：更新成环回滚）
+        if "dependency_ids" in fields:
+            current = self.get_step(step_id)
+            if current is None:
+                return False
+            plan_id = self.get_step_plan_id(step_id)
+            if plan_id is None:
+                return False
+            updated = OKRPlanStep(
+                step_id=step_id,
+                text=current.text,
+                key=current.key,
+                status=current.status,
+                parent_id=current.parent_id,
+                dependency_ids=fields["dependency_ids"],
+                association_strength=current.association_strength,
+            )
+            self._validate_dag(plan_id, [updated])
 
         conn = self._connection()
         try:
