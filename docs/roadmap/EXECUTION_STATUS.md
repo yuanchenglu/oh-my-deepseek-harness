@@ -2,19 +2,19 @@
 
 - Status date: 2026-08-04
 - Normative contract: `OPEN_SOURCE_RELEASE_PLAN.md` v2.3.24
-- Implementation baseline: `develop@master`（INTENT-001 merge 后更新）
+- Implementation baseline: `develop@master`（DOC-001 merge 后更新）
 - Product maturity: **Experimental Preview**
 - Decision: **G0 PASS · G1 PASS · G2 PASS · M2 Complete · M3 Complete（10/10）**
-- Next serial step: **G3 Gate（M3 退出）**
+- Next serial step: **DOC-002（M4 第 2 项）**
 - XFAIL: **0（全清）**
 
 ## Progress
 
 | Status | Work IDs | Ratio |
 |---|---:|---:|
-| Complete | 32 | 66.7% |
+| Complete | 33 | 68.8% |
 | In progress | 0 | 0.0% |
-| Not started / blocked | 16 | 33.3% |
+| Not started / blocked | 15 | 31.3% |
 | Total | 48 | 100% |
 
 ## Gates
@@ -43,6 +43,20 @@
 | AUD-001 | #39 | PR #107 · `AUD-001.md` | Complete |
 | OPS-001 | #40 | PR #108 · `OPS-001.md` | Complete |
 | INTENT-001 | #41 | PR #109 · `INTENT-001.md` | Complete |
+
+## M4 progress
+
+| Work ID | Issue | Delivery | Status |
+|---|---:|---|---|
+| DOC-001 | #42 | PR #110 · `DOC-001.md` | Complete |
+| DOC-002 | #43 | pending | **Next** |
+| QA-001 | #44 | pending | Blocked |
+| QA-002 | #45 | pending | Blocked |
+| COMPAT-001 | #46 | pending | Blocked |
+| SEC-001 | #47 | pending | Blocked |
+| MIG-001 | #48 | pending | Blocked |
+| SEC-002 | #49 | pending | Blocked |
+| REL-006 | #50 | pending | Blocked |
 
 ## XFAIL inventory
 
