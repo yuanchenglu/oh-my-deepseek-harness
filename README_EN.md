@@ -21,6 +21,8 @@ Built on the Hermes Agent Plugin system, this project translates DeepSeek's phys
 
 ## Implemented Core Features
 
+> Each capability is classified (Stable/Beta/Experimental/Degraded/Removed) with evidence links in the [Capability Matrix](docs/capabilities/CAPABILITY_MATRIX.md); status definitions in [STATUS.md](docs/capabilities/STATUS.md).
+
 - ✅ **Cognitive Gate** (I-02 Bidirectional Primitives + I-08 Scope Control): Automatically injects L1 honor/shame values, L2 thinking patterns, and L3 exclusion list into every conversation turn
 - ✅ **Constraint Immune System** (I-01 Hard Constraint Detection + Periodic Audit): Detects constraints like "must not / cannot", automatically logs violations, and runs daily cron audits
 - ✅ **Intent Router** (I-10 7+1 Classification + Policy Binding): Keyword matching identifies 7+1 user intent types, binding different interview depth, Plan granularity, review standards, and execution modes
@@ -207,7 +209,7 @@ All feasible patterns are implemented. I-14 removed due to technical limitations
 No. It uses the official Hermes Plugin Hook and Context Engine interfaces. Actual v0.19.0 compatibility still requires `COMPAT-001` real E2E.
 
 **Will it overwrite my existing memory?**
-No. SOUL.md, MEMORY.md, and USER.md are automatically backed up as `.bak.{timestamp}` before installation. Original content is not deleted. The install.sh script defaults to --dry-run preview mode, safe with no side effects.
+No. SOUL.md, MEMORY.md, and USER.md are automatically backed up as `.bak.{timestamp}` before installation. Original content is not deleted. The install.sh script defaults to --dry-run preview mode; it backs up your memory files and does not overwrite or delete original content.
 
 **What environment is required?**
 - Hermes Agent v0.19.0 / tag `v2026.7.20`

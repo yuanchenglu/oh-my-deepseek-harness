@@ -16,6 +16,8 @@
 ## 3. Product
 
 - [`product/PRD.md`](product/PRD.md)：88 个 `FR-*`、固定外部契约、验收和 Release Gate。
+- [`capabilities/STATUS.md`](capabilities/STATUS.md)：能力状态分级定义（Stable/Beta/Experimental/Degraded/Removed）。
+- [`capabilities/CAPABILITY_MATRIX.md`](capabilities/CAPABILITY_MATRIX.md)：能力分级矩阵与证据链接。
 
 ## 4. Testing
 

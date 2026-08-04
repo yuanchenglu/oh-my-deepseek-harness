@@ -1,6 +1,6 @@
 # oh-my-deepseek-harness ⚡
 
-你的 Hermes Agent + DeepSeek 满血插件。一条命令安装，零配置开用。
+你的 Hermes Agent + DeepSeek 满血插件。一条命令安装，快速开用。
 
 [English](README_EN.md) | 简体中文
 
@@ -24,7 +24,7 @@ bash scripts/install.sh
 
 > ⭐ 觉得有用？点个 Star，让更多人发现 DeepSeek + Agent 的正确打开方式。
 
-安装脚本会自动完成：备份已有记忆 → 创建插件软链接 → 注册 Hook → 安装依赖。安全无副作用，`install.sh --dry-run` 可预览。
+安装脚本会自动完成：备份已有记忆 → 创建插件软链接 → 注册 Hook → 安装依赖。安装前会备份已有记忆文件，不覆盖原始内容；`install.sh --dry-run` 可预览。
 
 ---
 
@@ -40,7 +40,7 @@ bash scripts/install.sh
 
 **这个项目就是答案。**
 
-oh-my-deepseek-harness 是目前**唯一**专门针对 DeepSeek V4 API 做了全链 Agent 优化的开源项目。它不修改一行 Hermes 核心代码，全部通过官方 Plugin Hook 接口注入，Hermes 每日更新也不会有冲突。
+oh-my-deepseek-harness 是专门针对 DeepSeek V4 API 做了全链 Agent 优化的开源项目之一。它不修改一行 Hermes 核心代码，全部通过官方 Plugin Hook 接口注入，Hermes 更新时冲突风险低。
 
 同类项目？没有。这块是空白。
 
@@ -81,8 +81,8 @@ DeepSeek 的推理强度控制是个好能力，但问题是**每次都要手动
 ```
 
 其中：
-- **上下文压缩引擎**：对话长了自动压缩，不会撑爆窗口
-- **会话 Skill 学习**：长对话结束时自动识别可复用的模式，存入反馈记录
+- **上下文压缩引擎**：对话长了自动压缩，降低撑爆窗口的概率
+- **会话 Skill 候选提示**：长对话结束时识别可复用模式，输出 Skill 候选日志
 - **时效信息注入**：首轮自动注入时间，让 Agent 知道"现在是什么时候"
 
 ---
@@ -117,6 +117,8 @@ Python 3.10 仍在包级/纯模块 CI 中验证，但不是 Hermes v0.19.0 的�
 
 ## 完整能力一览
 
+> 每项能力的状态分级（Stable/Beta/Experimental/Degraded/Removed）与证据链接见 [能力矩阵](docs/capabilities/CAPABILITY_MATRIX.md)，状态定义见 [STATUS.md](docs/capabilities/STATUS.md)。
+
 核心插件层（Layer 1）贡献 9 个 Python 文件，通过 8 个 Hermes Hook 点运行。**当前 Runtime 注册 9 个可工作 Tool；Open-source Beta 目标契约固定为 10 个。**
 
 | 文件名 | 触发时机 | 功能 |
@@ -133,7 +135,7 @@ Python 3.10 仍在包级/纯模块 CI 中验证，但不是 Hermes v0.19.0 的�
 
 ### Tool Contract：当前 9，目标 10
 
-目标名称的唯一机器可读来源是 `plugins/deepseek-harness/tools.py::TARGET_PUBLIC_TOOL_NAMES`。
+目标名称的权威机器可读来源是 `plugins/deepseek-harness/tools.py::TARGET_PUBLIC_TOOL_NAMES`。
 
 | 领域 | Beta 目标 Tool | 当前状态 |
 |---|---|---|
@@ -167,7 +169,7 @@ Python 3.10 仍在包级/纯模块 CI 中验证，但不是 Hermes v0.19.0 的�
 |------|---------|---------|
 | 记忆标签管理 | 重要的记忆打上标签，找起来快 | I-05 |
 | 记忆精准过滤 | 只调出相关的记忆，不相关的自动屏蔽，避免干扰 | I-12 |
-| Skill 自动学习 | 长对话结束时，自动识别你的常用操作模式，下次直接用 | I-09 |
+| Skill 候选提示 | 长对话结束时，识别可复用模式并输出 Skill 候选日志（不自动创建） | I-09 |
 
 **④ 自动路由 — 该省省该花花**
 
@@ -211,10 +213,10 @@ Python 3.10 仍在包级/纯模块 CI 中验证，但不是 Hermes v0.19.0 的�
 ```
 
 - **Layer 1** 是你日常打交道的部分。所有 Hook 都在这层，Hermes 每轮对话会自动加载。
-- **Layer 2** 是底层优化引擎，在你看不到的地方默默压缩上下文，对话多长都不卡。
+- **Layer 2** 是底层优化引擎，在你看不到的地方默默压缩上下文，降低长对话卡顿概率。
 - **Layer 3** 是核心工具服务，当前通过 `ctx.register_tool()` 暴露 9 个可工作 Tool；Beta 目标第 10 个 `memory_store` 尚未注册。
 
-不会改 Hermes 核心代码，不会有 merge 冲突，不会影响你已有的 MemOS 或其他插件。
+不修改 Hermes 核心代码，通过官方 Plugin Hook 接口注入；与 MemOS 等其他插件冲突风险低（具体兼容性见能力矩阵）。
 
 ---
 
