@@ -30,23 +30,23 @@
 ════════════════════════════════════════════════
 二、当前事实快照（2026-08-04）
 ════════════════════════════════════════════════
-- 当前 develop 基线：master（PLAN-003 merge 后更新）
+- 当前 develop 基线：master（CP-001 merge 后更新）
 - master：398701c5cf6495180a7a7566f09921cf126a054a（与 develop diverged，不提前合并）
 - 固定 Work ID：48
-- Complete：28/48（58.3%）
-- Not started / dependency blocked：20/48
+- Complete：29/48（60.4%）
+- Not started / dependency blocked：19/48
 - M0：Complete / G0：PASS
 - M1：8/8 Complete / G1：PASS
 - M2：Complete（CTX-001/002/003/004 + SES-001 + PRIV-001）/ G2：PASS
-- M3：CON-001 + MEM-001 + MEM-002 + PLAN-001 + PLAN-002 + PLAN-003 Complete
+- M3：CON-001 + MEM-001 + MEM-002 + PLAN-001 + PLAN-002 + PLAN-003 + CP-001 Complete
 - 产品成熟度：Experimental Preview
-- 下一唯一合法任务：CP-001 / Issue #38
-- 1 strict XFAIL：XF-AUDIT-001（→AUD-001 #39）；XF-MEM-001 已由 MEM-001 关闭
+- 下一唯一合法任务：AUD-001 / Issue #39
+- 1 strict XFAIL：XF-AUDIT-001（→AUD-001 #39，本次任务）；XF-MEM-001 已由 MEM-001 关闭
 - master、Tag、GitHub Release、PyPI 均未进入发布阶段
 - PyPI 按 REL-005 保持禁用
 
 ════════════════════════════════════════════════
-三、剩余任务全清单（20 个 Work ID + 4 个 Gate）
+三、剩余任务全清单（19 个 Work ID + 4 个 Gate）
 ════════════════════════════════════════════════
 M3（Contract & Data Integrity，退出 G3）：
 - MEM-001 #33：✅ Complete（PR #101）— memory_store/Tag/Query、content hash、source identity、mtime、import batch、λ 连续边界
@@ -54,7 +54,7 @@ M3（Contract & Data Integrity，退出 G3）：
 - PLAN-001 #35：✅ Complete（PR #103）— 自依赖/缺失依赖/跨 Plan/循环、更新后校验、Cascade 影响集合
 - PLAN-002 #36：✅ Complete（PR #104）— 状态机、创建/更新事务、短任务重复步骤修复
 - PLAN-003 #37：✅ Complete（PR #105）— 用 plan_status 承担公共 Query、固定 CLI/API Delete/Archive、禁止跨 Plan 删除
-- CP-001 #38：Plan/Completed ID 归属、并发编号、Review Rule Version
+- CP-001 #38：✅ Complete（PR #106）— Plan/Completed ID 归属、并发编号、Review Rule Version
 - AUD-001 #39：JSONL 事件源 + Markdown 派生报告（XF-AUDIT-001 转 Pass）
 - OPS-001 #40：手工 audit 命令、Cron 降级为不自动安装示例
 - INTENT-001 #41：修复低置信阈值、否定语义、用户显式优先（CON-001 后可并行）
