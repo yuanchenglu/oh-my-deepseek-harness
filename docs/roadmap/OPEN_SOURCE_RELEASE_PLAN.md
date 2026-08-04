@@ -1,6 +1,6 @@
 # 开源发布执行计划（Open-source Release Execution Plan）
 
-> 文档版本：2.3.26（DOC-002 Complete / M4 2/9）
+> 文档版本：2.3.27（QA-001 Complete / M4 3/9）
 >
 > 状态日期：2026-08-04
 >
@@ -55,7 +55,7 @@
 
 | 状态 | 数量 | 比例 |
 |---|---:|---:|
-| Complete | 34 | 70.8% |
+| Complete | 35 | 72.9% |
 | In progress | 0 | 0.0% |
 | Not started / dependency blocked | 14 | 29.2% |
 | Total | 48 | 100% |
@@ -150,7 +150,8 @@ G2已评估通过。Evidence: `docs/testing/evidence/GATE-G2.md`. PR #96 · `a84
 | `INTENT-001` | #41 | CON-001 | PR #109 · `INTENT-001.md` | **Complete** |
 | `DOC-001` | #42 | M2 + M3 | PR #110 · `DOC-001.md` | **Complete** |
 | `DOC-002` | #43 | DOC-001 | PR #112 · `DOC-002.md` | **Complete** |
-| `QA-001` | #44 | M2 + M3 | pending | **Next** |
+| `QA-001` | #44 | M2 + M3 | PR #113 · `QA-001.md` | **Complete** |
+| `QA-002` | #45 | QA-001 | pending | **Next** |
 
 ## 8. 固定支持边界
 
