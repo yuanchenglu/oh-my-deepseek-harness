@@ -1,12 +1,12 @@
 # 开源发布执行计划（Open-source Release Execution Plan）
 
-> 文档版本：2.3.26（DOC-002 Complete / M4 2/9）
+> 文档版本：2.3.28（QA-002 Complete / M4 4/9）
 >
 > 状态日期：2026-08-04
 >
-> 当前实现事实基线：`develop@master`（DOC-002 merge 后更新）
+> 当前实现事实基线：`develop@master`（QA-002 merge 后更新）
 >
-> 计划状态：`M1_COMPLETE / G1_PASS / M2_COMPLETE / G2_PASS / M3_COMPLETE / M4: DOC-001+DOC-002 COMPLETE / G3_PENDING`
+> 计划状态：`M1_COMPLETE / G1_PASS / M2_COMPLETE / G2_PASS / M3_COMPLETE / M4: DOC-001+DOC-002+QA-001+QA-002 COMPLETE / G3_PENDING`
 >
 > 当前产品成熟度：`Experimental Preview`
 >
@@ -55,9 +55,9 @@
 
 | 状态 | 数量 | 比例 |
 |---|---:|---:|
-| Complete | 34 | 70.8% |
+| Complete | 36 | 75.0% |
 | In progress | 0 | 0.0% |
-| Not started / dependency blocked | 14 | 29.2% |
+| Not started / dependency blocked | 12 | 25.0% |
 | Total | 48 | 100% |
 
 ## 3. Gate 状态
@@ -150,8 +150,9 @@ G2已评估通过。Evidence: `docs/testing/evidence/GATE-G2.md`. PR #96 · `a84
 | `INTENT-001` | #41 | CON-001 | PR #109 · `INTENT-001.md` | **Complete** |
 | `DOC-001` | #42 | M2 + M3 | PR #110 · `DOC-001.md` | **Complete** |
 | `DOC-002` | #43 | DOC-001 | PR #112 · `DOC-002.md` | **Complete** |
-| `QA-001` | #44 | M2 + M3 | pending | **Next** |
-
+| `QA-001` | #44 | M2 + M3 | PR #113 · `QA-001.md` | **Complete** |
+| `QA-002` | #45 | QA-001 | PR #116 · `QA-002.md` | **Complete** |
+| `COMPAT-001` | #46 | COMPAT-000 + QA-002 | pending | **Next** |
 ## 8. 固定支持边界
 
 - Hermes 候选固定为 **Hermes Agent v0.19.0 / Git tag `v2026.7.20`**；

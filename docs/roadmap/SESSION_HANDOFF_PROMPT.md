@@ -30,24 +30,24 @@
 ════════════════════════════════════════════════
 二、当前事实快照（2026-08-04）
 ════════════════════════════════════════════════
-- 当前 develop 基线：master（DOC-002 merge 后更新）
+- 当前 develop 基线：master（QA-002 merge 后更新）
 - master：398701c5cf6495180a7a7566f09921cf126a054a（与 develop diverged，不提前合并）
 - 固定 Work ID：48
-- Complete：34/48（70.8%）
-- Not started / dependency blocked：14/48
+- Complete：36/48（75.0%）
+- Not started / dependency blocked：12/48
 - M0：Complete / G0：PASS
 - M1：8/8 Complete / G1：PASS
 - M2：Complete（CTX-001/002/003/004 + SES-001 + PRIV-001）/ G2：PASS
-- M3：Complete（10/10）— CON-001 + MEM-001/002 + PLAN-001/002/003 + CP-001 + AUD-001 + OPS-001 + INTENT-001
-- M4：DOC-001 + DOC-002 Complete（PR #110/#112）— 能力分级 + 生命周期/隐私/排障指南
+- M3：Complete（10/10）
+- M4：DOC-001 + DOC-002 + QA-001 + QA-002 Complete（PR #110/#112/#113/#116）
 - 产品成熟度：Experimental Preview
-- 下一唯一合法任务：QA-001（#44）
+- 下一唯一合法任务：COMPAT-001（#46）
 - XFAIL：**0（全清）**
 - master、Tag、GitHub Release、PyPI 均未进入发布阶段
 - PyPI 按 REL-005 保持禁用
 
 ════════════════════════════════════════════════
-三、剩余任务全清单（14 个 Work ID + 4 个 Gate）
+三、剩余任务全清单（12 个 Work ID + 4 个 Gate）
 ════════════════════════════════════════════════
 M3（Contract & Data Integrity，退出 G3）：
 - MEM-001 #33：✅ Complete（PR #101）— memory_store/Tag/Query、content hash、source identity、mtime、import batch、λ 连续边界
@@ -63,8 +63,8 @@ M3（Contract & Data Integrity，退出 G3）：
 M4（开源可用性、兼容性、RC，退出 G3）：
 - DOC-001 #42：✅ Complete（PR #110）— 能力五级状态分级 + evidence-backed README（CR-P2-001/005 收敛）
 - DOC-002 #43：✅ Complete（PR #112）— 安装/升级/Doctor/卸载/隐私/Troubleshooting/Known Limitations
-- QA-001 #44：test-fast / test-integration / test-release 三条通道
-- QA-002 #45：Ruff、类型、ShellCheck、Coverage、依赖与 Secret 扫描
+- QA-001 #44：✅ Complete（PR #113）— test-fast / test-integration / test-release 三条通道
+- QA-002 #45：✅ Complete（PR #116）— Ruff、类型、ShellCheck、Coverage、依赖与 Secret 扫描
 - COMPAT-001 #46：Linux/macOS、Python 3.10-3.12、真实 Hermes E2E
 - SEC-001 #47：SECURITY、第三方许可证、SBOM、发布权限最小化
 - MIG-001 #48：从审查基线到 Beta 的 Config/DB/JSONL Migration、拒绝降级、失败回滚（TC-MIG-001-006）
