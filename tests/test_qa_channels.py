@@ -12,6 +12,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = ROOT / "scripts"
+QUALITY = SCRIPTS / "quality"
 
 
 def _files_in(script: str) -> set[str]:
@@ -45,3 +46,30 @@ def test_fast_has_no_process_or_network_files() -> None:
     fast = _files_in("test_fast.sh")
     assert not {"tests/test_server_process.py", "tests/test_installer_e2e.py"} & fast
     assert not {"tests/test_package_artifact.py", "tests/test_package_dependencies.py"} & fast
+
+
+# ── QA-002 ──────────────────────────────────────────────────
+
+
+def test_quality_script_exists() -> None:
+    assert (QUALITY / "qa.sh").exists(), "missing scripts/quality/qa.sh"
+
+
+def test_quality_script_runs_gates() -> None:
+    """qa.sh 引用 ruff/coverage/shellcheck 三个稳定上下文。"""
+    text = (QUALITY / "qa.sh").read_text(encoding="utf-8")
+    assert "ruff check" in text and "ruff format" in text
+    assert "--cov" in text
+    assert "shellcheck" in text
+
+
+def test_ci_has_quality_job() -> None:
+    """ci.yml 注册 qa-quality 上下文。"""
+    text = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+    assert "qa-quality" in text and "scripts/quality/qa.sh" in text
+
+
+def test_pyproject_has_ruff_config() -> None:
+    """pyproject.toml 有 [tool.ruff] 配置。"""
+    text = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    assert "[tool.ruff]" in text and "line-length" in text

@@ -38,6 +38,7 @@ dev = [
     "pydantic>=2.5.0,<3",
     "pytest>=7.0,<10",
     "pytest-cov>=4.0,<7",
+    "ruff>=0.6,<1",
     "build>=1.2,<2",
     "twine>=5,<7",
     "setuptools>=64,<82",
@@ -70,3 +71,20 @@ include = ["deepseek_harness*", "deepseek_context*", "harness_server*"]
 deepseek_harness = ["resources/*.yaml"]
 deepseek_context = ["resources/*.yaml"]
 harness_server = ["config.yaml"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["F", "E"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+markers = [
+    "fast: no network/real HOME/API (QA-001)",
+    "integration: controlled processes/artifacts (QA-001)",
+    "release: final matrix + evidence (QA-001)",
+]
