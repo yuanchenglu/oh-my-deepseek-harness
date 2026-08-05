@@ -1,12 +1,12 @@
 # 开源发布执行计划（Open-source Release Execution Plan）
 
-> 文档版本：2.3.33（REL-006 Complete / M4 9/9）
+> 文档版本：2.3.34（G3 PASS / M4 9/9 Complete）
 >
 > 状态日期：2026-08-04
 >
 > 当前实现事实基线：`develop@master`（REL-006 merge 后更新）
 >
-> 计划状态：`M1_COMPLETE / G1_PASS / M2_COMPLETE / G2_PASS / M3_COMPLETE / M4_COMPLETE / G3_PENDING`
+> 计划状态：`M1_COMPLETE / G1_PASS / M2_COMPLETE / G2_PASS / M3_COMPLETE / M4_COMPLETE / G3_PASS / M5_PENDING`
 >
 > 当前产品成熟度：`Experimental Preview`
 >
@@ -68,7 +68,7 @@
 | G0 | PASS | PR #61 · `ee516c9b` |
 | G1 | PASS | PR #77 FAIL → PR #78 remediation → PR #79 PASS |
 | G2 | PASS | GATE-G2.md · PR #96 |
-| G3 | NOT_STARTED | 依赖 M2、M3、M4 与 RC Evidence |
+| G3 | **PASS** | 依赖 M2、M3、M4 与 RC Evidence |
 | G4 | NOT_STARTED | 依赖真实 Beta 反馈闭环 |
 | G5 | NOT_STARTED | 依赖 Stable 阶段与真实 soak |
 
