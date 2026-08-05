@@ -111,3 +111,22 @@ def test_validation_report_is_honest_zero_state() -> None:
     text = (ROOT / "docs" / "beta" / "VALIDATION_REPORT.md").read_text(encoding="utf-8")
     assert "0/N" in text
     assert "no evidence yet" in text
+
+
+# ── BETA-003 / REL-007 ──────────────────────────────────────────
+
+
+def test_failure_ledger_exists_and_honest() -> None:
+    """FAILURE_LEDGER.md 存在且诚实记录 0 失败。"""
+    text = (ROOT / "docs" / "beta" / "FAILURE_LEDGER.md").read_text(encoding="utf-8")
+    assert "0 failures recorded" in text
+    assert "P0" in text and "waiver" in text
+
+
+def test_rollback_guide_and_drill_exist() -> None:
+    """ROLLBACK.md + rollback_drill.sh 存在且覆盖数据保留。"""
+    text = (ROOT / "docs" / "release" / "ROLLBACK.md").read_text(encoding="utf-8")
+    assert "Never move/overwrite/delete" in text
+    assert "data" in text.lower()
+    drill = (ROOT / "scripts" / "release" / "rollback_drill.sh").read_text(encoding="utf-8")
+    assert "upgrade --dry-run" in drill
