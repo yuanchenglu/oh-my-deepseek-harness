@@ -30,18 +30,19 @@
 ════════════════════════════════════════════════
 二、当前事实快照（2026-08-04）
 ════════════════════════════════════════════════
-- 当前 develop 基线：`e8c05ba`（G3 PASS 后更新）
+- 当前基线：master@a45eee0 = v3.0.0-beta.1（已发布）
+- develop：继续演进；master 与 develop diverged（不提前合并）
 - master：398701c5cf6495180a7a7566f09921cf126a054a（与 develop diverged，不提前合并）
 - 固定 Work ID：48
-- Complete：41/48（85.4%）· G3 PASS
-- Not started / dependency blocked：7/48（M5 5 + M6 2）
+- Complete：42/48（87.5%）· G3 PASS · BETA-001 发布
+- Not started / dependency blocked：6/48（M5 3 + M6 2 + REL-008）
 - M0：Complete / G0：PASS
 - M1：8/8 Complete / G1：PASS
 - M2：Complete（CTX-001/002/003/004 + SES-001 + PRIV-001）/ G2：PASS
 - M3：Complete（10/10）
 - M4：Complete（9/9）— DOC-001 + DOC-002 + QA-001 + QA-002 + COMPAT-001 + SEC-001 + MIG-001 + SEC-002 + REL-006（PR #110/#112/#113/#116/#118/#120/#122/#123/#124）
 - 产品成熟度：Experimental Preview
-- 下一唯一合法任务：BETA-001（#51）— M5 Public Beta，至少 14 天日历
+- 下一唯一合法任务：BETA-002（#52）— 外部验证指标；M5 至少 14 天日历观察期进行中
 - XFAIL：**0（全清）**
 - master、Tag、GitHub Release、PyPI 均未进入发布阶段
 - PyPI 按 REL-005 保持禁用

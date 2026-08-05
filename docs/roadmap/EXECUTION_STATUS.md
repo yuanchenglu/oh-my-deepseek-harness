@@ -1,20 +1,20 @@
 # Open-source Release Execution Status
 
 - Status date: 2026-08-04
-- Normative contract: `OPEN_SOURCE_RELEASE_PLAN.md` v2.3.34
-- Implementation baseline: `develop@e8c05ba`（G3 PASS 后更新）
-- Product maturity: **Experimental Preview（G3 PASS，Beta 发布待 M5）**
-- Decision: **G0 PASS · G1 PASS · G2 PASS · M2 Complete · M3 Complete · M4 Complete（9/9）· G3 PASS**
-- Next serial step: **BETA-001 / Issue #51**
+- Normative contract: `OPEN_SOURCE_RELEASE_PLAN.md` v2.3.35
+- Implementation baseline: `master@a45eee0`（BETA-001 发布后更新）
+- Product maturity: **Public Beta（v3.0.0-beta.1 已发布）**
+- Decision: **G0 PASS · G1 PASS · G2 PASS · M2 Complete · M3 Complete · M4 Complete（9/9）· G3 PASS · M5: BETA-001 Complete**
+- Next serial step: **BETA-002 / Issue #52（M5 观察期）**
 - XFAIL: **0（全清）**
 
 ## Progress
 
 | Status | Work IDs | Ratio |
 |---|---:|---:|
-| Complete | 41 | 85.4% |
+| Complete | 42 | 87.5% |
 | In progress | 0 | 0.0% |
-| Not started / blocked | 7 | 14.6% |
+| Not started / blocked | 6 | 12.5% |
 | Total | 48 | 100% |
 
 ## Gates

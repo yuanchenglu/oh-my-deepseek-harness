@@ -1,14 +1,14 @@
 # 开源发布执行计划（Open-source Release Execution Plan）
 
-> 文档版本：2.3.34（G3 PASS / M4 9/9 Complete）
+> 文档版本：2.3.35（BETA-001 发布 / v3.0.0-beta.1）
 >
 > 状态日期：2026-08-04
 >
 > 当前实现事实基线：`develop@master`（REL-006 merge 后更新）
 >
-> 计划状态：`M1_COMPLETE / G1_PASS / M2_COMPLETE / G2_PASS / M3_COMPLETE / M4_COMPLETE / G3_PASS / M5_PENDING`
+> 计划状态：`M1_COMPLETE / G1_PASS / M2_COMPLETE / G2_PASS / M3_COMPLETE / M4_COMPLETE / G3_PASS / M5: BETA-001 COMPLETE / G4_PENDING`
 >
-> 当前产品成熟度：`Experimental Preview`
+> 当前产品成熟度：`Public Beta（v3.0.0-beta.1 已发布）`
 >
 > 发布目标：`v3.0.0-beta.1` → 按需增加 Beta → `v3.0.0`
 >
