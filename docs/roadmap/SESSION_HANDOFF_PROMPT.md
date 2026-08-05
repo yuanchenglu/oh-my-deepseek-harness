@@ -33,8 +33,8 @@
 - 当前 develop 基线：`e8c05ba`（G3 PASS 后更新）
 - master：398701c5cf6495180a7a7566f09921cf126a054a（与 develop diverged，不提前合并）
 - 固定 Work ID：48
-- Complete：41/48（85.4%）· G3 PASS
-- Not started / dependency blocked：7/48（M5 5 + M6 2）
+- Complete：45/48（93.8%）· G3 PASS · v3.0.0-beta.1 发布 · M5 框架完成
+- Not started / dependency blocked：3/48（M6: STABLE-001/SOAK-001/REL-008）
 - M0：Complete / G0：PASS
 - M1：8/8 Complete / G1：PASS
 - M2：Complete（CTX-001/002/003/004 + SES-001 + PRIV-001）/ G2：PASS

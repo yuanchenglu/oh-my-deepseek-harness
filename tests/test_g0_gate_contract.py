@@ -164,7 +164,10 @@ def test_g0_security_and_issue_forms_are_private_data_safe() -> None:
 def test_g0_status_does_not_claim_product_release_readiness() -> None:
     status = _read("docs/roadmap/EXECUTION_STATUS.md")
     gate = _read("docs/testing/evidence/GATE-G0.md")
-    assert "Experimental Preview" in status
+    # Product maturity may be Experimental Preview (pre-Beta) or Public Beta
+    # (after v3.0.0-beta.1 publication). Either way it must not claim Stable.
+    assert "Experimental Preview" in status or "Public Beta" in status
     assert "PKG-001" in status and "does not" in status.lower()
     assert "Public Beta" in gate and "does not mean" in gate
     assert "PKG-001" in gate and "COMPAT-001" in gate
+    assert "Stable" not in status or "does not" in status.lower()

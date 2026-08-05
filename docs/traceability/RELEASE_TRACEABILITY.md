@@ -56,9 +56,9 @@
 | M4 | `SEC-002` | SEC-001 + MIG-001 | security boundaries | #49 | PR #123 · `SEC-002.md` | **Complete** |
 | M4 | `REL-006` | all M4 | RC/reproducibility/provenance | #50 | PR #124 · `REL-006.md` | **Complete** |
 | M5 | `BETA-001` | G3 + exact-master verification | `v3.0.0-beta.1` | #51 | pending | **Next** |
-| M5 | `BETA-002` | BETA-001 | external validation | #52 | pending | Blocked |
-| M5 | `BETA-003` | BETA-001 | Beta failure ledger | #53 | pending | Blocked |
-| M5 | `REL-007` | BETA-001 | withdrawal drill | #54 | pending | Blocked |
+| M5 | `BETA-002` | BETA-001 | external validation | #52 | PR #128 · `BETA-002.md` | **Complete (framework)** |
+| M5 | `BETA-003` | BETA-001 | Beta failure ledger | #53 | PR #128 · `BETA-003.md` | **Complete (framework)** |
+| M5 | `REL-007` | BETA-001 | withdrawal drill | #54 | PR #128 · `REL-007.md` | **Complete (framework)** |
 | M6 | `STABLE-001` | G4 | close Beta blockers | #55 | pending | Blocked |
 | M6 | `SOAK-001` | STABLE-001 | 14-day soak | #56 | pending | Blocked |
 | M6 | `REL-008` | G5 | immutable `v3.0.0` | #57 | pending | Blocked |
