@@ -6,7 +6,7 @@
 >
 > 当前实现事实基线：`develop@master`（REL-006 merge 后更新）
 >
-> 计划状态：`M1_COMPLETE / G1_PASS / M2_COMPLETE / G2_PASS / M3_COMPLETE / M4_COMPLETE / G3_PASS / M5_PENDING`
+> 计划状态：`M1_COMPLETE / G1_PASS / M2_COMPLETE / G2_PASS / M3_COMPLETE / M4_COMPLETE / G3_PASS / M5: BETA-001+002+003+REL-007 COMPLETE / G4_PENDING（14 天观察期）`
 >
 > 当前产品成熟度：`Experimental Preview`
 >
