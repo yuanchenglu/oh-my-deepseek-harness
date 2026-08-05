@@ -13,18 +13,21 @@ from pathlib import Path
 import pytest
 import yaml
 
+try:
+    import tomllib
+except ModuleNotFoundError:  # Python 3.10
+    import tomli as tomllib
+
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="已知缺陷：硬约束保存在模块级全局集合，未按 session_id 隔离",
-)
 def test_hard_constraints_are_isolated_between_sessions() -> None:
+    """XF-POLICY-001 -> SES-001: 硬约束必须按 session_id 隔离，不再使用模块级全局集合。"""
     from deepseek_harness import gate
+    from deepseek_harness.session_policy import SessionPolicyStore
 
-    gate._current_hard_constraints.clear()
+    SessionPolicyStore.reset_instance()
     gate.on_pre_llm_call(
         session_id="session-a",
         is_first_turn=True,
@@ -36,14 +39,16 @@ def test_hard_constraints_are_isolated_between_sessions() -> None:
         user_message="请查看项目状态",
     )
 
-    assert not gate._current_hard_constraints
+    # session-b 从未设置约束 -> 应为空
+    assert SessionPolicyStore.get_instance().get_active_constraints("session-b") == set()
+    # session-a 的约束应存在
+    assert "不能删除数据库" in SessionPolicyStore.get_instance().get_active_constraints("session-a") or \
+        any("删除数据库" in c for c in SessionPolicyStore.get_instance().get_active_constraints("session-a"))
+    SessionPolicyStore.reset_instance()
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="已知缺陷：assessor 写入的 Markdown 格式无法被 immune_audit 解析",
-)
 def test_immune_audit_parses_assessor_output_format() -> None:
+    """XF-AUDIT-001 -> AUD-001: assessor 输出格式可被 immune_audit 解析。"""
     from deepseek_harness.immune_audit import _parse_violations
 
     content = """
@@ -59,11 +64,8 @@ def test_immune_audit_parses_assessor_output_format() -> None:
     assert rows[0]["constraint"] == "不能删除数据库"
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="已知缺陷：memory_filter 工具发送 lambda_value，而 API 只接收 lambda 别名",
-)
 def test_memory_filter_tool_uses_api_contract(monkeypatch: pytest.MonkeyPatch) -> None:
+    """XF-CONTRACT-001 -> CON-001: memory_filter must send 'lambda' alias, not 'lambda_value'."""
     from deepseek_harness import tools
 
     captured: dict = {}
@@ -78,22 +80,16 @@ def test_memory_filter_tool_uses_api_contract(monkeypatch: pytest.MonkeyPatch) -
     assert captured["json"] == {"lambda": 0.5}
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="已知缺陷：checkpoint_create 工具 schema 未声明 API 的两个必填字段",
-)
 def test_checkpoint_tool_schema_matches_api_required_fields() -> None:
+    """XF-CONTRACT-002 -> CON-001: checkpoint_create schema must declare plan_id, plan_steps, completed_step_ids."""
     from deepseek_harness.tools import _TOOL_SCHEMAS
 
     required = set(_TOOL_SCHEMAS["checkpoint_create"].get("required", []))
     assert {"plan_id", "plan_steps", "completed_step_ids"} <= required
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="已知缺陷：plan_update_step schema 描述 blocked，但服务枚举不支持该状态",
-)
 def test_plan_status_schema_matches_service_enum() -> None:
+    """XF-CONTRACT-003 -> CON-001: plan_update_step status enum must match PlanStatus values."""
     from deepseek_harness.tools import _TOOL_SCHEMAS
     from harness_server.models import PlanStatus
 
@@ -101,47 +97,72 @@ def test_plan_status_schema_matches_service_enum() -> None:
     assert set(status_schema.get("enum", [])) == {s.value for s in PlanStatus}
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="已知缺陷：安装脚本未安装或复制 mcp/harness_server",
-)
-def test_install_script_installs_harness_server_runtime() -> None:
+def test_install_path_deploys_packaged_harness_server_runtime() -> None:
+    """XF-INSTALL-001 closed: one installed CLI path starts the packaged Supervisor."""
     install_text = (ROOT / "scripts" / "install.sh").read_text(encoding="utf-8")
-    assert "mcp/harness_server" in install_text or "harness_server" in install_text
+    installer_text = (
+        ROOT / "src" / "deepseek_harness" / "installer.py"
+    ).read_text(encoding="utf-8")
+
+    assert "deepseek_harness.cli install" in install_text
+    assert "from harness_server.supervisor import Supervisor" in installer_text
+    assert "supervisor.start(" in installer_text
+    assert "pip install" not in installer_text
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="已知缺陷：Context Engine 运行依赖 openai，但正式依赖未声明",
-)
 def test_runtime_dependencies_include_openai() -> None:
-    pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
-    assert re.search(r'["\']openai(?:[<>=!~].*)?["\']', pyproject)
+    """XF-DEPS-001 closed: Context-capable variants declare OpenAI explicitly."""
+    with (ROOT / "pyproject.toml").open("rb") as handle:
+        project = tomllib.load(handle)["project"]
+
+    base = "\n".join(project["dependencies"]).lower()
+    extras = project["optional-dependencies"]
+    assert "openai" not in base
+    for extra in ("context", "all", "dev"):
+        assert any(requirement.lower().startswith("openai") for requirement in extras[extra])
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="已知缺陷：根包、Harness 插件、Context 插件版本号不一致",
-)
+def _manifest_version_from_python(python_version: str) -> str:
+    """Map PEP 440 prerelease syntax to the plugin manifest SemVer syntax."""
+    beta_match = re.fullmatch(r"(\d+)\.(\d+)\.(\d+)b(\d+)", python_version)
+    if beta_match:
+        major, minor, patch, beta = beta_match.groups()
+        return f"{major}.{minor}.{patch}-beta.{beta}"
+
+    if re.fullmatch(r"\d+\.\d+\.\d+", python_version):
+        return python_version
+
+    raise AssertionError(f"unsupported release version syntax: {python_version}")
+
+
 def test_project_versions_are_consistent() -> None:
     pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
-    root_version = re.search(r'^version\s*=\s*["\']([^"\']+)', pyproject, re.MULTILINE).group(1)
+    root_version_match = re.search(r'^version\s*=\s*["\']([^"\']+)', pyproject, re.MULTILINE)
+    requires_python_match = re.search(
+        r'^requires-python\s*=\s*["\']([^"\']+)', pyproject, re.MULTILINE
+    )
+    assert root_version_match is not None
+    assert requires_python_match is not None
+
+    root_version = root_version_match.group(1)
+    expected_manifest_version = _manifest_version_from_python(root_version)
 
     harness = yaml.safe_load(
-        (ROOT / "plugins" / "deepseek-harness" / "plugin.yaml").read_text(encoding="utf-8")
+        (ROOT / "src" / "deepseek_harness" / "resources" / "plugin.yaml").read_text(encoding="utf-8")
     )
     context = yaml.safe_load(
-        (ROOT / "plugins" / "deepseek-context" / "plugin.yaml").read_text(encoding="utf-8")
+        (ROOT / "src" / "deepseek_context" / "resources" / "plugin.yaml").read_text(encoding="utf-8")
     )
 
-    assert root_version == str(harness["version"]) == str(context["version"])
+    assert root_version == "3.0.0b1"
+    assert expected_manifest_version == "3.0.0-beta.1"
+    assert str(harness["version"]) == expected_manifest_version
+    assert str(context["version"]) == expected_manifest_version
+    assert requires_python_match.group(1) == ">=3.10,<3.13"
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="已知缺陷：启动导入没有内容唯一键，同一记忆会重复写入",
-)
 def test_memory_import_storage_is_idempotent(tmp_path: Path) -> None:
+    """XF-MEM-001 -> MEM-001: storage 层 content_hash+source 唯一索引使导入幂等。"""
     from harness_server.models import MemoryEntry, MemoryLayer
     from harness_server.storage import HarnessStorage
 
@@ -161,12 +182,20 @@ def test_memory_import_storage_is_idempotent(tmp_path: Path) -> None:
 
 
 def test_harness_server_defaults_to_loopback() -> None:
-    """安全基线：默认监听地址必须是本机回环地址。"""
-    server_text = (ROOT / "mcp" / "harness_server" / "server.py").read_text(encoding="utf-8")
-    assert 'os.environ.get("HARNESS_HOST", "127.0.0.1")' in server_text
+    """安全基线：默认回环，非回环监听必须被拒绝。"""
+    from harness_server.config import RuntimeConfig
+
+    assert RuntimeConfig.from_env({}).host == "127.0.0.1"
+    assert RuntimeConfig.from_env({"HARNESS_HOST": "localhost"}).host == "localhost"
+    assert RuntimeConfig.from_env({"HARNESS_HOST": "127.0.0.1"}).host == "127.0.0.1"
+    assert RuntimeConfig.from_env({"HARNESS_HOST": "::1"}).host == "::1"
+    with pytest.raises(ValueError, match="loopback"):
+        RuntimeConfig.from_env({"HARNESS_HOST": "0.0.0.0"})
+    with pytest.raises(ValueError, match="loopback"):
+        RuntimeConfig.from_env({"HARNESS_HOST": "192.168.1.10"})
 
 
 def test_sqlite_updates_use_field_allowlist() -> None:
     """安全基线：动态 UPDATE 字段必须经过白名单过滤。"""
-    storage_text = (ROOT / "mcp" / "harness_server" / "storage.py").read_text(encoding="utf-8")
+    storage_text = (ROOT / "src" / "harness_server" / "storage.py").read_text(encoding="utf-8")
     assert 'allowed = {"text", "key", "status", "parent_id", "dependency_ids", "association_strength"}' in storage_text

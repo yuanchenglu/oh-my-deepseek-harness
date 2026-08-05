@@ -1,10 +1,15 @@
 """plugin.yaml 格式验证 — 确保 YAML 语法正确、Hook 列表完整。"""
 
-import os
-import sys
+import re
 from pathlib import Path
 
 import yaml
+
+
+_MANIFEST_VERSION = re.compile(
+    r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)"
+    r"(?:-(alpha|beta|rc)\.(0|[1-9]\d*))?$"
+)
 
 
 def _load_plugin_yaml(name: str) -> dict:
@@ -12,6 +17,12 @@ def _load_plugin_yaml(name: str) -> dict:
     path = Path(__file__).resolve().parent.parent / "plugins" / name / "plugin.yaml"
     with open(path, "r", encoding="utf-8") as f:
         return yaml.safe_load(f)
+
+
+def _assert_manifest_version(value: object) -> None:
+    """接受稳定 SemVer 或 alpha/beta/rc.N 预发布版本。"""
+    assert isinstance(value, str)
+    assert _MANIFEST_VERSION.fullmatch(value), f"invalid plugin manifest version: {value}"
 
 
 class TestHarnessPluginYaml:
@@ -47,7 +58,7 @@ class TestHarnessPluginYaml:
         assert count >= 3
 
     def test_provides_tools_declared(self):
-        """provides_tools 声明了 9 个工具。"""
+        """provides_tools 声明当前运行时的 9 个工具。"""
         data = _load_plugin_yaml("deepseek-harness")
         tools = data.get("provides_tools", [])
         assert len(tools) == 9
@@ -62,10 +73,7 @@ class TestHarnessPluginYaml:
 
     def test_version_format(self):
         data = _load_plugin_yaml("deepseek-harness")
-        v = data["version"]
-        parts = v.split(".")
-        assert len(parts) == 3
-        assert all(p.isdigit() for p in parts)
+        _assert_manifest_version(data["version"])
 
 
 class TestContextPluginYaml:
@@ -80,3 +88,4 @@ class TestContextPluginYaml:
         assert data["name"] == "deepseek-context"
         assert "type" in data
         assert data["type"] == "context_engine"
+        _assert_manifest_version(data["version"])

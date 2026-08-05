@@ -4,29 +4,87 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "oh-my-deepseek-harness"
-version = "2.0.0"
+version = "3.0.0b1"
 description = "DeepSeek 深度优化插件 -- 14 项物理特性全激发"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.10,<3.13"
 license = {text = "MIT"}
 authors = [{name = "yuanchenglu"}]
 
 dependencies = [
-    "PyYAML>=6.0",
+    "PyYAML>=6.0,<7",
+    "httpx>=0.25.0,<1",
 ]
 
 [project.optional-dependencies]
-dev = [
-    "pytest>=7.0",
-    "pytest-cov>=4.0",
-    "httpx>=0.25.0",
+context = [
+    "openai>=1.0,<3",
 ]
+server = [
+    "fastapi>=0.104.0,<1",
+    "uvicorn>=0.24.0,<1",
+    "pydantic>=2.5.0,<3",
+]
+all = [
+    "openai>=1.0,<3",
+    "fastapi>=0.104.0,<1",
+    "uvicorn>=0.24.0,<1",
+    "pydantic>=2.5.0,<3",
+]
+dev = [
+    "openai>=1.0,<3",
+    "fastapi>=0.104.0,<1",
+    "uvicorn>=0.24.0,<1",
+    "pydantic>=2.5.0,<3",
+    "pytest>=7.0,<10",
+    "pytest-cov>=4.0,<7",
+    "ruff>=0.6,<1",
+    "build>=1.2,<2",
+    "twine>=5,<7",
+    "setuptools>=64,<82",
+    "wheel>=0.43,<1",
+    "tomli>=2.0,<3; python_version < '3.11'",
+]
+# Transitional compatibility alias; new documentation uses the `server` extra.
 mcp = [
-    "fastapi>=0.104.0",
-    "uvicorn>=0.24.0",
-    "pydantic>=2.5.0",
-    "PyYAML>=6.0",
+    "fastapi>=0.104.0,<1",
+    "uvicorn>=0.24.0,<1",
+    "pydantic>=2.5.0,<3",
 ]
 
+[project.scripts]
+deepseek-harness = "deepseek_harness.cli:main"
+
+[project.entry-points."hermes_agent.plugins"]
+deepseek-harness = "deepseek_harness"
+deepseek-context = "deepseek_context.plugin"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+include-package-data = true
+
 [tool.setuptools.packages.find]
-include = ["plugins.*", "packages.*"]
+where = ["src"]
+include = ["deepseek_harness*", "deepseek_context*", "harness_server*"]
+
+[tool.setuptools.package-data]
+deepseek_harness = ["resources/*.yaml"]
+deepseek_context = ["resources/*.yaml"]
+harness_server = ["config.yaml"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["F", "E"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+markers = [
+    "fast: no network/real HOME/API (QA-001)",
+    "integration: controlled processes/artifacts (QA-001)",
+    "release: final matrix + evidence (QA-001)",
+]

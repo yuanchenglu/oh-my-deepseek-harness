@@ -1,14 +1,16 @@
 # oh-my-deepseek-harness ⚡
 
-你的 Hermes Agent + DeepSeek 满血插件。一条命令安装，零配置开用。
+你的 Hermes Agent + DeepSeek 满血插件。一条命令安装，快速开用。
 
 [English](README_EN.md) | 简体中文
 
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-green)](https://python.org)
-[![Hermes Agent v0.18+](https://img.shields.io/badge/hermes-%3E%3D0.18.0-purple)](https://github.com/HermesAgent/hermes)
+[![Package CI Python 3.10-3.12](https://img.shields.io/badge/package%20CI-3.10--3.12-green)](https://python.org)
+[![Hermes v0.19.0](https://img.shields.io/badge/Hermes-v0.19.0-purple)](https://github.com/NousResearch/hermes-agent)
 [![Tests](https://img.shields.io/badge/tests-142%20cases-brightgreen)](tests/)
 [![GitHub Stars](https://img.shields.io/github/stars/yuanchenglu/oh-my-deepseek-harness?style=social)](https://github.com/yuanchenglu/oh-my-deepseek-harness)
+
+> **兼容性基线**：完整 Hermes 集成目标固定为 Hermes Agent **v0.19.0**（tag `v2026.7.20`）+ Python **3.11–3.12**，支持 Linux/macOS。Python **3.10** 仅保留包级、纯模块和契约回归 CI；Hermes v0.19.0 上游要求 Python ≥3.11，因此 3.10 不是完整产品支持环境。真实 E2E 由 `COMPAT-001` 完成，当前仍是 Experimental Preview。
 
 <div align="center">
   <img src="docs/assets/hero-comparison.svg" alt="Before vs After" width="100%">
@@ -22,7 +24,7 @@ bash scripts/install.sh
 
 > ⭐ 觉得有用？点个 Star，让更多人发现 DeepSeek + Agent 的正确打开方式。
 
-安装脚本会自动完成：备份已有记忆 → 创建插件软链接 → 注册 Hook → 安装依赖。安全无副作用，`install.sh --dry-run` 可预览。
+安装脚本会自动完成：备份已有记忆 → 创建插件软链接 → 注册 Hook → 安装依赖。安装前会备份已有记忆文件，不覆盖原始内容；`install.sh --dry-run` 可预览。
 
 ---
 
@@ -38,7 +40,7 @@ bash scripts/install.sh
 
 **这个项目就是答案。**
 
-oh-my-deepseek-harness 是目前**唯一**专门针对 DeepSeek V4 API 做了全链 Agent 优化的开源项目。它不修改一行 Hermes 核心代码，全部通过官方 Plugin Hook 接口注入，Hermes 每日更新也不会有冲突。
+oh-my-deepseek-harness 是专门针对 DeepSeek V4 API 做了全链 Agent 优化的开源项目之一。它不修改一行 Hermes 核心代码，全部通过官方 Plugin Hook 接口注入，Hermes 更新时冲突风险低。
 
 同类项目？没有。这块是空白。
 
@@ -79,8 +81,8 @@ DeepSeek 的推理强度控制是个好能力，但问题是**每次都要手动
 ```
 
 其中：
-- **上下文压缩引擎**：对话长了自动压缩，不会撑爆窗口
-- **会话 Skill 学习**：长对话结束时自动识别可复用的模式，存入反馈记录
+- **上下文压缩引擎**：对话长了自动压缩，降低撑爆窗口的概率
+- **会话 Skill 候选提示**：长对话结束时识别可复用模式，输出 Skill 候选日志
 - **时效信息注入**：首轮自动注入时间，让 Agent 知道"现在是什么时候"
 
 ---
@@ -101,10 +103,13 @@ bash scripts/install.sh
 hermes plugins list | grep deepseek
 ```
 
-什么环境需要？
-- Hermes Agent ≥ v0.18.0
-- Python ≥ 3.10
+完整 Hermes 集成环境：
+- Hermes Agent v0.19.0（tag `v2026.7.20`）
+- Python 3.11 或 3.12
+- Linux 或 macOS
 - rsync、sqlite3 CLI、pyyaml（部分功能需要，非必需）
+
+Python 3.10 仍在包级/纯模块 CI 中验证，但不是 Hermes v0.19.0 的完整集成环境。
 
 安装会备份你已有的 SOUL.md、MEMORY.md、USER.md，**不覆盖不删除你的任何内容**。
 
@@ -112,7 +117,9 @@ hermes plugins list | grep deepseek
 
 ## 完整能力一览
 
-核心插件层（Layer 1）贡献 9 个 Python 文件，通过 8 个 Hermes Hook 点 + 9 个注册工具运行：
+> 每项能力的状态分级（Stable/Beta/Experimental/Degraded/Removed）与证据链接见 [能力矩阵](docs/capabilities/CAPABILITY_MATRIX.md)，状态定义见 [STATUS.md](docs/capabilities/STATUS.md)。
+
+核心插件层（Layer 1）贡献 9 个 Python 文件，通过 8 个 Hermes Hook 点运行。**当前 Runtime 注册 9 个可工作 Tool；Open-source Beta 目标契约固定为 10 个。**
 
 | 文件名 | 触发时机 | 功能 |
 |--------|---------|------|
@@ -124,7 +131,19 @@ hermes plugins list | grep deepseek
 | `assessor.py` | 每次工具调用后 | 内容完整性检查 |
 | `learner.py` | Session 结束时 | Skill 提议 → 追加反馈记录 |
 | `subagent_watch.py` | 子任务启停时 | 记录子任务状态和结果 |
-| `tools.py` | 插件注册时 | 注册 9 个工具（级联规划 / 记忆标签 / 快照审查） |
+| `tools.py` | 插件注册时 | 目标 10 Tool 名称权威源；当前只注册 9 个可工作 Tool |
+
+### Tool Contract：当前 9，目标 10
+
+目标名称的权威机器可读来源是 `plugins/deepseek-harness/tools.py::TARGET_PUBLIC_TOOL_NAMES`。
+
+| 领域 | Beta 目标 Tool | 当前状态 |
+|---|---|---|
+| Plan | `plan_create`、`plan_update_step`、`plan_cascade`、`plan_status` | 4/4 已注册 |
+| Memory | `memory_tag`、`memory_store`、`memory_query`、`memory_filter` | 3/4 已注册；`memory_store` pending |
+| Checkpoint | `checkpoint_create`、`checkpoint_review` | 2/2 已注册 |
+
+`memory_store` 不会在 M0 注册占位实现；其 Schema/Contract 由 `CON-001` 完成，领域逻辑和持久化由 `MEM-001` 完成。
 
 **15 项能力，按你关心的方式拆解**（看不懂技术术语也没关系，看"你的收益"列就行了）：
 
@@ -150,7 +169,7 @@ hermes plugins list | grep deepseek
 |------|---------|---------|
 | 记忆标签管理 | 重要的记忆打上标签，找起来快 | I-05 |
 | 记忆精准过滤 | 只调出相关的记忆，不相关的自动屏蔽，避免干扰 | I-12 |
-| Skill 自动学习 | 长对话结束时，自动识别你的常用操作模式，下次直接用 | I-09 |
+| Skill 候选提示 | 长对话结束时，识别可复用模式并输出 Skill 候选日志（不自动创建） | I-09 |
 
 **④ 自动路由 — 该省省该花花**
 
@@ -180,7 +199,7 @@ hermes plugins list | grep deepseek
 ```
 ┌──────────────────────────────────────────────────────┐
 │  Layer 1: Hermes 插件层 (plugins/deepseek-harness/)  │
-│  9 个文件 · 8 个 Hook · 9 个注册工具                  │
+│  9 个文件 · 8 个 Hook · 当前 9 Tool / 目标 10 Tool    │
 │  负责：认知门控 · 意图路由 · 质量评估 · 学习         │
 ├──────────────────────────────────────────────────────┤
 │  Layer 2: 上下文引擎 (plugins/deepseek-context/)     │
@@ -194,10 +213,10 @@ hermes plugins list | grep deepseek
 ```
 
 - **Layer 1** 是你日常打交道的部分。所有 Hook 都在这层，Hermes 每轮对话会自动加载。
-- **Layer 2** 是底层优化引擎，在你看不到的地方默默压缩上下文，对话多长都不卡。
-- **Layer 3** 是核心工具服务，通过 `ctx.register_tool()` 暴露 9 个工具给 LLM 调用。插件注册时自动拉起，不需要你手动启动。
+- **Layer 2** 是底层优化引擎，在你看不到的地方默默压缩上下文，降低长对话卡顿概率。
+- **Layer 3** 是核心工具服务，当前通过 `ctx.register_tool()` 暴露 9 个可工作 Tool；Beta 目标第 10 个 `memory_store` 尚未注册。
 
-不会改 Hermes 核心代码，不会有 merge 冲突，不会影响你已有的 MemOS 或其他插件。
+不修改 Hermes 核心代码，通过官方 Plugin Hook 接口注入；与 MemOS 等其他插件冲突风险低（具体兼容性见能力矩阵）。
 
 ---
 
@@ -215,7 +234,7 @@ hermes plugins list | grep deepseek
 ## FAQ
 
 **会修改 Hermes 核心代码吗？**
-不会。全部通过官方 Plugin Hook 接口注入，Hermes 更新也不会有 merge 冲突。
+不会。全部通过官方 Plugin Hook 接口注入；v0.19.0 的真实兼容性仍由 `COMPAT-001` E2E 验证。
 
 **会覆盖我已有的记忆吗？**
 不会。安装前自动备份 SOUL.md、MEMORY.md、USER.md，不删除原始内容。
@@ -228,10 +247,13 @@ hermes plugins list | grep deepseek
 
 **我想卸载？**
 ```bash
-hermes plugins disable deepseek-harness
-rm -rf ~/.hermes/plugins/deepseek-harness/
+deepseek-harness uninstall          # 普通卸载：保留数据与 distribution
+deepseek-harness uninstall --purge-data --confirm   # 连数据一起清除（需二次确认）
 ```
-安装时创建的备份 `*.bak.*` 会保留，需手动清理。
+详见 [卸载指南](docs/guides/UNINSTALL.md)。
+
+> 完整生命周期、隐私与排障指南见 [docs/guides](docs/guides/README.md)：
+> [安装](docs/guides/INSTALL.md) · [升级](docs/guides/UPGRADE.md) · [卸载](docs/guides/UNINSTALL.md) · [Doctor](docs/guides/DOCTOR.md) · [隐私](docs/guides/PRIVACY.md) · [排障](docs/guides/TROUBLESHOOTING.md) · [已知限制](docs/release/KNOWN_LIMITATIONS.md)
 
 ---
 
