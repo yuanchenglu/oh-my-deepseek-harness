@@ -75,3 +75,58 @@ def test_release_workflow_least_privilege_and_non_publishing() -> None:
     assert "build_rc.sh" in text
     assert "test_release.sh" in text
     assert "publish" not in text.lower() or "non-publishing" in text.lower()
+
+
+# ── BETA-002 ──────────────────────────────────────────────────
+
+
+def test_beta_metrics_schema_and_log_exist() -> None:
+    """METRICS_SCHEMA.md + VALIDATION_LOG.csv + VALIDATION_REPORT.md 存在。"""
+    beta = ROOT / "docs" / "beta"
+    assert (beta / "METRICS_SCHEMA.md").exists()
+    assert (beta / "VALIDATION_LOG.csv").exists()
+    assert (beta / "VALIDATION_REPORT.md").exists()
+
+
+def test_wilson_interval_computable() -> None:
+    """METRICS_SCHEMA 的 Wilson 公式可复算（x=18, n=20 → ≥90% 阈值的区间）。"""
+    import math
+
+    x, n = 18, 20
+    p_hat = x / n
+    z = 1.96
+    denom = 1 + z * z / n
+    center = (p_hat + z * z / (2 * n)) / denom
+    half = z * math.sqrt(p_hat * (1 - p_hat) / n + z * z / (4 * n * n)) / denom
+    lower, upper = center - half, center + half
+    # x=18/20 → 90% point estimate; 95% Wilson interval straddles 0.90
+    assert lower < 0.90 < upper
+    # Same numbers as schema formula
+    text = (ROOT / "docs" / "beta" / "METRICS_SCHEMA.md").read_text(encoding="utf-8")
+    assert "z = 1.96" in text
+
+
+def test_validation_report_is_honest_zero_state() -> None:
+    """VALIDATION_REPORT 诚实记录当前 0 收集，不虚报。"""
+    text = (ROOT / "docs" / "beta" / "VALIDATION_REPORT.md").read_text(encoding="utf-8")
+    assert "0/N" in text
+    assert "no evidence yet" in text
+
+
+# ── BETA-003 / REL-007 ──────────────────────────────────────────
+
+
+def test_failure_ledger_exists_and_honest() -> None:
+    """FAILURE_LEDGER.md 存在且诚实记录 0 失败。"""
+    text = (ROOT / "docs" / "beta" / "FAILURE_LEDGER.md").read_text(encoding="utf-8")
+    assert "0 failures recorded" in text
+    assert "P0" in text and "waiver" in text
+
+
+def test_rollback_guide_and_drill_exist() -> None:
+    """ROLLBACK.md + rollback_drill.sh 存在且覆盖数据保留。"""
+    text = (ROOT / "docs" / "release" / "ROLLBACK.md").read_text(encoding="utf-8")
+    assert "Never move/overwrite/delete" in text
+    assert "data" in text.lower()
+    drill = (ROOT / "scripts" / "release" / "rollback_drill.sh").read_text(encoding="utf-8")
+    assert "upgrade --dry-run" in drill
