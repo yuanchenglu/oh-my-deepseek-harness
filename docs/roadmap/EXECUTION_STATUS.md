@@ -57,8 +57,6 @@
 | MIG-001 | #48 | PR #122 · `MIG-001.md` | Complete |
 | SEC-002 | #49 | PR #123 · `SEC-002.md` | Complete |
 | REL-006 | #50 | PR #124 · `REL-006.md` | Complete |
-| SEC-002 | #49 | pending | Blocked |
-| REL-006 | #50 | pending | Blocked |
 
 ## XFAIL inventory
 
