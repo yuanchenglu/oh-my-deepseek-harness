@@ -8,6 +8,7 @@ from pathlib import Path
 
 import yaml
 
+
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -70,6 +71,7 @@ def test_g0_version_identity_is_fixed() -> None:
     )
     assert version and version.group(1) == "3.0.0b1"
     assert requires_python and requires_python.group(1) == ">=3.10,<3.13"
+
     for path in [
         "src/deepseek_harness/resources/plugin.yaml",
         "src/deepseek_context/resources/plugin.yaml",
@@ -92,11 +94,13 @@ def test_g0_traceability_has_48_unique_work_ids_and_issue_urls() -> None:
     section = trace.split("## 1. Work ID → Issue → Delivery", 1)[1].split(
         "## 2. Requirement-domain ownership", 1
     )[0]
+
     work_ids = re.findall(r"\| (?:M0|M1|M2|M3|M4|M5|M6) \| `([A-Z0-9-]+)` \|", section)
     issue_numbers = re.findall(
         r"https://github\.com/yuanchenglu/oh-my-deepseek-harness/issues/(\d+)",
         section,
     )
+
     assert len(work_ids) == len(set(work_ids)) == 48
     assert len(issue_numbers) == len(set(issue_numbers)) == 48
     assert "**48 Work IDs · 48 unique GitHub Issues · 88 FR IDs · 17 CR IDs · 100 Test IDs**" in trace
@@ -151,6 +155,7 @@ def test_g0_security_and_issue_forms_are_private_data_safe() -> None:
     config = yaml.safe_load(_read(".github/ISSUE_TEMPLATE/config.yml"))
     bug = yaml.safe_load(_read(".github/ISSUE_TEMPLATE/bug_report.yml"))
     work = yaml.safe_load(_read(".github/ISSUE_TEMPLATE/work_item.yml"))
+
     assert "security/advisories/new" in security
     assert config["blank_issues_enabled"] is False
     assert any("security/advisories/new" in link["url"] for link in config["contact_links"])

@@ -3,7 +3,7 @@
 - Gate：`G0`
 - Decision：**PASS upon merge of this evidence PR**
 - Decision date：2026-07-28
-- Source branch：`docs/gate-g0-evidence-v2`
+- Source branch：`docs/gate-g0-evidence`
 - Normative plan：`docs/roadmap/OPEN_SOURCE_RELEASE_PLAN.md` v2.3.3
 - Current status ledger：`docs/roadmap/EXECUTION_STATUS.md`
 - Product maturity after PASS：**Experimental Preview**
