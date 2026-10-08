@@ -1,9 +1,9 @@
 # 产品架构：oh-my-deepseek-harness
 
-- 文档状态：Open-source Beta Target Architecture
-- 目标版本：`v3.0.0-beta.1` → `v3.0.0`
+- 文档状态：Stable Release Architecture（v3.0.0）
+- 版本：`v3.0.0`（Stable，2026-10-08 发布）
 - 适用分支：`develop`
-- 当前成熟度：Experimental Preview；G0 尚未通过
+- 当前成熟度：Stable（内部验证范围；外部样本按 owner 决策豁免——见 KNOWN_LIMITATIONS §6）
 
 ## 1. 产品定位
 
@@ -11,12 +11,12 @@
 
 ## 2. 固定外部契约
 
-- Git/GitHub：`v3.0.0-beta.1`；Python：`3.0.0b1`；Stable：`v3.0.0`。
-- 当前运行时 9 个公共 Tool；Beta 目标 10 个，新增 `memory_store` 由 `CON-001 + MEM-001` 实现。
+- Git/GitHub：`v3.0.0`；Python：`3.0.0`；Plugin：`3.0.0`。
+- 当前运行时 9 个公共 Tool；目标 10 个，新增 `memory_store` 由 `CON-001 + MEM-001` 实现（handler 注册属后续版本）。
 - pip 管理 distribution；`deepseek-harness` 管理 Hermes 部署、配置、数据、Server 和诊断。
 - Linux/macOS、Python 3.10–3.12；Hermes 只承诺一个经真实 E2E 的正式版本。
 - Server 默认 `127.0.0.1:8200`；Summary 默认关闭；Memory startup import 默认关闭。
-- G3 验证冻结 Commit/RC Tag；正式不可变 Beta Tag 只在最终制品验证后由 `BETA-001` 创建。
+- G3 验证冻结 Commit/RC Tag；正式不可变 Tag：`v3.0.0-beta.1`（BETA-001）、`v3.0.0`（REL-008，2026-10-08 创建）。
 
 ## 3. 目标用户
 
@@ -49,7 +49,7 @@ Evidence Plane
 
 ### 5.1 安装与首次验证
 
-1. `python -m pip install "oh-my-deepseek-harness[all]==3.0.0b1"`。
+1. `python -m pip install "oh-my-deepseek-harness[all]==3.0.0"`。
 2. `deepseek-harness install --dry-run` 查看影响。
 3. `deepseek-harness install` 注册 Hermes 薄适配和数据目录。
 4. `deepseek-harness doctor` 验证 Plugin、Context、Server、DB、Provider 和权限。
@@ -89,17 +89,17 @@ Pydantic Model 是唯一契约源；目标 10 个 Tool 调用统一 Server envel
 
 ## 7. 版本策略
 
-### `v3.0.0-beta.1`
+### `v3.0.0-beta.1`（已完成）
 
 只完成真实可安装、数据完整性、Session 隔离、Tool Contract、Migration、安全边界、文档真实性和 Public Beta 验证，不增加 Innovation。
 
-### 后续 Beta
+### 后续 Beta（未发生）
 
-只修复 Beta 暴露的问题；不可覆盖 Tag 或制品，递增 `beta.2`、`beta.3`。
+未出现需要 `beta.2`/`beta.3` 的阻塞缺陷（0 失败账本、P0/P1=0），直接从 beta.1 进入 Stable；不可覆盖 Tag 或制品的规则保持有效。
 
-### `v3.0.0`
+### `v3.0.0`（已发布 2026-10-08）
 
-G5 通过后发布，P0/P1 必须为 0，并完成最终 RC 14 天观察。
+G5 通过后发布，P0/P1 为 0，并完成最终 RC ≥14 天观察——全部满足。
 
 ## 8. 产品成功定义
 
@@ -142,7 +142,7 @@ Hermes 核心修改、模型训练、独立 UI、云账号与同步、企业权�
 
 北极星指标是“有效 Harness 会话率”：用户从发布制品安装后，在无数据完整性错误、无未披露外发和可诊断故障的情况下完成任务的会话占比。
 
-| 指标 | Beta 目标 |
+| 指标 | 目标 |
 |---|---:|
 | Clean install | 支持矩阵 100% |
 | Server readiness | 100% |

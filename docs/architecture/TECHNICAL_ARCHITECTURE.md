@@ -1,9 +1,9 @@
 # 技术架构：oh-my-deepseek-harness
 
-- 文档状态：Target Architecture for Open-source Beta
-- 目标版本：`v3.0.0-beta.1`
+- 文档状态：Stable Architecture（v3.0.0）
+- 版本：`v3.0.0`（Stable，2026-10-08 发布）
 - 适用分支：`develop`
-- 当前成熟度：Experimental Preview；G0 尚未通过
+- 当前成熟度：Stable（内部验证范围）
 
 ## 1. 架构目标
 
@@ -22,11 +22,11 @@
 
 ## 2. 固定外部契约
 
-- Git Tag `v3.0.0-beta.1`；Python `3.0.0b1`；Plugin `3.0.0-beta.1`。
-- 当前 9 个 Tool；目标 10 个，新增 `memory_store` 在 M3 实现。
+- Git Tag `v3.0.0`；Python `3.0.0`；Plugin `3.0.0`。
+- 当前 9 个 Tool；目标 10 个，新增 `memory_store` 的领域逻辑已于 M3 实现（handler 注册属后续版本）。
 - pip 只管理 distribution；CLI 不得调用 pip 管理自身。
 - 环境变量只使用计划 §2.8 的稳定名称，不保留 `HARNESS_SERVER_PORT` / `HARNESS_SERVER_URL`。
-- G3 从冻结 Commit SHA 或临时 RC Tag 构建；正式 Tag 由 `BETA-001` 创建。
+- G3 从冻结 Commit SHA 或临时 RC Tag 构建；正式 Tag 由 `BETA-001`（beta.1）/ `REL-008`（v3.0.0）创建。
 
 ## 3. 目标源码布局
 

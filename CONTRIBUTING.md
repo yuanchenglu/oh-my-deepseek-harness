@@ -42,12 +42,12 @@ pytest -ra
 最终发布安装契约是：
 
 ```bash
-python -m pip install "oh-my-deepseek-harness[all]==3.0.0b1"
+python -m pip install "oh-my-deepseek-harness[all]==3.0.0"
 deepseek-harness install
 deepseek-harness doctor
 ```
 
-该最终契约将在 M1 实现。当前 editable install 只能作为开发基线，不构成 Release Evidence。
+该最终契约已实现（v3.0.0 发布）。editable install 仅作为开发基线，不构成 Release Evidence。
 
 ## 3. 测试隔离 | Test Isolation
 

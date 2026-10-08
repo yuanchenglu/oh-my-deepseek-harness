@@ -2,8 +2,8 @@
 
 - Work ID: `REL-005`
 - Decision date: 2026-07-28
-- Current decision: **GitHub Release is mandatory; PyPI is disabled for the first Public Beta until authenticated publishing prerequisites are verified.**
-- Target release identity: Git/GitHub `v3.0.0-beta.1`; Python metadata `3.0.0b1`
+- Current decision: **GitHub Release is mandatory; PyPI is disabled (v3.0.0; authenticated publishing prerequisites not yet verified).**
+- Release identity: Git/GitHub `v3.0.0`; Python metadata `3.0.0`
 
 ## 1. Decision
 

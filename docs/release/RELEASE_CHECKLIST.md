@@ -38,3 +38,14 @@
 - [ ] 发布可撤回（新版本而非覆盖旧 tag）
 
 > 本清单由 SECURITY.md 引用，是发布安全门的一部分。任何跳过项必须记录理由与 owner。
+
+## v3.0.0 发布记录（2026-10-08）
+
+| 检查项 | 结果 | 证据 |
+|---|---|---|
+| 依赖/许可证/SBOM | ✓（无未豁免 High/Critical；SBOM 身份一致） | `SEC-001.md`；`scripts/security/sbom.sh` |
+| 发布权限最小化 | ✓（无 registry token；GitHub-only） | `.github/workflows/*`；`REL-005.md` |
+| 制品身份（可重复构建） | ✓（RC 重建一致性 + 发布前 clean-venv 安装验证） | `REL-006.md`；`REL-008.md` §2–3 |
+| 安全门（无开放 P0/P1） | ✓ | `STABLE-001.md` §1 |
+| 证据与追踪 | ✓（GATE-G4/G5、M6 evidence、traceability 更新） | `docs/testing/evidence/*` |
+| 回滚策略 | ✓（不可变发布；撤回=新版本） | `ROLLBACK.md` |

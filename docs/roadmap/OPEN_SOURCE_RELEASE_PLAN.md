@@ -1,16 +1,16 @@
 # 开源发布执行计划（Open-source Release Execution Plan）
 
-> 文档版本：2.3.34（G3 PASS / M4 9/9 Complete）
+> 文档版本：2.3.35（G4/G5 PASS · 48/48 Complete · v3.0.0 发布）
 >
-> 状态日期：2026-08-04
+> 状态日期：2026-10-08
 >
-> 当前实现事实基线：`develop@master`（REL-006 merge 后更新）
+> 当前实现事实基线：`develop@c0419bc`（发布准备；发布 head 见 `REL-008.md`）
 >
-> 计划状态：`M1_COMPLETE / G1_PASS / M2_COMPLETE / G2_PASS / M3_COMPLETE / M4_COMPLETE / G3_PASS / M5: BETA-001+002+003+REL-007 COMPLETE / G4_PENDING（14 天观察期）`
+> 计划状态：`M1–M5 COMPLETE / G0–G5 ALL PASS / M6: STABLE-001+SOAK-001+REL-008 COMPLETE / v3.0.0 PUBLISHED`
 >
-> 当前产品成熟度：`Experimental Preview`
+> 当前产品成熟度：`Stable（v3.0.0）` — 外部验证样本按 owner 决策豁免并转为 post-release 观测（见 GATE-G4）
 >
-> 发布目标：`v3.0.0-beta.1` → 按需增加 Beta → `v3.0.0`
+> 发布目标：`v3.0.0` ✅ 已发布
 >
 > 完整 48 Work ID 账本：[`archive/OPEN_SOURCE_RELEASE_PLAN_2.2.md`](archive/OPEN_SOURCE_RELEASE_PLAN_2.2.md)
 >
@@ -26,7 +26,7 @@
 
 ## 1. 当前发布判断
 
-当前产品仍是 **Experimental Preview**。M2 Complete 与 G2 PASS、CON-001/MEM-001/MEM-002 Complete 只推进 M3，不表示 Public Beta、master、Tag、GitHub Release、PyPI 或 Stable Ready。
+产品已发布 **v3.0.0（Stable）**（2026-10-08）。G0–G5 全部 PASS、48/48 Work IDs Complete；外部验证样本按 owner 决策豁免并公开记录（见 `docs/testing/evidence/GATE-G4.md`）。PyPI 仍按 `REL-005` 禁用。
 
 已完成：
 
@@ -55,9 +55,9 @@
 
 | 状态 | 数量 | 比例 |
 |---|---:|---:|
-| Complete | 41 | 85.4% |
+| Complete | 48 | 100% |
 | In progress | 0 | 0.0% |
-| Not started / dependency blocked | 7 | 14.6% |
+| Not started / dependency blocked | 0 | 0.0% |
 | Total | 48 | 100% |
 
 ## 3. Gate 状态
@@ -69,8 +69,8 @@
 | G1 | PASS | PR #77 FAIL → PR #78 remediation → PR #79 PASS |
 | G2 | PASS | GATE-G2.md · PR #96 |
 | G3 | **PASS** | 依赖 M2、M3、M4 与 RC Evidence |
-| G4 | NOT_STARTED | 依赖真实 Beta 反馈闭环 |
-| G5 | NOT_STARTED | 依赖 Stable 阶段与真实 soak |
+| G4 | **PASS** | `GATE-G4.md` · owner decision（§9 样本豁免，记录在案） |
+| G5 | **PASS** | `GATE-G5.md` |
 
 ## 4. M0 / G0 完成状态
 
@@ -165,14 +165,14 @@ G2已评估通过。Evidence: `docs/testing/evidence/GATE-G2.md`. PR #96 · `a84
 - real Hermes E2E 属于 `COMPAT-001` / M4 / G3；
 - byte-for-byte reproducibility、SBOM、provenance 属于 `REL-006`；
 - Runtime 当前 9 Tools，目标 10；不得添加 placeholder `memory_store`；
-- 当前 1 strict XFAIL owner：`AUD-001`（XF-MEM-001 已由 MEM-001 关闭）；
+- XFAIL 全清（0）：`XF-AUDIT-001` 已由 AUD-001 关闭、`XF-MEM-001` 已由 MEM-001 关闭；
 - PyPI 按 `REL-005` 保持禁用。
 
 ## 9. 固定串行顺序
 
 ```text
-M3 (MEM-002 -> ... -> OPS-001/INTENT-001) -> M4/G3 -> exact-master RC
-v3.0.0-beta.1 -> real Beta feedback/G4 -> Stable prep/SOAK/G5 -> v3.0.0
+M3 (MEM-002 -> ... -> OPS-001/INTENT-001) -> M4/G3 -> exact-master RC  ✅
+v3.0.0-beta.1（2026-08-05）-> G4（owner decision）-> STABLE-001/SOAK-001 -> G5 -> v3.0.0 ✅（2026-10-08）
 ```
 
-严格边界：不提前合入 master、Tag、Release 或 PyPI；不声称 Public Beta Ready；不访问真实 HOME/DB/Memory/Secret；不弱化 PID、symlink、traversal、rollback 或 destructive-operation 防线。
+历史边界（保持有效）：不弱化 PID、symlink、traversal、rollback 或 destructive-operation 防线；不访问真实 HOME/DB/Memory/Secret。v3.0.0 发布已按授权执行；PyPI 保持禁用。

@@ -1,12 +1,12 @@
 # Open-source Release Traceability
 
-- Normative plan: [`OPEN_SOURCE_RELEASE_PLAN.md`](../roadmap/OPEN_SOURCE_RELEASE_PLAN.md) v2.3.12
+- Normative plan: [`OPEN_SOURCE_RELEASE_PLAN.md`](../roadmap/OPEN_SOURCE_RELEASE_PLAN.md) v2.3.35
 - Complete task ledger: [`OPEN_SOURCE_RELEASE_PLAN_2.2.md`](../roadmap/archive/OPEN_SOURCE_RELEASE_PLAN_2.2.md)
 - Test ownership source: [`TEST_PLAN.md`](../testing/TEST_PLAN.md)
-- Last synchronized: 2026-07-29
+- Last synchronized: 2026-10-08
 - Fixed scope: **48 Work IDs · 48 unique GitHub Issues · 88 FR IDs · 17 CR IDs · 100 Test IDs**
-- Current Gate: **G1 PASS**
-- Current serial task: **SES-001 #30**
+- Current Gate: **G5 PASS**
+- Current serial task: **无（48/48 Complete；v3.0.0 已发布）**
 
 > 一个 Work ID 只有一个 canonical Issue。`CTX-001`、`CTX-002`、`CTX-003`、`CTX-004` 已闭环；固定分母不变。
 
@@ -55,13 +55,13 @@
 | M4 | `MIG-001` | INS-003 + MEM-002 + AUD-001 | `TC-MIG-001–006` | #48 | PR #122 · `MIG-001.md` | **Complete** |
 | M4 | `SEC-002` | SEC-001 + MIG-001 | security boundaries | #49 | PR #123 · `SEC-002.md` | **Complete** |
 | M4 | `REL-006` | all M4 | RC/reproducibility/provenance | #50 | PR #124 · `REL-006.md` | **Complete** |
-| M5 | `BETA-001` | G3 + exact-master verification | `v3.0.0-beta.1` | #51 | pending | **Next** |
-| M5 | `BETA-002` | BETA-001 | external validation | #52 | PR #128 · `BETA-002.md` | **Complete (framework)** |
+| M5 | `BETA-001` | G3 + exact-master verification | `v3.0.0-beta.1` | #51 | Published 2026-08-05 | **Complete** |
+| M5 | `BETA-002` | BETA-001 | external validation | #52 | PR #128 · `BETA-002.md` | **Complete (framework; 0/N → owner decision, see GATE-G4)** |
 | M5 | `BETA-003` | BETA-001 | Beta failure ledger | #53 | PR #128 · `BETA-003.md` | **Complete (framework)** |
 | M5 | `REL-007` | BETA-001 | withdrawal drill | #54 | PR #128 · `REL-007.md` | **Complete (framework)** |
-| M6 | `STABLE-001` | G4 | close Beta blockers | #55 | pending | Blocked |
-| M6 | `SOAK-001` | STABLE-001 | 14-day soak | #56 | pending | Blocked |
-| M6 | `REL-008` | G5 | immutable `v3.0.0` | #57 | pending | Blocked |
+| M6 | `STABLE-001` | G4 | close Beta blockers | #55 | `STABLE-001.md` | **Complete** |
+| M6 | `SOAK-001` | STABLE-001 | 14-day soak | #56 | `SOAK-001.md` · `docs/beta/SOAK_REPORT.md` | **Complete (owner decision)** |
+| M6 | `REL-008` | G5 | immutable `v3.0.0` | #57 | `REL-008.md` | **Complete** |
 
 ### Canonical Issue URL registry
 
@@ -140,8 +140,8 @@
 | `CR-P0-002` | CTX-001 | Complete by PR #81 |
 | `CR-P0-003` | CTX-002 | Complete by PR #83 |
 | `CR-P0-004` | CTX-003 | Complete by PR #85 |
-| `CR-P0-005` | SES-001 | Open |
-| `CR-P1-001` | CON-001 | Open |
+| `CR-P0-005` | SES-001 | Complete by PR #94 |
+| `CR-P1-001` | CON-001 | Complete by PR #97 |
 | `CR-P1-002` | AUD-001 | Complete (JSONL 审计事件源) |
 | `CR-P1-003` | OPS-001 | Complete (audit CLI + 无 scheduler 副作用) |
 | `CR-P1-004` | MEM-002 | Complete (storage dedup 由 MEM-001, delete/import 由 MEM-002) |
@@ -161,15 +161,15 @@
 | `XF-CTX-001` | CTX-001 #26 | Fixed by PR #81 |
 | `XF-CTX-002` | CTX-002 #27 | Fixed by PR #83 |
 | `XF-CTX-003` | CTX-003 #28 | Fixed by PR #85 |
-| `XF-POLICY-001` | SES-001 #30 | Open |
-| `XF-AUDIT-001` | AUD-001 #39 | Open |
-| `XF-CONTRACT-001–003` | CON-001 #32 | Open |
+| `XF-POLICY-001` | SES-001 #30 | Fixed by PR #94 |
+| `XF-AUDIT-001` | AUD-001 #39 | Fixed by PR #107 |
+| `XF-CONTRACT-001–003` | CON-001 #32 | Fixed by PR #97 |
 | `XF-MEM-001` | MEM-001 #33 | Fixed (storage dedup) |
 | `XF-INSTALL-001` | INS-001 #22 | Fixed |
 | `XF-DEPS-001` | PKG-002 #19 | Fixed |
 | `XF-RELEASE-001` | REL-001 #5 | Fixed |
 
-Current suite has **6 strict XFAIL tests** and no orphan owner.
+Current suite has **0 strict XFAIL tests**（全清）and no orphan owner.
 
 ## 5. Test ID unique primary ownership — exactly 100
 
@@ -209,5 +209,5 @@ M0 → G0 PASS
 M1 → G1 PASS
 CTX-001 + CTX-002 + CTX-003 + CTX-004 Complete → SES-001 → PRIV-001 → G2
 G2 PASS → M3 → M4/G3 → exact-master verification
-BETA-001 → real feedback/G4 → Stable/SOAK/G5 → REL-008
+BETA-001（v3.0.0-beta.1 published 2026-08-05）→ G4（owner decision, see GATE-G4）→ STABLE-001 → SOAK-001 → G5 → REL-008（v3.0.0）✅
 ```
