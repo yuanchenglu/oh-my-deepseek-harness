@@ -6,6 +6,11 @@ PYTHON_BIN="${1:-python}"
 ROOT="$(git rev-parse --show-toplevel)"
 cd "$ROOT"
 
+# Fixed timestamp for byte-reproducible wheel/sdist containers: setuptools
+# stamps generated dist-info entries with the build wall-clock unless
+# SOURCE_DATE_EPOCH is set. Any constant works; 1580601600 = 2020-02-01.
+export SOURCE_DATE_EPOCH="${SOURCE_DATE_EPOCH:-1580601600}"
+
 RUN_ID="$(date +%Y%m%d-%H%M%S)"
 OUT="${ROOT}/dist/rel-${RUN_ID}"
 mkdir -p "$OUT"
