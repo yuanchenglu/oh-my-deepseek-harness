@@ -109,7 +109,7 @@ def test_recovery_rejects_manifest_traversal_before_restoring_owned_files(tmp_pa
         backup_dir=str(backup_dir),
         previous_running=True,
         previous_version="2.9.0",
-        target_version="3.0.0b1",
+        target_version="3.0.0",
     )
     lifecycle._write_marker(LifecyclePaths.from_plan(plan), marker)
     try:

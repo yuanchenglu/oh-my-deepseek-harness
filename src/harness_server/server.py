@@ -25,7 +25,7 @@ def _distribution_version() -> str:
     try:
         return importlib.metadata.version("oh-my-deepseek-harness")
     except importlib.metadata.PackageNotFoundError:
-        return "3.0.0b1"
+        return "3.0.0"
 
 
 def _load_domain_module(storage: HarnessStorage) -> ModuleType:

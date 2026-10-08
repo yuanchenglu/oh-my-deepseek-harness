@@ -53,7 +53,7 @@ def dependency_wheel(tmp_path_factory: pytest.TempPathFactory) -> Path:
         ".",
         cwd=ROOT,
     )
-    wheels = list(wheel_dir.glob("oh_my_deepseek_harness-3.0.0b1-*.whl"))
+    wheels = list(wheel_dir.glob("oh_my_deepseek_harness-3.0.0-*.whl"))
     assert len(wheels) == 1
     return wheels[0]
 

@@ -37,8 +37,8 @@ tar -xf "${WORK}/source.tar" -C "${SOURCE}"
 "${PYTHON_BIN}" -m build --wheel --sdist --no-isolation \
   --outdir "${DIST_DIR}" "${SOURCE}" >"${RESULTS_DIR}/build.log" 2>&1
 
-mapfile -t WHEELS < <(find "${DIST_DIR}" -maxdepth 1 -type f -name 'oh_my_deepseek_harness-3.0.0b1-*.whl' -print)
-mapfile -t SDISTS < <(find "${DIST_DIR}" -maxdepth 1 -type f -name 'oh_my_deepseek_harness-3.0.0b1.tar.gz' -print)
+mapfile -t WHEELS < <(find "${DIST_DIR}" -maxdepth 1 -type f -name 'oh_my_deepseek_harness-3.0.0-*.whl' -print)
+mapfile -t SDISTS < <(find "${DIST_DIR}" -maxdepth 1 -type f -name 'oh_my_deepseek_harness-3.0.0.tar.gz' -print)
 if [[ "${#WHEELS[@]}" -ne 1 ]]; then
   printf 'expected exactly one wheel, found %s\n' "${#WHEELS[@]}" >&2
   exit 1
@@ -209,7 +209,7 @@ for entry in sys.path:
     assert resolved != archived_source and archived_source not in resolved.parents
 
 distribution = importlib.metadata.distribution("oh-my-deepseek-harness")
-assert distribution.version == "3.0.0b1"
+assert distribution.version == "3.0.0"
 out.write_text(
     json.dumps(
         {
@@ -264,7 +264,7 @@ payload = {
 }
 assert payload["health"]["status"] == "ok"
 assert payload["ready"]["status"] == "ready"
-assert payload["version"]["version"] == "3.0.0b1"
+assert payload["version"]["version"] == "3.0.0"
 assert payload["memory_tag"]["layer"] == "constraint"
 out.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
 PY
@@ -297,7 +297,7 @@ assert payload["pip_uninstall_command"] == "python -m pip uninstall oh-my-deepse
 assert data_root.is_dir()
 assert (data_root / "config" / "config.yaml").is_file()
 assert db_path.is_file()
-assert importlib.metadata.version("oh-my-deepseek-harness") == "3.0.0b1"
+assert importlib.metadata.version("oh-my-deepseek-harness") == "3.0.0"
 import deepseek_harness
 assert deepseek_harness.__file__
 PY
