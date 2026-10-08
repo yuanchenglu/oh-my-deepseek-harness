@@ -4,7 +4,7 @@
 - Status: Implemented for Open-source Beta governance
 - Integration/default branch: `develop`
 - Release branch: `master`
-- Effective release cycle: `v3.0.0-beta.1` → `v3.0.0`
+- Release cycle: `v3.0.0-beta.1` → `v3.0.0` (completed 2026-10-08)
 - Normative plan: [`OPEN_SOURCE_RELEASE_PLAN.md` v2.3](../roadmap/OPEN_SOURCE_RELEASE_PLAN.md)
 
 ## 1. First Principle

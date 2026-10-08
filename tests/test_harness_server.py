@@ -39,7 +39,7 @@ class TestRuntimeProbes:
         data = response.json()
         assert data["status"] == "ok"
         assert data["service"] == "harness-server"
-        assert data["version"] == "3.0.0b1"
+        assert data["version"] == "3.0.0"
         assert data["api_version"] == "1"
 
 

@@ -60,7 +60,7 @@ def _build_wheel_from_git_archive(tmp_path: Path) -> Path:
         ".",
         cwd=source,
     )
-    wheels = list(wheel_dir.glob("oh_my_deepseek_harness-3.0.0b1-*.whl"))
+    wheels = list(wheel_dir.glob("oh_my_deepseek_harness-3.0.0-*.whl"))
     assert len(wheels) == 1
     return wheels[0]
 
@@ -261,8 +261,8 @@ def test_final_wheel_full_lifecycle_outside_source_tree(tmp_path: Path) -> None:
         "junit.xml",
     }
     assert required <= {path.name for path in results.iterdir()}
-    assert len(list(results.glob("oh_my_deepseek_harness-3.0.0b1-*.whl"))) == 1
-    assert len(list(results.glob("oh_my_deepseek_harness-3.0.0b1.tar.gz"))) == 1
+    assert len(list(results.glob("oh_my_deepseek_harness-3.0.0-*.whl"))) == 1
+    assert len(list(results.glob("oh_my_deepseek_harness-3.0.0.tar.gz"))) == 1
 
     digest_lines = (results / "artifacts.sha256").read_text(encoding="utf-8").splitlines()
     assert len(digest_lines) == 2
@@ -270,7 +270,7 @@ def test_final_wheel_full_lifecycle_outside_source_tree(tmp_path: Path) -> None:
     assert any(line.endswith(".tar.gz") for line in digest_lines)
 
     import_probe = json.loads((results / "import-probe.json").read_text(encoding="utf-8"))
-    assert import_probe["distribution_version"] == "3.0.0b1"
+    assert import_probe["distribution_version"] == "3.0.0"
     assert set(import_probe["modules"]) >= {
         "deepseek_harness",
         "deepseek_context",

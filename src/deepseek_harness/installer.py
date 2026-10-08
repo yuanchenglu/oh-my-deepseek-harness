@@ -114,7 +114,7 @@ def _distribution_version() -> str:
     try:
         return importlib.metadata.version(DISTRIBUTION_NAME)
     except importlib.metadata.PackageNotFoundError:
-        return "3.0.0b1"
+        return "3.0.0"
 
 
 def _resource_text(package: str, name: str) -> str:

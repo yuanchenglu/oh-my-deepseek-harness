@@ -73,7 +73,7 @@ def _build_installed_environment(base: Path) -> Path:
         cwd=source,
     )
     assert built.returncode == 0, built.stdout + built.stderr
-    wheels = list(wheelhouse.glob("oh_my_deepseek_harness-3.0.0b1-*.whl"))
+    wheels = list(wheelhouse.glob("oh_my_deepseek_harness-3.0.0-*.whl"))
     assert len(wheels) == 1
 
     environment = base / "venv"

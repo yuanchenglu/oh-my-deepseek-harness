@@ -38,3 +38,7 @@ diagnostics only.
 1. Recruit 10 non-maintainer validators (Linux/macOS × Python 3.11/3.12).
 2. Log every opt-in install/session/Tool-call/compression row.
 3. Recompute metrics + Wilson intervals at G4.
+
+## 5. Owner decision（2026-10-08）
+
+外部样本在观察窗口内未产生（0/N，事实保留不修改）。Owner 决策：豁免 §9 外部样本作为 v3.0.0 发布前置；降级为 post-release 持续观测（opt-in 数据继续按 §9.3 收集）。记录见 `docs/testing/evidence/GATE-G4.md`、`docs/beta/SOAK_REPORT.md` §4、`docs/release/KNOWN_LIMITATIONS.md` §6。

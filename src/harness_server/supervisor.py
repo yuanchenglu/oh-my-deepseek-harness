@@ -78,7 +78,7 @@ class Supervisor:
         try:
             return importlib.metadata.version("oh-my-deepseek-harness")
         except importlib.metadata.PackageNotFoundError:
-            return "3.0.0b1"
+            return "3.0.0"
 
     def _base_url(self, host: str, port: int) -> str:
         rendered_host = f"[{host}]" if ":" in host else host

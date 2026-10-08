@@ -1,5 +1,5 @@
 name: deepseek-harness
-version: 3.0.0-beta.1
+version: 3.0.0
 description: Open-source Beta 稳定化清单。当前 Runtime 注册 9 个可工作 Tool；Beta 目标为 10 个，唯一机器可读目标源是 tools.py::TARGET_PUBLIC_TOOL_NAMES，memory_store 由 CON-001 + MEM-001 实现。
 author: yuanchenglu
 

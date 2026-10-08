@@ -36,6 +36,12 @@
 - 部分功能需要 `rsync`、`sqlite3` CLI、`pyyaml`（非必需）。
 - Summary 请求发送到外部 Provider 后，其数据保留由 Provider 政策决定，需自行确认。
 
+## 6. 验证样本与观测边界（v3.0.0 owner decision）
+
+- **外部 Beta 验证样本未达原计划 §9.2 量级**（10 名非维护者等；当前 0/N）。v3.0.0 发布依据为内部证据（完整测试矩阵、可复现 RC、0 失败账本、P0/P1=0），系 **owner 决策豁免**并公开记录（见 `docs/testing/evidence/GATE-G4.md`、`docs/beta/SOAK_REPORT.md`）。
+- 外部验证降级为 **post-release 持续观测项**：后续真实使用数据仍按 §9.3 隐私约束（opt-in、去标识化）收集，并在后续版本更新 `docs/beta/VALIDATION_REPORT.md`。
+- 因此：**v3.0.0 的"Stable"声明仅覆盖内部验证范围**，不代表已有外部生产级可靠性统计。
+
 ## 历史
 
 已知缺陷的修复遵循 FR-QA-008：有 Issue、精确复现与 strict XFAIL；修复后删除 XFAIL。当前 **XFAIL 全清（0）**。
