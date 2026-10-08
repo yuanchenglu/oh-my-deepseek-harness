@@ -7,20 +7,30 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ---
 
-## [Unreleased]
+## [v3.0.0] - 2026-10-08
 
-Planned release identity: Git/GitHub `v3.0.0-beta.1`, Python distribution `3.0.0b1`, Plugin manifests `3.0.0-beta.1`.
+First Stable release. Release identity: Git/GitHub `v3.0.0`, Python distribution `3.0.0`, Plugin manifests `3.0.0`.
 
-### Changed
+### Stable promotion
 
-- Unified the coordinated distribution and plugin version semantics for the Open-source Beta stabilization cycle.
+- G0–G5 全部 PASS；48/48 Work IDs Complete；v3.0.0-beta.1 观察期 ≥14 天（RC 冻结、0 失败记录）。
+- Version identity unified across distribution / plugins / runtime: `3.0.0`.
+- 发布证据：`docs/testing/evidence/GATE-G4.md`、`GATE-G5.md`、`REL-008.md`。
+
+### Changed（beta 周期累计）
+
+- Unified the coordinated distribution and plugin version semantics for the stabilization cycle.
 - Limited declared Python support to `>=3.10,<3.13`, matching the tested Python 3.10–3.12 matrix.
 - Added a permanent regression test for the PEP 440 ↔ Plugin SemVer mapping.
 
+### Known limitation（owner decision, disclosed）
+
+- 外部 Beta 验证样本未达原计划 §9.2 量级（0/N）；经 owner 决策豁免发布，转为 post-release 持续观测。详见 `docs/release/KNOWN_LIMITATIONS.md` §6。
+
 ### Notes
 
-- This entry does not mean a Beta package, tag, or GitHub Release has been published.
-- Historical `v1.0.0` and `v2.0.0` records remain unchanged.
+- PyPI remains disabled; install from the wheel attached to the GitHub Release or build from source.
+- Historical `v1.0.0`/`v2.0.0` records remain unchanged.
 
 ---
 

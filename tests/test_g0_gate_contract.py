@@ -68,13 +68,13 @@ def test_g0_version_identity_is_fixed() -> None:
     requires_python = re.search(
         r'^requires-python\s*=\s*"([^"]+)"', pyproject, re.MULTILINE
     )
-    assert version and version.group(1) == "3.0.0b1"
+    assert version and version.group(1) == "3.0.0"
     assert requires_python and requires_python.group(1) == ">=3.10,<3.13"
     for path in [
         "src/deepseek_harness/resources/plugin.yaml",
         "src/deepseek_context/resources/plugin.yaml",
     ]:
-        assert str(yaml.safe_load(_read(path))["version"]) == "3.0.0-beta.1"
+        assert str(yaml.safe_load(_read(path))["version"]) == "3.0.0"
 
 
 def test_g0_tool_denominator_is_target_10_runtime_9() -> None:
@@ -164,9 +164,14 @@ def test_g0_security_and_issue_forms_are_private_data_safe() -> None:
 def test_g0_status_does_not_claim_product_release_readiness() -> None:
     status = _read("docs/roadmap/EXECUTION_STATUS.md")
     gate = _read("docs/testing/evidence/GATE-G0.md")
-    # Product maturity may be Experimental Preview (pre-Beta) or Public Beta
-    # (after v3.0.0-beta.1 publication). Either way it must not claim Stable.
-    assert "Experimental Preview" in status or "Public Beta" in status
+    # Product maturity may be Experimental Preview (pre-Beta), Public Beta
+    # (during the v3.0.0-beta.1 cycle) or Stable (after v3.0.0 publication).
+    # The guard stays: the doc must not claim readiness beyond evidence.
+    assert (
+        "Experimental Preview" in status
+        or "Public Beta" in status
+        or "Stable" in status
+    )
     assert "PKG-001" in status and "does not" in status.lower()
     assert "Public Beta" in gate and "does not mean" in gate
     assert "PKG-001" in gate and "COMPAT-001" in gate

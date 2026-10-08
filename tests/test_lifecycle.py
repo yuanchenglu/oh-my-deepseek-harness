@@ -161,7 +161,7 @@ def test_upgrade_dry_run_reports_impact_without_changes(tmp_path: Path) -> None:
         result = upgrade_plan(plan, dry_run=True)
         assert result["state"] == "planned"
         assert result["current_version"] == "2.9.0"
-        assert result["target_version"] == "3.0.0b1"
+        assert result["target_version"] == "3.0.0"
         assert result["backup_required"] is True
         assert result["config"] == "replace_with_packaged_contract"
         assert result["database"] == "backup_and_validate"
@@ -233,7 +233,7 @@ def test_interrupted_upgrade_recovers_from_marker_and_is_retryable(tmp_path: Pat
         retry = upgrade(plan, timeout=20)
         assert retry["state"] == "upgraded"
         assert retry["ready"] is True
-        assert yaml.safe_load(plan.config_path.read_text())["distribution_version"] == "3.0.0b1"
+        assert yaml.safe_load(plan.config_path.read_text())["distribution_version"] == "3.0.0"
     finally:
         _stop(plan)
 
@@ -256,7 +256,7 @@ def test_ordinary_uninstall_removes_deployment_and_preserves_distribution_and_da
     assert result["data_preserved"] is True
     assert result["distribution_preserved"] is True
     assert result["pip_uninstall_command"] == PIP_UNINSTALL_COMMAND
-    assert importlib.metadata.version("oh-my-deepseek-harness") == "3.0.0b1"
+    assert importlib.metadata.version("oh-my-deepseek-harness") == "3.0.0"
     assert not (plan.hermes_home / "plugins" / "deepseek-harness" / "__init__.py").exists()
     assert not (plan.hermes_home / "plugins" / "deepseek-context" / "__init__.py").exists()
     assert plan.config_path.read_bytes() == config
@@ -302,7 +302,7 @@ def test_confirmed_purge_deletes_only_canonical_product_root_and_preserves_exter
     assert not plan.data_root.exists()
     assert external_db.is_file()
     assert not (plan.hermes_home / "plugins" / "deepseek-harness").exists()
-    assert importlib.metadata.version("oh-my-deepseek-harness") == "3.0.0b1"
+    assert importlib.metadata.version("oh-my-deepseek-harness") == "3.0.0"
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Windows lifecycle process matrix is later work")

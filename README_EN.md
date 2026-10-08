@@ -9,7 +9,7 @@ English | [简体中文](README.md)
 [![Hermes v0.19.0](https://img.shields.io/badge/Hermes-v0.19.0-purple)](https://github.com/NousResearch/hermes-agent)
 [![Tests](https://img.shields.io/badge/tests-142%20cases-brightgreen)](tests/)
 
-> **Compatibility baseline:** full Hermes integration targets Hermes Agent **v0.19.0** (tag `v2026.7.20`) on Python **3.11–3.12**, Linux and macOS. Python **3.10** remains in package/core/contract CI only; upstream Hermes v0.19.0 requires Python >=3.11, so Python 3.10 is not a supported full-product host. Real E2E remains `COMPAT-001`; the product is still an Experimental Preview.
+> **Compatibility baseline:** full Hermes integration targets Hermes Agent **v0.19.0** (tag `v2026.7.20`) on Python **3.11–3.12**, Linux and macOS. Python **3.10** remains in package/core/contract CI only; upstream Hermes v0.19.0 requires Python >=3.11, so Python 3.10 is not a supported full-product host. Real E2E is covered by `COMPAT-001` (G3 PASS); the product has shipped **v3.0.0 (Stable)**.
 
 ---
 
@@ -33,7 +33,7 @@ Built on the Hermes Agent Plugin system, this project translates DeepSeek's phys
 - ✅ **Timeliness Injection** (I-18 Degraded Fallback): Automatically injects current date and time on the first conversation turn. Note: API rejects `role=latest_reminder` (400 InvalidParameter); degraded to context text injection
 - ✅ **Subtask Watch**: Tracks subagent_start/subagent_stop events, records each subtask's start, end, and result
 - ✅ **Context Compression Engine** (I-03/I-04/I-07/I-13 Independent Context Engine Plugin): Uses DeepSeek API for independent context compression, does not depend on Hermes auxiliary_client
-- ✅ **Harness Server Merged Service** (I-06/I-11/I-12 Three-in-One): Single FastAPI service + single SQLite. The current runtime registers 9 working tools; the Open-source Beta target contract is 10 tools.
+- ✅ **Harness Server Merged Service** (I-06/I-11/I-12 Three-in-One): Single FastAPI service + single SQLite. The current runtime registers 9 working tools; the target contract is 10 tools.
   - plan_create/plan_update_step/plan_cascade/plan_status (I-06 Cascading Planning)
   - memory_tag/memory_query/memory_filter (I-12 Memory Tagging + Lambda Filtering)
   - checkpoint_create/checkpoint_review (I-11 Checkpoint Review)
@@ -43,7 +43,7 @@ Built on the Hermes Agent Plugin system, this project translates DeepSeek's phys
 
 The sole machine-readable target-name source is `plugins/deepseek-harness/tools.py::TARGET_PUBLIC_TOOL_NAMES`.
 
-| Domain | Beta target tools | Current runtime |
+| Domain | Target tools | Current runtime |
 |---|---|---|
 | Plan | `plan_create`, `plan_update_step`, `plan_cascade`, `plan_status` | 4/4 registered |
 | Memory | `memory_tag`, `memory_store`, `memory_query`, `memory_filter` | 3/4 registered; `memory_store` pending |
@@ -74,7 +74,7 @@ M0 does not register a placeholder `memory_store` handler or schema.
 
 ### Layer 1: Hermes Plugin
 
-`plugins/deepseek-harness/` contains 10 files injected through 8 Hook points. It currently registers 9 working tools while preserving a 10-tool Beta target contract:
+`plugins/deepseek-harness/` contains 10 files injected through 8 Hook points. It currently registers 9 working tools while preserving a 10-tool target contract:
 
 | File | Hook | Trigger | Function |
 |------|------|---------|----------|
@@ -100,7 +100,7 @@ M0 does not register a placeholder `memory_store` handler or schema.
 - **memory** endpoints (I-12): memory_tag / memory_query / memory_filter
 - **checkpoint** endpoints (I-11): checkpoint_create / checkpoint_review
 
-The Beta target adds `memory_store`, but it is not registered until `CON-001 + MEM-001` complete.
+The target adds `memory_store`; its domain logic is implemented (`CON-001 + MEM-001`) but the runtime handler is not registered yet (see Known Limitations).
 
 Single SQLite persistence (`~/.hermes/mcp/harness.db`), auto-launched during plugin registration.
 

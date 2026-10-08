@@ -247,7 +247,7 @@ def test_real_process_reaches_health_ready_and_version(tmp_path: Path) -> None:
         assert ready.status_code == 200
         assert ready.json() == {"status": "ready"}
         assert version.status_code == 200
-        assert version.json()["version"] == "3.0.0b1"
+        assert version.json()["version"] == "3.0.0"
         assert version.json()["api_version"] == "1"
         assert db_path.is_file()
         rendered = health.text + ready.text + version.text
@@ -380,7 +380,7 @@ def test_supervisor_rejects_foreign_pid_without_signaling(tmp_path: Path) -> Non
         pid=os.getpid(),
         host="127.0.0.1",
         port=_free_port(),
-        version="3.0.0b1",
+        version="3.0.0",
         log_path=str(paths.log_file),
         db_path=str(tmp_path / "foreign.db"),
     )
