@@ -1,14 +1,14 @@
 # PRD：oh-my-deepseek-harness
 
 - 产品名称：oh-my-deepseek-harness
-- 文档版本：2.1
-- 文档状态：Open-source Beta Execution Baseline
-- 目标发布：Git/GitHub `v3.0.0-beta.1`；Python `3.0.0b1`；Stable `v3.0.0`
+- 文档版本：2.2
+- 文档状态：Stable Release Baseline（v3.0.0）
+- 发布版本：Git/GitHub `v3.0.0`；Python `3.0.0`；Plugin `3.0.0`（2026-10-08 发布）
 - 适用分支：`develop`
 - Owner：Repository Maintainer
-- 最后更新：2026-07-28
+- 最后更新：2026-10-08
 
-> 当前代码仍是 Experimental Preview；G0 尚未通过。本文件定义目标契约，不表示功能已经实现。
+> `v3.0.0`（Stable）已于 2026-10-08 发布；本文件为发布基线契约。唯一豁免：外部验证样本按 owner 决策记录（见 `docs/release/KNOWN_LIMITATIONS.md` §6）。
 
 ## 1. 产品定义
 
@@ -18,15 +18,15 @@
 
 ### 2.1 版本与制品
 
-- Git Tag / GitHub Release：`v3.0.0-beta.1`；
-- Python Distribution：`3.0.0b1`；
-- Plugin Manifest：`3.0.0-beta.1`；
-- Beta 制品：wheel、sdist、SHA256SUMS、SBOM、provenance、Release Notes、Known Limitations；
-- G3 使用冻结 Commit SHA 或可删除 RC Tag 验证；正式不可变 Beta Tag 仅由 `BETA-001` 在最终制品验证后创建。
+- Git Tag / GitHub Release：`v3.0.0`；
+- Python Distribution：`3.0.0`；
+- Plugin Manifest：`3.0.0`；
+- 发布制品：wheel、sdist、SHA256SUMS、SBOM、provenance、Release Notes、Known Limitations；
+- G3 使用冻结 Commit SHA 或可删除 RC Tag 验证；`v3.0.0-beta.1` 由 `BETA-001`、不可变 `v3.0.0` 由 `REL-008` 在最终验证后创建（2026-10-08 已发布）。
 
 ### 2.2 Tool Contract
 
-当前运行时注册 9 个公共 Tool；Beta 目标固定为 10 个。`memory_store` 只由 `CON-001 + MEM-001` 实现，M0 不得提前注册不可工作的 Tool。
+当前运行时注册 9 个公共 Tool；目标固定为 10 个。`memory_store` 只由 `CON-001 + MEM-001` 实现，不得提前注册不可工作的 Tool。
 
 机器可执行的目标名称唯一来源是 `plugins/deepseek-harness/tools.py::TARGET_PUBLIC_TOOL_NAMES`。当前 9 Tool Runtime 必须由该目标清单减去显式 pending 集合派生；Manifest、测试和文档不得维护第二份可驱动注册的目标清单。
 
@@ -39,7 +39,7 @@
 ### 2.3 安装与 CLI 边界
 
 ```bash
-python -m pip install "oh-my-deepseek-harness[all]==3.0.0b1"
+python -m pip install "oh-my-deepseek-harness[all]==3.0.0"
 deepseek-harness install
 deepseek-harness doctor
 ```
@@ -99,7 +99,7 @@ uninstall [--dry-run] [--purge-data --confirm]
 
 ## 6. 产品范围总览
 
-| Epic | 名称 | Beta 优先级 |
+| Epic | 名称 | 优先级 |
 |---|---|---|
 | EP-01 | 安装、升级和卸载 | P0 |
 | EP-02 | Plugin 注册与生命周期 | P0 |
@@ -527,7 +527,7 @@ logging: {include_content: false}
 
 ## 10. Release Gate
 
-### Public Beta 前置
+### Stable 发布前置（已于 2026-10-08 满足）
 
 - G0–G3 全部以证据报告 PASS；
 - P0 = 0；P1 已关闭或具有有效 Beta Waiver；
@@ -696,7 +696,7 @@ Config、DB、JSONL 和 runtime state 变更必须有 Schema 版本、migration�
 - 未解释外部数据发送：0；
 - P0：0；Stable 时 P1：0。
 
-### 16.2 Public Beta 暴露量
+### 16.2 验证样本与暴露量（原 Public Beta 暴露量；见 KNOWN_LIMITATIONS §6）
 
 - 至少 10 名非维护者；
 - 至少 20 次独立安装，观察成功率 ≥ 90%，报告 95% Wilson 区间；

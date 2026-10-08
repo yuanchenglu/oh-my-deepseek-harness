@@ -10,7 +10,7 @@
 [![Tests](https://img.shields.io/badge/tests-142%20cases-brightgreen)](tests/)
 [![GitHub Stars](https://img.shields.io/github/stars/yuanchenglu/oh-my-deepseek-harness?style=social)](https://github.com/yuanchenglu/oh-my-deepseek-harness)
 
-> **兼容性基线**：完整 Hermes 集成目标固定为 Hermes Agent **v0.19.0**（tag `v2026.7.20`）+ Python **3.11–3.12**，支持 Linux/macOS。Python **3.10** 仅保留包级、纯模块和契约回归 CI；Hermes v0.19.0 上游要求 Python ≥3.11，因此 3.10 不是完整产品支持环境。真实 E2E 由 `COMPAT-001` 完成，当前仍是 Experimental Preview。
+> **兼容性基线**：完整 Hermes 集成固定为 Hermes Agent **v0.19.0**（tag `v2026.7.20`）+ Python **3.11–3.12**，支持 Linux/macOS。Python **3.10** 仅保留包级、纯模块和契约回归 CI；Hermes v0.19.0 上游要求 Python ≥3.11，因此 3.10 不是完整产品支持环境。真实 E2E 由 `COMPAT-001` 完成（G3 PASS）；产品已发布 **v3.0.0（Stable）**。
 
 <div align="center">
   <img src="docs/assets/hero-comparison.svg" alt="Before vs After" width="100%">
@@ -119,7 +119,7 @@ Python 3.10 仍在包级/纯模块 CI 中验证，但不是 Hermes v0.19.0 的�
 
 > 每项能力的状态分级（Stable/Beta/Experimental/Degraded/Removed）与证据链接见 [能力矩阵](docs/capabilities/CAPABILITY_MATRIX.md)，状态定义见 [STATUS.md](docs/capabilities/STATUS.md)。
 
-核心插件层（Layer 1）贡献 9 个 Python 文件，通过 8 个 Hermes Hook 点运行。**当前 Runtime 注册 9 个可工作 Tool；Open-source Beta 目标契约固定为 10 个。**
+核心插件层（Layer 1）贡献 9 个 Python 文件，通过 8 个 Hermes Hook 点运行。**当前 Runtime 注册 9 个可工作 Tool；目标契约固定为 10 个。**
 
 | 文件名 | 触发时机 | 功能 |
 |--------|---------|------|
@@ -137,7 +137,7 @@ Python 3.10 仍在包级/纯模块 CI 中验证，但不是 Hermes v0.19.0 的�
 
 目标名称的权威机器可读来源是 `plugins/deepseek-harness/tools.py::TARGET_PUBLIC_TOOL_NAMES`。
 
-| 领域 | Beta 目标 Tool | 当前状态 |
+| 领域 | 目标 Tool | 当前状态 |
 |---|---|---|
 | Plan | `plan_create`、`plan_update_step`、`plan_cascade`、`plan_status` | 4/4 已注册 |
 | Memory | `memory_tag`、`memory_store`、`memory_query`、`memory_filter` | 3/4 已注册；`memory_store` pending |
@@ -214,7 +214,7 @@ Python 3.10 仍在包级/纯模块 CI 中验证，但不是 Hermes v0.19.0 的�
 
 - **Layer 1** 是你日常打交道的部分。所有 Hook 都在这层，Hermes 每轮对话会自动加载。
 - **Layer 2** 是底层优化引擎，在你看不到的地方默默压缩上下文，降低长对话卡顿概率。
-- **Layer 3** 是核心工具服务，当前通过 `ctx.register_tool()` 暴露 9 个可工作 Tool；Beta 目标第 10 个 `memory_store` 尚未注册。
+- **Layer 3** 是核心工具服务，当前通过 `ctx.register_tool()` 暴露 9 个可工作 Tool；目标第 10 个 `memory_store` 尚未注册（见已知限制）。
 
 不修改 Hermes 核心代码，通过官方 Plugin Hook 接口注入；与 MemOS 等其他插件冲突风险低（具体兼容性见能力矩阵）。
 

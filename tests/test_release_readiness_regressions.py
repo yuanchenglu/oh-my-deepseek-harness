@@ -154,8 +154,8 @@ def test_project_versions_are_consistent() -> None:
         (ROOT / "src" / "deepseek_context" / "resources" / "plugin.yaml").read_text(encoding="utf-8")
     )
 
-    assert root_version == "3.0.0b1"
-    assert expected_manifest_version == "3.0.0-beta.1"
+    assert root_version == "3.0.0"
+    assert expected_manifest_version == "3.0.0"
     assert str(harness["version"]) == expected_manifest_version
     assert str(context["version"]) == expected_manifest_version
     assert requires_python_match.group(1) == ">=3.10,<3.13"
